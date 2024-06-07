@@ -6,6 +6,7 @@ import { getCategories, transformScheme } from './utils'
 import { EMPTY_ARRAY } from '../../consts'
 import SvgScheme from '../SvgSheme'
 import s from './svg-scheme-editor.module.scss'
+import axios from 'axios'
 
 const { Title, Paragraph } = Typography
 
@@ -35,6 +36,17 @@ export default function SvgSchemeEditor({ value, onChange }) {
   const [ scheme, setScheme ] = useState(value.scheme || '')
   const [ editingSeat, setEditingSeat ] = useState(null)
   const svgRef = useRef()
+
+  useEffect(() => {
+    if (typeof value === 'string' && value.startsWith('http')) {
+      axios.get(value).then(({ data }) => {
+        setScheme(data.scheme)
+        setCategories(data.categories)
+        setCustomProps(data.customProps)
+        onChange(data)
+      })
+    }
+  }, [])
 
   useEffect(() => onChange({
     categories,

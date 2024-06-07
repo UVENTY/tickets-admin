@@ -12,6 +12,7 @@ import { fetchData, getStadium, getStadiumSchemeStatus, fetchStadiumScheme, post
 import { getCities, getCountries } from '../../redux/config'
 import SvgScheme from '../../components/SvgSheme'
 import SvgSchemeEditor from '../../components/SvgSchemeEditor'
+import { toBase64 } from '../../utils/utils'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
@@ -44,7 +45,7 @@ export default function PageStadium() {
   useEffect(() => {
     if (['loading', 'loaded'].includes(schemeStatus)) return
     dispatch(fetchStadiumScheme(id, config.type))
-  }, [schemeStatus, id])
+  }, [isLoaded, schemeStatus, id])
 
   useEffect(() => {
     if (!isLoaded && !isLoading) {
@@ -83,24 +84,30 @@ export default function PageStadium() {
       layout='vertical'
       form={form}
       onFinish={values => {
-        console.log(values)
-        return
-        const { name, address = {}, country, city, scheme, scheme_blob } = values
-        const stadium = {
-          ...name,
-          address_en: address.en,
-          address_ru: address.ru,
-          address_ar: address.ar,
-          address_fr: address.fr,
-          address_es: address.es,
-          country,
-          city
-        }
-        if (scheme_blob) stadium.scheme_blob = scheme_blob
-        if (scheme) stadium.scheme = JSON.stringify(scheme).replaceAll('"', '\'')
-        stadium.scheme = ''
-        if (!isNew) stadium.id = id
-        dispatch(postData({ stadiums: [stadium] }))// .then(() => navigate('/stadiums'))
+        const file = new File([JSON.stringify(values.scheme_blob)], 'scheme.json', {
+          type: 'application/json',
+        })
+        toBase64(file).then(base64 => {
+          const { name, address = {}, country, city, scheme, scheme_blob } = values
+          const stadium = {
+            ...name,
+            address_en: address.en,
+            address_ru: address.ru,
+            address_ar: address.ar,
+            address_fr: address.fr,
+            address_es: address.es,
+            country,
+            city
+          }
+          if (scheme_blob) {
+            stadium.scheme_blob = base64
+          }
+          if (scheme) stadium.scheme = JSON.stringify(scheme).replaceAll('"', '\'')
+          stadium.scheme = ''
+          if (!isNew) stadium.id = id
+          dispatch(postData({ stadiums: [stadium] }))// .then(() => navigate('/stadiums'))
+        })
+
       }}
       initialValues={initialValues}
     >
