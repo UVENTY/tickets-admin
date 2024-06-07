@@ -1,18 +1,27 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Col, Row, Form, Button, Select, Input } from 'antd'
-import { CaretLeftFilled } from '@ant-design/icons'
+import { Col, Row, Form, Button, Select, Input, Upload } from 'antd'
+import { CaretLeftFilled, UploadOutlined } from '@ant-design/icons'
+import buildConfig from '../../buildConfig'
 import JSONEditor from '../../components/JSONEditor'
 import InputImage from '../../components/InputImage'
 import MultilangInput from '../../components/MultilangInput'
 import StadiumScheme from '../../components/StadiumScheme'
 import { fetchData, getStadium, getStadiumSchemeStatus, fetchStadiumScheme, postData } from '../../redux/data'
 import { getCities, getCountries } from '../../redux/config'
+import SvgScheme from '../../components/SvgSheme'
+import SvgSchemeEditor from '../../components/SvgSchemeEditor'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
   .sort((item1, item2) => item1.label > item2.label ? 1 : -1)
+
+  
+const config = buildConfig.getPaths({
+  type: 'scheme_type',
+  upload: 'scheme_upload'
+}, 'stadium')
 
 export default function PageStadium() {
   const dispatch = useDispatch()
@@ -27,12 +36,14 @@ export default function PageStadium() {
   const stadium = useSelector(state => getStadium(state, id))
   const schemeStatus = useSelector(state => getStadiumSchemeStatus(state, id))
 
+  const [ form ] = Form.useForm()
+
   const countriesOptions = useMemo(() => getOptions(countries), [countries])
   const citiesOptions = useMemo(() => getOptions(cities), [cities])
 
   useEffect(() => {
     if (['loading', 'loaded'].includes(schemeStatus)) return
-    dispatch(fetchStadiumScheme(id))
+    dispatch(fetchStadiumScheme(id, config.type))
   }, [schemeStatus, id])
 
   useEffect(() => {
@@ -40,6 +51,7 @@ export default function PageStadium() {
       dispatch(fetchData())
     }
   }, [isLoaded, isLoading])
+
 
   if ((!stadium || schemeStatus !== 'loaded') && !isNew) {
     return null
@@ -69,7 +81,10 @@ export default function PageStadium() {
   return (
     <Form
       layout='vertical'
+      form={form}
       onFinish={values => {
+        console.log(values)
+        return
         const { name, address = {}, country, city, scheme, scheme_blob } = values
         const stadium = {
           ...name,
@@ -83,12 +98,20 @@ export default function PageStadium() {
         }
         if (scheme_blob) stadium.scheme_blob = scheme_blob
         if (scheme) stadium.scheme = JSON.stringify(scheme).replaceAll('"', '\'')
+        stadium.scheme = ''
         if (!isNew) stadium.id = id
-        dispatch(postData({ stadiums: [stadium] })).then(() => navigate('/stadiums'))
+        dispatch(postData({ stadiums: [stadium] }))// .then(() => navigate('/stadiums'))
       }}
       initialValues={initialValues}
     >
-      <Row
+      <Button
+        type='primary'
+        htmlType='submit'
+        loading={isSubmitting}
+      >
+        {isNew ? 'Create' : 'Save'}
+      </Button>
+      {/* <Row
         style={{
           borderBottom: '1px solid #ccc',
           padding: '10px'
@@ -178,21 +201,20 @@ export default function PageStadium() {
             />
           </Form.Item>
         </Col>
-      </Row>
+      </Row> */}
       <Row style={{ margin: '20px 20px 0 20px' }}>
         <Col
           span={24}
           style={{ padding: '0 10px 0 0' }}
         >
           <Form.Item
-            label='Image scheme'
             name='scheme_blob'
           >
-            <InputImage />
+            {config.type === 'svg' ? <SvgSchemeEditor /> : <InputImage />}
           </Form.Item>
         </Col>
       </Row>
-      <Row style={{ margin: '20px 20px 0 20px' }}>
+      {config.type === 'json' && <Row style={{ margin: '20px 20px 0 20px' }}>
         <Col
           span={12}
           style={{ padding: '0 10px 0 0' }}
@@ -212,7 +234,7 @@ export default function PageStadium() {
             <StadiumScheme />
           </Form.Item>
         </Col>
-      </Row>
+      </Row>}
     </Form>
   )
 }

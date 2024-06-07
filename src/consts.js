@@ -11,3 +11,6 @@ export const USER_ROLES = {
   '2': 'Seller',
   '4': 'Admin'
 }
+
+export const EMPTY_ARRAY = []
+export const EMPTY_OBJECT = {}

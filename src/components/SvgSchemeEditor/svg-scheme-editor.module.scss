@@ -1,0 +1,53 @@
+.addIcon,
+.catIcon {
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: .8em;
+
+  div {
+    margin-top: -7px;
+  }
+}
+
+.addIcon {
+  padding-top: 3px;
+}
+  
+.catIcon {
+  svg {
+    max-width: 32px;
+    max-height: 32px;
+    height: auto;
+  }
+}
+
+.form {
+  margin-top: 10px;
+}
+
+.scheme {
+  flex: 1 1 auto;
+
+  svg {
+    border-radius: 8px;
+  }
+}
+
+.params {
+  flex: 0 0 300px;
+}
+
+.deleteCatOuter {
+  overflow: hidden;
+  width: 0;
+  transition: ease .3s width;
+}
+
+.catName {
+  width: 170px;
+}
+
+.addCat {
+  margin-top: 15px;
+}

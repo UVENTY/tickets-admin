@@ -12,11 +12,22 @@ export const getFileExt = (fileName, withDot = false) => {
 }
 
 export const toBase64 = file => new Promise((resolve, reject) => {
+  const filename = (file.name || '').split('.').slice(0, -1).join('.')
+  const fakeJson = new File([file], `${filename}.json`, {
+    type: 'application/json',
+    lastModified: new Date(),
+  })
   const reader = new FileReader()
-  reader.readAsDataURL(file)
+  reader.readAsDataURL(fakeJson)
   reader.onload = () => resolve(reader.result)
   reader.onerror = reject
 })
 
 export const getOptions = (arr, path) =>
   orderBy(uniq(map(arr, path))).filter(item => item)
+
+export const isValidSvg = src => {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(src)
+  return doc.querySelector('parsererror') === null
+}
