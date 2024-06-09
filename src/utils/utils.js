@@ -23,11 +23,21 @@ export const toBase64 = file => new Promise((resolve, reject) => {
   reader.onerror = reject
 })
 
+export const toText = file => new Promise((resolve, reject) => {
+  const reader = new FileReader()
+  reader.addEventListener('load', () => resolve(reader.result), false)
+  reader.addEventListener('error', reject, false)
+  reader.readAsText(file)
+})
+
 export const getOptions = (arr, path) =>
   orderBy(uniq(map(arr, path))).filter(item => item)
 
-export const isValidSvg = src => {
+export const getValidSvg = src => {
   const parser = new DOMParser()
-  const doc = parser.parseFromString(src)
-  return doc.querySelector('parsererror') === null
+  const doc = parser.parseFromString(src, 'image/svg+xml')
+  return doc.querySelector('parsererror') === null ? doc : null
 }
+
+// Замена всех цветов в fill и stroke на currentColor для дальнейшего изменения цвета через CSS
+export const setCurrentColor = (svg) => svg.replaceAll(/(fill|stroke)=["']([^none].*?)["']/g, '$1="currentColor"')

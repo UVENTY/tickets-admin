@@ -10,6 +10,25 @@
   }
 }
 
+.edit {
+  label {
+    font-weight: bold;
+  }
+    
+  .label {
+    display: block;
+    margin-top: 10px;
+    padding-bottom: 5px;
+  }
+} 
+.row3 > div {
+  flex: 1 1 0;
+}
+
+.checkbox {
+  margin-top: 10px;
+}
+
 .addIcon {
   padding-top: 3px;
 }
@@ -18,16 +37,20 @@
   svg {
     max-width: 32px;
     max-height: 32px;
+    min-width: 24px;
+    min-height: 24px;
+    width: auto;
     height: auto;
   }
 }
 
 .form {
-  margin-top: 10px;
+  margin-top: 20px;
 }
 
 .scheme {
   flex: 1 1 auto;
+  margin-right: 20px;
 
   svg {
     border-radius: 8px;
@@ -35,7 +58,7 @@
 }
 
 .params {
-  flex: 0 0 300px;
+  flex: 0 0 420px;
 }
 
 .deleteCatOuter {
@@ -48,6 +71,38 @@
   width: 170px;
 }
 
+.catColor {
+  width: 100px;
+}
+
 .addCat {
   margin-top: 15px;
+}
+
+.preview {
+  min-width: 150px;
+}
+
+.previewFooter {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 0 8px;
+}
+
+.catOption {
+  
+  &Icon {
+    flex: 0 0 24px;
+    height: 24px;
+    text-align: center;
+    border-radius: 5px;
+  }
+
+  svg {
+    max-width: 24px;
+    max-height: 24px;
+    width: auto;
+    height: auto;
+  }
 }

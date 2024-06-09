@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Col, Row, Form, Button, Select, Input, Upload } from 'antd'
+import { Col, Row, Form, Button, Select, Input, Upload, Flex } from 'antd'
 import { CaretLeftFilled, UploadOutlined } from '@ant-design/icons'
 import buildConfig from '../../buildConfig'
 import JSONEditor from '../../components/JSONEditor'
@@ -10,7 +10,6 @@ import MultilangInput from '../../components/MultilangInput'
 import StadiumScheme from '../../components/StadiumScheme'
 import { fetchData, getStadium, getStadiumSchemeStatus, fetchStadiumScheme, postData } from '../../redux/data'
 import { getCities, getCountries } from '../../redux/config'
-import SvgScheme from '../../components/SvgSheme'
 import SvgSchemeEditor from '../../components/SvgSchemeEditor'
 import { toBase64 } from '../../utils/utils'
 
@@ -43,7 +42,7 @@ export default function PageStadium() {
   const citiesOptions = useMemo(() => getOptions(cities), [cities])
 
   useEffect(() => {
-    if (['loading', 'loaded'].includes(schemeStatus)) return
+    if (['loading', 'loaded'].includes(schemeStatus) || !isLoaded) return
     dispatch(fetchStadiumScheme(id, config.type))
   }, [isLoaded, schemeStatus, id])
 
@@ -52,7 +51,6 @@ export default function PageStadium() {
       dispatch(fetchData())
     }
   }, [isLoaded, isLoading])
-
 
   if ((!stadium || schemeStatus !== 'loaded') && !isNew) {
     return null
@@ -83,41 +81,42 @@ export default function PageStadium() {
     <Form
       layout='vertical'
       form={form}
-      onFinish={values => {
-        const file = new File([JSON.stringify(values.scheme_blob)], 'scheme.json', {
+      onFinish={async (values) => {
+        const file = values.scheme_blob && new File([JSON.stringify(values.scheme_blob)], 'scheme.json', {
           type: 'application/json',
         })
-        toBase64(file).then(base64 => {
-          const { name, address = {}, country, city, scheme, scheme_blob } = values
-          const stadium = {
-            ...name,
-            address_en: address.en,
-            address_ru: address.ru,
-            address_ar: address.ar,
-            address_fr: address.fr,
-            address_es: address.es,
-            country,
-            city
-          }
-          if (scheme_blob) {
-            stadium.scheme_blob = base64
-          }
-          if (scheme) stadium.scheme = JSON.stringify(scheme).replaceAll('"', '\'')
-          stadium.scheme = ''
-          if (!isNew) stadium.id = id
-          dispatch(postData({ stadiums: [stadium] }))// .then(() => navigate('/stadiums'))
-        })
-
+        const base64 = await (file ? toBase64(file) : Promise.resolve())
+        const { name, address = {}, country, city, scheme, scheme_blob } = values
+        const stadium = {
+          ...name,
+          address_en: address.en,
+          address_ru: address.ru,
+          address_ar: address.ar,
+          address_fr: address.fr,
+          address_es: address.es,
+          country,
+          city
+        }
+        if (base64) {
+          stadium.scheme_blob = base64
+        }
+        if (scheme) stadium.scheme = JSON.stringify(scheme).replaceAll('"', '\'')
+        stadium.scheme = ''
+        if (!isNew) stadium.id = id
+        dispatch(postData({ stadiums: [stadium] }))// .then(() => navigate('/stadiums'))
       }}
       initialValues={initialValues}
     >
-      <Button
-        type='primary'
-        htmlType='submit'
-        loading={isSubmitting}
-      >
-        {isNew ? 'Create' : 'Save'}
-      </Button>
+      <Flex gap={20} justify='flex-end' style={{ padding: '10px 30px', position: 'sticky', zIndex: 50, background: '#fff', top: 0 }}>
+        <Button
+          type='primary'
+          htmlType='submit'
+          loading={isSubmitting}
+          size='large'
+        >
+          {isNew ? 'Create' : 'Save'}
+        </Button>
+      </Flex>
       {/* <Row
         style={{
           borderBottom: '1px solid #ccc',
