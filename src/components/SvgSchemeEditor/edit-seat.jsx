@@ -76,14 +76,16 @@ export default function SvgSchemeEditSeat({
       {fields.filter(f => !['seat', 'icon', 'row'].includes(f.value)).map(field => {
         const rest = {
           onChange: value => setChangedValue({ ...changedValues, [field.value]: value?.target ? (value.target?.value || value.target?.checked) : value }),
-          defaultValue: values[field.value]
         }
+        const isCheckbox = field.type === 'checkbox'
+        if (isCheckbox) rest.defaultChecked = values[field.value]
+        else rest.defaultValue = values[field.value]
         return (
           <Fragment key={field.value}>
-            {field.type !== 'checkbox' && <label className={s.label}>{field.label}</label>}
+            {!isCheckbox && <label className={s.label}>{field.label}</label>}
             {!field.type && <Input {...rest} />}
             {field.type === 'select' && <Select {...rest} options={field.options || []} />}
-            {field.type === 'checkbox' && <Checkbox className={s.checkbox} {...rest}>{field.label}</Checkbox>}
+            {isCheckbox && <Checkbox className={s.checkbox} {...rest}>{field.label}</Checkbox>}
             {field.type === 'file' && (
               field.accept === '.svg' ? <InputSvg {...rest} /> : <Upload accept={field.accept} itemRender={() => null} />
             )}
