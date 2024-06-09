@@ -51,10 +51,14 @@
 }
 
 .svgSchemeTooltip {
-  position: fixed;
-  transform: translate(-45%, -110%);
+  position: absolute;
+  transform: translate(-45%, -100%);
   opacity: 0;
   left: -500px;
   top: -500px;
   transition: ease .3s opacity;
+}
+
+.scheme {
+  position: relative;
 }

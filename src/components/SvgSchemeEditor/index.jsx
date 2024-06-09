@@ -47,7 +47,6 @@ export default function SvgSchemeEditor({ value, onChange }) {
   const [ customProps, setCustomProps ] = useState(value.customProps || defaultCustomProps)
   const [ scheme, setScheme ] = useState(value.scheme || '')
   const [ editingSeat, setEditingSeat ] = useState(null)
-  const [ tooltipSeat, setTooltipSeat ] = useState(null)
   const svgRef = useRef()
 
   useEffect(() => {
@@ -90,7 +89,7 @@ export default function SvgSchemeEditor({ value, onChange }) {
   }, [editingSeat])
 
   const handleChangeSeat = useCallback((values) => {
-    const data = { ...getSeatData(tooltipSeat), ...values }
+    const data = { ...getSeatData(editingSeat), ...values }
     Object.entries(data).forEach(([key, value]) => {
       if (value) {
         editingSeat.setAttribute(`data-${key}`, value)
@@ -104,9 +103,6 @@ export default function SvgSchemeEditor({ value, onChange }) {
     setScheme(svgRef.current.innerHTML)
     cb && cb(null)
   }, [svgRef.current])
-
-  const showTooltop = useCallback((e) => setTooltipSeat(e.target), [])
-  const hideTooltip = useCallback(() => setTooltipSeat(null), [])
 
   return (
     <div>
@@ -140,27 +136,12 @@ export default function SvgSchemeEditor({ value, onChange }) {
       </Flex>
       <Flex className={s.form}>
         <div className={s.scheme}>
-          <SvgSchemeTooltop
-            for={tooltipSeat}
-          >
-            <SvgSchemeSeatPreview
-              className={s.preview}
-              {...getSeatData(tooltipSeat)}
-              categories={categories}
-              price='16$'
-              footer={<div className={s.previewFooter}>
-                <div>Click to edit seat</div>
-                {/* <div>Double click to edit category</div> */}
-              </div>}
-            />
-          </SvgSchemeTooltop>
           <SvgScheme
             categories={categories}
             src={scheme}
             ref={svgRef}
+            tooltip={data => <SvgSchemeSeatPreview className={s.preview} categories={categories} price='16$' {...data} />}
             onSeatClick={editSeat}
-            onSeatOver={showTooltop}
-            onSeatOut={hideTooltip}
           />
         </div>
         <div className={s.params}>

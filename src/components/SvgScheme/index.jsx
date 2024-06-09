@@ -1,7 +1,17 @@
-import { forwardRef, useCallback, useMemo } from 'react'
+import { forwardRef, useCallback, useMemo, useState } from 'react'
 import s from './svg-scheme.module.scss'
+import SvgSchemeTooltop from './tooltip'
 
-const SvgScheme = forwardRef(({ src, onSeatClick, onSeatOver, onSeatOut, categories = [], seatSelector = '.svg-seat' }, ref) => {
+const SvgScheme = forwardRef(({
+  categories = [],
+  seatSelector = '.svg-seat',
+  src,
+  tooltip,
+  onSeatClick,
+  onSeatOver,
+  onSeatOut,
+}, ref) => {
+  const [ tooltipSeat, setTooltipSeat ] = useState()
   const handleClick = useCallback(e => {
     const { target: el } = e
     if (!el.matches(seatSelector)) return;
@@ -11,12 +21,14 @@ const SvgScheme = forwardRef(({ src, onSeatClick, onSeatOver, onSeatOut, categor
   const handleMouseOver = useCallback(e => {
     const { target: el } = e
     if (!el.matches(seatSelector)) return;
+    if (tooltip) setTooltipSeat(el)
     onSeatOver && onSeatOver(e)
-  }, [])
+  }, [tooltip])
 
   const handleMouseOut = useCallback(e => {
     const { target: el } = e
     if (!el.matches(seatSelector)) return;
+    if (tooltip) setTooltipSeat(null)
     onSeatOut && onSeatOut(e)
   }, [])
 
@@ -36,7 +48,10 @@ const SvgScheme = forwardRef(({ src, onSeatClick, onSeatOver, onSeatOut, categor
   }, [categories])
 
   return (
-    <>
+    <div className={s.scheme}>
+      {!!tooltip && <SvgSchemeTooltop for={tooltipSeat}>
+        {!!tooltipSeat && tooltip(Object.assign({}, tooltipSeat.dataset))}  
+      </SvgSchemeTooltop>}
       <style>{styles}</style>
       <div
         ref={ref}
@@ -46,7 +61,7 @@ const SvgScheme = forwardRef(({ src, onSeatClick, onSeatOver, onSeatOut, categor
         onMouseOver={handleMouseOver}
         onMouseOut={handleMouseOut}
       />
-    </>
+    </div>
   )
 })
 

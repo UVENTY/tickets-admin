@@ -18,8 +18,8 @@ export default function SvgSchemeTooltop({
     }
     const target = isElem ? el : document.querySelector(el)
     if (target) {
-      const { left, top } = target.getBoundingClientRect()
-      setStyles({ left, top, opacity: 1 })
+      const { x: left, y: top, width } = target.getBBox()
+      setStyles({ left: left, top, opacity: 1 })
     }
   }, [el])
 
