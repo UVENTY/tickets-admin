@@ -1,4 +1,5 @@
 import { map, uniq, orderBy } from 'lodash'
+import { EMPTY_FUNC } from '../consts'
 
 export const capitalizeFirstLetter = str => {
   return str[0].toUpperCase() + str.substr(1)
@@ -41,3 +42,22 @@ export const getValidSvg = src => {
 
 // Замена всех цветов в fill и stroke на currentColor для дальнейшего изменения цвета через CSS
 export const setCurrentColor = (svg) => svg.replaceAll(/(fill|stroke)=["']([^none].*?)["']/g, '$1="currentColor"')
+
+export const isMacintosh = () => navigator.platform.indexOf('Mac') > -1
+
+export const requestTimeout = (fn, args, delay, registerCancel) => {
+  const start = new Date().getTime()
+  const loop = () => {
+    const delta = new Date().getTime() - start
+    if (delta >= delay) {
+      fn(...args)
+      registerCancel(EMPTY_FUNC)
+      return
+    }
+    const raf = requestAnimationFrame(loop)
+    registerCancel(() => cancelAnimationFrame(raf))
+  };
+
+  const raf = requestAnimationFrame(loop)
+  registerCancel(() => cancelAnimationFrame(raf))
+}

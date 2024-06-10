@@ -1,28 +1,47 @@
-import { Fragment, useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { Button, Card, Checkbox, Flex, Input, Select, Typography, Upload } from 'antd'
 import cn from 'classnames'
 import InputSvg from '../InputSvg'
 import s from './svg-scheme-editor.module.scss'
 import { setCurrentColor } from '../../utils/utils'
 import { ArrowLeftOutlined } from '@ant-design/icons'
+import { mapValues } from 'lodash'
 
 const { Title } = Typography
 
+const isArray = val => (ifTrue, ifFalse = val) => Array.isArray(val) ? ifTrue : ifFalse
 
 export default function SvgSchemeEditSeat({
   categories = [],
   fields = [],
-  values = {},
+  seats = [],
   onOk,
-  onCancel,
   onChange
 }) {
   const [ changedValues, setChangedValue ] = useState({})
-  const { category, row, seat } = values
 
-  useEffect(() => {
-    onChange && onChange(changedValues)
-  }, [changedValues])
+  const handleChange = (name, value) => setChangedValue(prev => {
+    const changed = { ...prev, [name]: value}
+    onChange && onChange(changed)
+    return changed
+  })
+
+  const fieldsToShow = useMemo(() => fields.filter(f => seats.length > 1 ? f.groupEditable : true), [seats, fields])
+
+  const values = useMemo(() => mapValues(
+    seats.reduce((acc, el) => {
+      const data = Object.assign({}, el.dataset)
+      const keys = ['category'].concat(fieldsToShow.map(f => f.value))
+      keys.forEach(field => {
+        const val = data[field] || null
+        if (!acc[field]) acc[field] = [val]
+        else if (!acc[field].includes(val)) acc[field].push(val)
+      })
+      return acc
+    }, {}),
+    val => val.length <= 1 ? (val[0] || null) : val
+  ), [seats, fieldsToShow])
+  const { category, row, seat } = values
 
   return (
     <Card
@@ -32,8 +51,9 @@ export default function SvgSchemeEditSeat({
       <label className={s.label}>Category</label>
       <Select
         options={categories}
-        defaultValue={category}
-        onChange={value => setChangedValue({ ...changedValues, category: value })}
+        placeholder={isArray(category)('Multiple categories')}
+        defaultValue={isArray(category)(null)}
+        onChange={value => handleChange('category', value)}
         labelRender={({ value }) => {
           const item = categories.find(c => c.value === value)
           return (
@@ -66,20 +86,27 @@ export default function SvgSchemeEditSeat({
         <div>
           <label className={s.label}>Icon</label>
           <InputSvg
-            defaultValue={values.icon}
-            onChange={icon => setChangedValue({ ...changedValues, icon })}
+            defaultValue={isArray(values.icon)(null)}
+            placeholder={isArray(values.icon)('Multiple icons', values.icon)}
             svgClassName={`svg-scheme-icon-cat-${changedValues.category || category}`}
+            onChange={icon => handleChange('icon', icon)}
             beforeChange={icon => setCurrentColor(icon)}
           />
         </div>
       </Flex>
       {fields.filter(f => !['seat', 'icon', 'row'].includes(f.value)).map(field => {
-        const rest = {
-          onChange: value => setChangedValue({ ...changedValues, [field.value]: value?.target ? (value.target?.value || value.target?.checked) : value }),
-        }
         const isCheckbox = field.type === 'checkbox'
-        if (isCheckbox) rest.defaultChecked = values[field.value]
-        else rest.defaultValue = values[field.value]
+        const rest = {
+          onChange: (val) => handleChange(field.value, isCheckbox ? val.target?.checked : (val.target?.value || val)),
+        }
+        const isArrayField = isArray(values[field.value])
+        if (isCheckbox) {
+          rest.defaultChecked = isArrayField(false, values[field.value] === true)
+          rest.indeterminate = isArrayField(true, undefined)
+        } else {
+          rest.defaultValue = isArrayField(null)
+          rest.placeholder = isArrayField('Multiple values', '')
+        }
         return (
           <Fragment key={field.value}>
             {!isCheckbox && <label className={s.label}>{field.label}</label>}

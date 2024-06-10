@@ -7,13 +7,14 @@ import { EMPTY_ARRAY } from '../../consts'
 import SvgScheme from '../SvgScheme'
 import s from './svg-scheme-editor.module.scss'
 import axios from 'axios'
-import SvgSchemeTooltop from '../SvgScheme/tooltip'
 import SvgSchemeSeatPreview from '../SvgScheme/preview'
 import SvgSchemeEditSeat from './edit-seat'
-import { setCurrentColor, toText } from '../../utils/utils'
-import { omit } from 'lodash'
+import { isMacintosh, setCurrentColor, toText } from '../../utils/utils'
 
 const { Title } = Typography
+
+const seatClassName = 'svg-seat'
+const activeSeatClassName = 'active'
 
 const defaultCustomProps = [
   {
@@ -26,27 +27,37 @@ const defaultCustomProps = [
     value: 'icon',
     label: 'Place Icon',
     type: 'file',
-    accept: '.svg'
+    accept: '.svg',
+    groupEditable: true
   }, {
     value: 'text',
     label: 'Text',
+    groupEditable: true
   }, {
     value: 'disabled',
     label: 'Disabled',
-    type: 'checkbox'
+    type: 'checkbox',
+    groupEditable: true
   }
 ]
 
 const getSeatData = (el) => {
   if (!(el instanceof Element)) return {}
   return Object.assign({}, el.dataset)
+} 
+
+const getSelectionKey = selected => {
+  const key = selected.map(el => `${el.getAttribute('data-row')}-${el.getAttribute('data-seat')}`).join('_')
+  return key
 }
+
+const isMac = isMacintosh()
 
 export default function SvgSchemeEditor({ value, onChange }) {
   const [ categories, setCategories ] = useState(value.categories || EMPTY_ARRAY)
   const [ customProps, setCustomProps ] = useState(value.customProps || defaultCustomProps)
   const [ scheme, setScheme ] = useState(value.scheme || '')
-  const [ editingSeat, setEditingSeat ] = useState(null)
+  const [ selectedSeats, setSelectedSeats ] = useState([])
   const svgRef = useRef()
 
   useEffect(() => {
@@ -65,44 +76,59 @@ export default function SvgSchemeEditor({ value, onChange }) {
     scheme,
   }), [scheme, categories, customProps])
 
+  useEffect(() => {
+    svgRef.current.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
+    selectedSeats.forEach(el => el.classList.add(activeSeatClassName))
+  }, [selectedSeats])
+
   const handleChangeCategory = useCallback((index, key, value) => {
     setCategories(prev => prev.map((item, i) => i === index ? { ...item, [key]: value } : item))
   }, [setCategories])
 
   const deleteCategory = useCallback((value) => {
     if (svgRef.current) {
-      Array.from(svgRef.current.querySelectorAll(`*[data-category="${value}"]`))
-        .forEach(el => {
-          el.setAttribute('fill', '#000')
-          el.removeAttribute('data-category')
-      })
+      Array.from(svgRef.current.querySelectorAll(`.${seatClassName}[data-category="${value}"]`))
+        .forEach(el => el.removeAttribute('data-category'))
     }
     setCategories(prev => prev.filter((cat) => cat.value !== value))
   }, [setCategories, svgRef.current])
 
-  const editSeat = useCallback((e) => {
-    const { target: el } = e
-    if (editingSeat && editingSeat !== el) {
-      updateFromSvg(() => setEditingSeat(null))
-    }
-    setEditingSeat(el)
-  }, [editingSeat])
-
-  const handleChangeSeat = useCallback((values) => {
-    const data = { ...getSeatData(editingSeat), ...values }
-    Object.entries(data).forEach(([key, value]) => {
-      if (value) {
-        editingSeat.setAttribute(`data-${key}`, value)
-      } else {
-        editingSeat.removeAttribute(`data-${key}`)
+  const toggleSelect = ({ detail, target: el, ctrlKey, metaKey }) => {
+    const isDoubleClick = detail > 1
+    setSelectedSeats(prev => {
+      if (isDoubleClick) {
+        const cat = el.getAttribute('data-category')
+        const group = Array.from(svgRef.current.querySelectorAll(`.${seatClassName}[data-category="${cat}"]`))
+        const isFullIncludes = group.every(el => prev.includes(el))
+        return ctrlKey || metaKey ? 
+          (isFullIncludes ? prev.filter(el => !group.includes(el)) : prev.filter(el => !group.includes(el)).concat(group)) :
+          group
       }
+      if (ctrlKey || metaKey) {
+        return prev.includes(el) ? prev.filter(item => item !== el) : [...prev, el] 
+      }
+      return prev.length === 1 ? (prev[0] === el ? [] : [el]) : [el]
     })
-  }, [editingSeat])
+  }
 
-  const updateFromSvg = useCallback((cb) => {
-    setScheme(svgRef.current.innerHTML)
+  const changeSelected = (values) => {
+    console.log(values)
+    setSelectedSeats(prev => prev.map(el => {
+      Object.entries(values).forEach(([key, value]) => value ?
+        el.setAttribute(`data-${key}`, value) :
+        el.removeAttribute(`data-${key}`)
+      )
+      return el
+    }))
+    updateFromSvg()
+  }
+
+  const updateFromSvg = (cb) => {
+    const node = svgRef.current.cloneNode(true)
+    node.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
+    setScheme(node.innerHTML)
     cb && cb(null)
-  }, [svgRef.current])
+  }
 
   return (
     <div>
@@ -140,26 +166,35 @@ export default function SvgSchemeEditor({ value, onChange }) {
             categories={categories}
             src={scheme}
             ref={svgRef}
-            tooltip={data => <SvgSchemeSeatPreview className={s.preview} categories={categories} price='16$' {...data} />}
-            onSeatClick={editSeat}
+            onSeatClick={toggleSelect}
+            onSeatDoubleClick={toggleSelect}
+            tooltip={data => (
+              <SvgSchemeSeatPreview
+                className={s.preview}
+                categories={categories} 
+                price='16$'
+                {...data}
+                footer={<div className={s.previewFooter}>
+                  <div><b>Click</b> to edit seat</div>
+                  {selectedSeats.length > 0 && <div><b>{isMac ? '⌘' : 'Ctrl'} + click</b> to add to edit list</div>}
+                  <div><b>Double click</b> to edit all seats with the same category</div>
+                </div>}
+              />
+            )}
           />
         </div>
         <div className={s.params}>
-          {!!scheme && !!editingSeat && <>
+          {!!scheme && selectedSeats.length > 0 && <>
             <SvgSchemeEditSeat
-              key={editingSeat && `${editingSeat.getAttribute('data-row')}-${editingSeat.getAttribute('data-seat')}`}
+              key={getSelectionKey(selectedSeats)}
               categories={categories}
-              values={getSeatData(editingSeat)}
+              seats={selectedSeats}
               fields={customProps}
-              onOk={seat => {
-                handleChangeSeat(seat)
-                updateFromSvg(() => setEditingSeat(null))
-              }}
-              onChange={handleChangeSeat}
-              onCancel={() => setEditingSeat(null)}
+              onOk={() => updateFromSvg(() => setSelectedSeats([]))}
+              onChange={changeSelected}
             />
           </>}
-          {!!scheme && !editingSeat && <>
+          {!!scheme && !selectedSeats.length && <>
             <Card
               title={<Title level={4} style={{ margin: 0 }}>Categories</Title>}
             >

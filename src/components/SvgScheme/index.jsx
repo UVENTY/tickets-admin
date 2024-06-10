@@ -1,22 +1,30 @@
-import { forwardRef, useCallback, useMemo, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import s from './svg-scheme.module.scss'
 import SvgSchemeTooltop from './tooltip'
+import { useClickPrevention } from '../../utils/hooks'
 
 const SvgScheme = forwardRef(({
   categories = [],
   seatSelector = '.svg-seat',
   src,
+  defaultSrc,
   tooltip,
   onSeatClick,
+  onSeatDoubleClick,
   onSeatOver,
   onSeatOut,
 }, ref) => {
-  const [ tooltipSeat, setTooltipSeat ] = useState()
-  const handleClick = useCallback(e => {
+  const initial = useRef(src)
+
+  useEffect(() => {
+    if (!initial.current) initial.current = src
+  }, [src, initial.current])
+  
+  const handleMouseEvent = useCallback((e, cb) => {
     const { target: el } = e
-    if (!el.matches(seatSelector)) return;
-    onSeatClick && onSeatClick(e)
-  }, [])
+    if (!el.matches(seatSelector)) return
+    cb && cb(e)
+  })
 
   const handleMouseOver = useCallback(e => {
     const { target: el } = e
@@ -32,6 +40,13 @@ const SvgScheme = forwardRef(({
     onSeatOut && onSeatOut(e)
   }, [])
 
+  const [ tooltipSeat, setTooltipSeat ] = useState()
+  const [ handleClick, handleDblClick ] = useClickPrevention({
+    onClick: e => handleMouseEvent(e, onSeatClick),
+    onDoubleClick: e => handleMouseEvent(e, onSeatDoubleClick),
+    delay: 200
+  })
+
   const styles = useMemo(() => {
     return categories.reduce((acc, cat) => {
       acc += `
@@ -44,6 +59,7 @@ const SvgScheme = forwardRef(({
     }, `
       .svg-seat:not([data-disabled]) { cursor: pointer; }
       .svg-seat[data-disabled] { fill: #666 !important; }
+      .svg-seat.active { stroke: #ffffff !important; stroke-width: 2px; }
     `)
   }, [categories])
 
@@ -56,10 +72,11 @@ const SvgScheme = forwardRef(({
       <div
         ref={ref}
         className={s.svgContainer}
-        dangerouslySetInnerHTML={{ __html: src }}
+        dangerouslySetInnerHTML={{ __html: initial.current || '' }}
         onClick={handleClick}
-        onMouseOver={handleMouseOver}
-        onMouseOut={handleMouseOut}
+        onDoubleClick={handleDblClick}
+        onMouseOver={e => handleMouseEvent(e, handleMouseOver)}
+        onMouseOut={e => handleMouseEvent(e, handleMouseOut)}
       />
     </div>
   )
