@@ -1,6 +1,6 @@
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Button, Card, Upload, Input, Typography, ColorPicker, Flex } from 'antd'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Button, Card, Upload, Input, Typography, ColorPicker, Flex, Select, Form, Space } from 'antd'
 import { DeleteOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import { clearFillAndStringify, getCategories, transformScheme } from './utils'
 import { EMPTY_ARRAY } from '../../consts'
@@ -10,6 +10,7 @@ import axios from 'axios'
 import SvgSchemeSeatPreview from '../SvgScheme/preview'
 import SvgSchemeEditSeat from './edit-seat'
 import { isMacintosh, setCurrentColor, toText } from '../../utils/utils'
+import FieldForm from './field-form'
 
 const { Title } = Typography
 
@@ -28,6 +29,7 @@ const defaultCustomProps = [
     label: 'Place Icon',
     type: 'file',
     accept: '.svg',
+    originalColors: false,
     groupEditable: true
   }, {
     value: 'text',
@@ -58,6 +60,7 @@ export default function SvgSchemeEditor({ value, onChange }) {
   const [ customProps, setCustomProps ] = useState(value.customProps || defaultCustomProps)
   const [ scheme, setScheme ] = useState(value.scheme || '')
   const [ selectedSeats, setSelectedSeats ] = useState([])
+  const [ editProp, setEditProp ] = useState('categories')
   const svgRef = useRef()
 
   useEffect(() => {
@@ -112,7 +115,6 @@ export default function SvgSchemeEditor({ value, onChange }) {
   }
 
   const changeSelected = (values) => {
-    console.log(values)
     setSelectedSeats(prev => prev.map(el => {
       Object.entries(values).forEach(([key, value]) => value ?
         el.setAttribute(`data-${key}`, value) :
@@ -130,6 +132,16 @@ export default function SvgSchemeEditor({ value, onChange }) {
     cb && cb(null)
   }
 
+  const propOptions = useMemo(() => ([
+    { value: 'categories', label: 'Categories' },
+    ...customProps
+  ]), [customProps])
+
+  const activeProp = editProp === 'new' ?
+    { isNewField: true } :
+    customProps.find(({ value }) => value == editProp)
+  
+  console.log(customProps, propOptions) 
   return (
     <div>
       <Flex gap={24}>
@@ -195,50 +207,96 @@ export default function SvgSchemeEditor({ value, onChange }) {
             />
           </>}
           {!!scheme && !selectedSeats.length && <>
-            <Card
-              title={<Title level={4} style={{ margin: 0 }}>Categories</Title>}
-            >
-              <Flex gap={16} wrap>
-                {categories.map((item, i) => (
-                  <Flex gap={8} key={item.value} align='center' className={s.catItem}>
-                    {!item.icon ?
-                      <Upload
-                        accept='.svg'
-                        itemRender={() => null}
-                        customRequest={e => toText(e.file).then(setCurrentColor).then(icon => handleChangeCategory(i, 'icon', icon))}
-                      >
-                        <Button className={s.addIcon} type='dashed' shape='circle'><UploadOutlined /><div>Icon</div></Button>
-                      </Upload> :
-                      <Flex
-                        className={s.catIcon}
-                        align='center'
-                        justify='center'
-                        title='Clear Icon'
-                        style={{ color: item.color }}
-                        onClick={() => handleChangeCategory(i, 'icon', null)}
-                        dangerouslySetInnerHTML={{ __html: item.icon }}
+            <Form.Item label={<b>Seat options</b>}>
+              <Space.Compact style={{ display: 'flex' }}>
+                <Select
+                  size='large'
+                  value={editProp}
+                  onChange={setEditProp}
+                  options={propOptions.filter(({ value }) => !['row', 'seat'].includes(value)).map(({ label, value }) => ({ label, value }))}
+                  disabled={editProp === 'new'}
+                />
+                <Button
+                  size='large'
+                  type='primary'
+                  style={{ background: '#fff' }}
+                  onClick={() => {
+                    setEditProp('new')
+                  }}
+                  disabled={editProp === 'new'}
+                  ghost
+                >
+                  <PlusOutlined /> Add option
+                </Button>
+              </Space.Compact>
+            </Form.Item>
+            {editProp === 'categories' ?
+              <Card>
+                <Title level={5} className={s.title}>Options</Title>
+                <Flex gap={16} wrap>
+                  {categories.map((item, i) => (
+                    <Flex gap={8} key={item.value} className={s.catItem} align='center'>
+                      {!item.icon ?
+                        <Upload
+                          accept='.svg'
+                          itemRender={() => null}
+                          customRequest={e => toText(e.file).then(setCurrentColor).then(icon => handleChangeCategory(i, 'icon', icon))}
+                        >
+                          <Button className={s.addIcon} type='dashed' shape='circle'><UploadOutlined /><div>Icon</div></Button>
+                        </Upload> :
+                        <Flex
+                          className={s.catIcon}
+                          align='center'
+                          justify='center'
+                          title='Clear Icon'
+                          style={{ color: item.color }}
+                          onClick={() => handleChangeCategory(i, 'icon', null)}
+                          dangerouslySetInnerHTML={{ __html: item.icon }}
+                        />
+                      }
+                      <Input
+                        placeholder='Label'
+                        defaultValue={item.label}
+                        className={s.catName}
+                        onBlur={e => handleChangeCategory(i, 'label', e.target.value)}
                       />
-                    }
-                    <Input
-                      placeholder='Label'
-                      defaultValue={item.label}
-                      className={s.catName}
-                      onBlur={e => handleChangeCategory(i, 'label', e.target.value)}
-                    />
-                    <ColorPicker
-                      defaultValue={item.color}
-                      onChangeComplete={(color) => handleChangeCategory(i, 'color', `#${color.toHex()}`)}
-                      className={s.catColor}
-                      showText
-                    />
-                    <Button className={s.deleteCat} icon={<DeleteOutlined />} onClick={() => deleteCategory(item.value)} danger />
-                  </Flex>
-                ))}
-              </Flex>
-              <Button type='dashed' className={s.addCat} onClick={() => setCategories([...categories, { value: `cat${categories.length + 1}`, label: '', icon: null, color: '#000' }])} block>
-                <PlusOutlined /> Add category
-              </Button>
-            </Card>
+                      <ColorPicker
+                        defaultValue={item.color}
+                        onChangeComplete={(color) => handleChangeCategory(i, 'color', `#${color.toHex()}`)}
+                        className={s.catColor}
+                        showText
+                      />
+                      <Button className={s.deleteCat} icon={<DeleteOutlined />} onClick={() => deleteCategory(item.value)} danger />
+                    </Flex>
+                  ))}
+                </Flex>
+                <Button type='dashed' className={s.addCat} onClick={() => setCategories([...categories, { value: `cat${categories.length + 1}`, label: '', icon: null, color: '#000' }])} block>
+                  <PlusOutlined /> Add category
+                </Button>
+              </Card> :
+              <FieldForm
+                key={activeProp.value}
+                {...activeProp}
+                onCreate={values => {
+                  setCustomProps(prev => ([ ...prev, values ]))
+                  setEditProp(values.value)
+                }}
+                onCancel={() => setEditProp('categories')}
+                onChange={(name, value) => editProp !== 'new' && setCustomProps(prev => {
+                  const index = prev.findIndex(({ value }) => value === activeProp.value)
+                  if (index > -1) {
+                    const newProps = [ ...prev ]
+                    newProps[index] = { ...activeProp, [name]: value }
+                    return newProps
+                  }
+                  return prev
+                })}
+                onDelete={value => {
+                  setEditProp('categories')
+                  setCustomProps(prev => prev.filter(item => item.value !== value))
+                }}
+              />
+            }
           </>}
         </div>
       </Flex>

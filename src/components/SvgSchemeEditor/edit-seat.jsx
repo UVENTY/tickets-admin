@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import { Button, Card, Checkbox, Flex, Input, Select, Typography, Upload } from 'antd'
+import { Button, Card, Checkbox, ColorPicker, Flex, Input, InputNumber, Select, Typography, Upload } from 'antd'
 import cn from 'classnames'
 import InputSvg from '../InputSvg'
 import s from './svg-scheme-editor.module.scss'
@@ -41,12 +41,15 @@ export default function SvgSchemeEditSeat({
     }, {}),
     val => val.length <= 1 ? (val[0] || null) : val
   ), [seats, fieldsToShow])
-  const { category, row, seat } = values
 
+  const { category, row, seat } = values
   return (
     <Card
       className={s.edit}
-      title={<Title level={4} style={{ margin: 0 }}>{row && seat ? <>Row <b>{row}</b>, seat <b>{seat}</b></> : `Category ${category?.label}`}</Title>}
+      title={<Title level={4} style={{ margin: 0 }}>
+        {seats.length === 1 && (row && seat ? <>Row <b>{row}</b>, seat <b>{seat}</b></> : `Category ${category?.label}`)}
+        {seats.length > 1 && `Edit ${seats.length} seats`}
+      </Title>}
     >
       <label className={s.label}>Category</label>
       <Select
@@ -83,18 +86,8 @@ export default function SvgSchemeEditSeat({
           <label className={s.label}>Seat</label>
           <Input defaultValue={seat} disabled />
         </div>}
-        <div>
-          <label className={s.label}>Icon</label>
-          <InputSvg
-            defaultValue={isArray(values.icon)(null)}
-            placeholder={isArray(values.icon)('Multiple icons', values.icon)}
-            svgClassName={`svg-scheme-icon-cat-${changedValues.category || category}`}
-            onChange={icon => handleChange('icon', icon)}
-            beforeChange={icon => setCurrentColor(icon)}
-          />
-        </div>
       </Flex>
-      {fields.filter(f => !['seat', 'icon', 'row'].includes(f.value)).map(field => {
+      {fieldsToShow.filter(f => !['seat', 'row'].includes(f.value)).map(field => {
         const isCheckbox = field.type === 'checkbox'
         const rest = {
           onChange: (val) => handleChange(field.value, isCheckbox ? val.target?.checked : (val.target?.value || val)),
@@ -112,9 +105,18 @@ export default function SvgSchemeEditSeat({
             {!isCheckbox && <label className={s.label}>{field.label}</label>}
             {!field.type && <Input {...rest} />}
             {field.type === 'select' && <Select {...rest} options={field.options || []} />}
+            {field.type === 'number' && <InputNumber {...rest} min={field.min} max={field.max} />}
+            {field.type === 'color' && <ColorPicker {...rest} showText />}
             {isCheckbox && <Checkbox className={s.checkbox} {...rest}>{field.label}</Checkbox>}
             {field.type === 'file' && (
-              field.accept === '.svg' ? <InputSvg {...rest} /> : <Upload accept={field.accept} itemRender={() => null} />
+      /*         field.accept === '.svg' ? */
+              <div className={`svg-scheme-icon-cat-${category}`}>
+                <InputSvg
+                  {...rest}
+                  beforeChange={icon => field.originalColor ? icon : setCurrentColor(icon)}
+                />
+              </div>/*  :
+              <Upload accept={field.accept} itemRender={() => null} /> */
             )}
           </Fragment>
         )

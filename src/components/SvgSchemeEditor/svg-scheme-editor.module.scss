@@ -107,3 +107,10 @@
     height: auto;
   }
 }
+.title {
+  margin: 0 0 10px;
+}
+.placeholderLikeValue::placeholder {
+  color: rgba(0, 0, 0, 0.88) !important;
+  opacity: 1 !important;
+}
