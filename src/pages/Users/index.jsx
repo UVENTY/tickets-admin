@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from 'react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Table, Tag } from 'antd'
 import { CheckOutlined } from '@ant-design/icons'
 import axios from '../../utils/axios'
@@ -43,11 +43,14 @@ const columns = [
 export default function PageUsers() {
   const navigate = useNavigate()
 
-  const { isLoading, data } = useQuery('users', async () => {
-    const response = await axios.postWithAuth('/query/select', {
-      sql: `SELECT id_user,id_role,phone,email,name,family,middle,id_verification_status FROM users WHERE active=1 AND deleted!=1`
-    })
-    return response.data?.data || []
+  const { isLoading, data } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const response = await axios.postWithAuth('/query/select', {
+        sql: `SELECT id_user,id_role,phone,email,name,family,middle,id_verification_status FROM users WHERE active=1 AND deleted!=1`
+      })
+      return response.data?.data || []
+    }
   })
 
   return (

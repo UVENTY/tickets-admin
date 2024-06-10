@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from 'react-query'
+import { useQuery } from '@tanstack/react-query'
 import {
   Col,
   Row,
@@ -338,11 +338,14 @@ function TicketsList({ matchId, onRowClick = () => {} }) {
     dispatch(fetchTicketsFiles(tripsId))
   }, [tripsId])
 
-  const { isLoading: isLoadingUsers, data: usersMap } = useQuery('users', async () => {
-    const response = await axios.postWithAuth('/query/select', {
-      sql: `SELECT id_user,id_role,phone,email,name,family,middle,id_verification_status FROM users WHERE active=1 AND deleted!=1`
-    })
-    return (response.data?.data || []).reduce((acc, item) => ({ ...acc, [item.id_user]: item }), {})
+  const { isLoading: isLoadingUsers, data: usersMap } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const response = await axios.postWithAuth('/query/select', {
+        sql: `SELECT id_user,id_role,phone,email,name,family,middle,id_verification_status FROM users WHERE active=1 AND deleted!=1`
+      })
+      return (response.data?.data || []).reduce((acc, item) => ({ ...acc, [item.id_user]: item }), {})
+    }
   })
 
   const getFile = useCallback(async (tripId, seatId) => {

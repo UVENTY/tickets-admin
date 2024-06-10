@@ -9,6 +9,7 @@ import { fetchData, getSchedule } from '../../redux/data'
 import { getIsAdmin } from '../../redux/user'
 import { getColumnSearch } from '../../utils/components'
 import { getOptions } from '../../utils/utils'
+import { useTickets } from '../../api/tickets'
 
 function MatchList({ schedule }) {
   const navigate = useNavigate()
@@ -81,6 +82,8 @@ export default function PageTickets() {
   const schedule = useSelector(getSchedule)
   const dataLoaded = useSelector(state => state.data.isLoaded)
   const isAdmin = useSelector(getIsAdmin)
+  const t = useTickets({ limit: 10, skip: 10 })
+  console.log(t.data, t.error)
   
   const isAddPage = params.matchId === 'add'
   const isMatchPage = !!params.matchId
