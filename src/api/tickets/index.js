@@ -6,20 +6,9 @@
  */
 
 import { useQuery } from '@tanstack/react-query'
-import { axios } from '../axios'
 import { filter, group, order, pipe, renameKeys } from '../utils'
 import { selectFlatArray } from './selector'
-import { sortBy } from 'lodash'
-
-async function fetchTickets(options) {
-  const params = renameKeys({
-    event_id: 'filter',
-    skip: 'lo',
-    limit: 'lc',
-  }, options)
-  const response = await axios.post('/trip/get', { params })
-  return response.data?.data
-}
+import { fetchTickets } from './request'
 
 /**
  * @param { TicketOptions } options 
@@ -28,7 +17,7 @@ async function fetchTickets(options) {
 export const useTickets = (options = {}, fn = {}, queryOptions = {}) => useQuery({
   ...queryOptions,
   queryKey: ['tickets', options],
-  queryFn: () => fetchTickets(options),
+  queryFn: () => fetchTickets(renameKeys({ event_id: 'filter', skip: 'lo', limit: 'lc' }, options)),
   select: data => pipe(
     selectFlatArray,
     filter(fn.filter),
