@@ -31,8 +31,16 @@ export const toText = file => new Promise((resolve, reject) => {
   reader.readAsText(file)
 })
 
+export const localeCompare = (str1, str2) => (str1 || '').localeCompare(str2 || '')
+
 export const getOptions = (arr, path) =>
   orderBy(uniq(map(arr, path))).filter(item => item)
+
+export const toOptions = (arr, keys, sorter = (a, b) => localeCompare(a.label, b.label)) => {
+  const { label = 'en', value = 'id' } = keys || {}
+  return Object.values(arr).map(item => ({ value: item[value], label: item[label] })).sort(sorter)
+}
+  
 
 export const getValidSvg = src => {
   const parser = new DOMParser()
@@ -77,7 +85,7 @@ export const translit = word => {
   
 	let answer = ''
 	for (let i = 0; i < word.length; ++i ) {
-		if (converter[word[i]] == undefined){
+		if (converter[word[i]] === undefined){
 			answer += word[i]
 		} else {
 			answer += converter[word[i]]
@@ -86,6 +94,6 @@ export const translit = word => {
  
 	answer = answer.replace(/[^-0-9a-z]/g, '-')
 	answer = answer.replace(/[-]+/g, '-')
-	answer = answer.replace(/^\-|-$/g, ''); 
+	answer = answer.replace(/^-|-$/g, ''); 
 	return answer
 }

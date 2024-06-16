@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { LoadingOutlined } from '@ant-design/icons'
 import { Row } from 'antd'
-import { Route, Routes, useNavigate, useLocation } from 'react-router-dom'
+import { Route, Routes, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import PageContent from './pages/Content'
 import PageLogin from './pages/Login'
@@ -23,6 +23,8 @@ import Layout from './components/Layout'
 import { authorizeByTokens } from './redux/user'
 import { fetchConfig } from './redux/config'
 import './App.css'
+import PageEvent from './pages/event'
+import EventForm from './pages/event/form'
 
 
 function App() {
@@ -60,6 +62,11 @@ function App() {
     <div className="App">
       <Routes>
         <Route path="/" element={<Layout />}>
+          <Route index element={<Navigate to='/events' replace />} />
+          <Route path="/dashboard" element={<PageTeams />} />
+          <Route path="/events" element={<PageEvent />} />
+          <Route path="/event/:id" element={<EventForm />} />
+
           <Route path="/translations" element={<PageTranslations />} />
           <Route path="/content/:page" element={<PageContent />} />
           <Route path="/templates/:page" element={<PageTemplates />} />

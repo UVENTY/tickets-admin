@@ -41,7 +41,7 @@ export const selectFlatArray = data =>
             row,
             seat,
             price: Number(price),
-            currency
+            currency,
           }))
         })
       })

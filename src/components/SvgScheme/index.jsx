@@ -7,7 +7,6 @@ const SvgScheme = forwardRef(({
   categories = [],
   seatSelector = '.svg-seat',
   src,
-  defaultSrc,
   tooltip,
   onSeatClick,
   onSeatDoubleClick,
@@ -18,7 +17,11 @@ const SvgScheme = forwardRef(({
 
   useEffect(() => {
     if (!initial.current) initial.current = src
-  }, [src, initial.current])
+    else if (!src) {
+      ref.current.innerHTML = null
+      initial.current = null
+    }
+  }, [src])
   
   const handleMouseEvent = useCallback((e, cb) => {
     const { target: el } = e

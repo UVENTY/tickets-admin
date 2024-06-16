@@ -9,21 +9,33 @@ import store from './redux'
 import App from './App'
 import reportWebVitals from './reportWebVitals'
 import './index.css'
+import { ConfigProvider, theme } from 'antd'
 
 dayjs.extend(utc)
 
 const queryClient = new QueryClient()
-
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
   <React.StrictMode>
-    <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </QueryClientProvider>
-    </Provider>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: "#0476D0",
+          colorInfo: "#0476D0",
+          colorSuccess: "#007600",
+          colorError: "#FF4500",
+          colorWarning: "#F5F749",
+        },
+      }}
+    >
+      <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </QueryClientProvider>
+      </Provider>
+    </ConfigProvider>
   </React.StrictMode>
 )
 

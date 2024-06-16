@@ -25,7 +25,7 @@ export const renameKeys = (keysMap, obj, skipOtherKeys) =>
     {}
   )
 
-export const pipe = (...fns) => x => fns.reduce((v, f) => typeof f === 'function' ? f(v) : v, x)
+export const pipe = (...fns) => x => fns.filter(f => typeof f === 'function').reduce((v, f) => typeof f === 'function' ? f(v) : v, x)
 
 export const order = sorter => data => sorter ? data.sort((a, b) => {
   const type = typeof sorter

@@ -175,10 +175,9 @@ function TicketFormRow({
           name={[name, 'row']}
           rules={[{ required: true, message: 'Please input row' }]}
         >
-          <InputNumber
+          <Input
             style={{ width: '100%' }}
             size='large'
-            min={1}
             disabled={isSold}
           />
         </Form.Item>
@@ -554,7 +553,7 @@ export default function TicketsForm({
             </Form.Item>
           </Col>
         </Row>
-        {stadiumLoaded && !isAdmin &&
+        {stadiumLoaded &&
           <>
             <Row style={{ margin: '20px 0 0 20px' }}>
               <Col>

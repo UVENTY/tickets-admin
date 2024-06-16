@@ -1,4 +1,5 @@
 import { createSelector } from 'reselect'
+import { getOptions, toOptions } from '../../utils/utils'
 
 export const getDefaultCurrency = createSelector(
   state => state.config.data?.currency,
@@ -27,9 +28,19 @@ export const getCities = createSelector(
   cities => cities
 )
 
+export const getCitiesOptions = createSelector(
+  state => state.config.data?.cities,
+  cities => toOptions(cities)
+)
+
 export const getCountries = createSelector(
   state => state.config.data?.countries,
   countries => countries
+)
+
+export const getCountriesOptions = createSelector(
+  state => state.config.data?.countries,
+  countries => toOptions(countries)
 )
 
 const emptyLang = {}

@@ -15,6 +15,7 @@ export default function SvgSchemeEditSeat({
   categories = [],
   fields = [],
   seats = [],
+  renderPrice,
   onOk,
   onChange
 }) {
@@ -27,6 +28,8 @@ export default function SvgSchemeEditSeat({
   })
 
   const fieldsToShow = useMemo(() => fields.filter(f => seats.length > 1 ? f.groupEditable : true), [seats, fields])
+
+  const seatsData = useMemo(() => seats.map(seat => Object.assign({}, seat.dataset)), [seats])
 
   const values = useMemo(() => mapValues(
     seats.reduce((acc, el) => {
@@ -86,11 +89,15 @@ export default function SvgSchemeEditSeat({
           <label className={s.label}>Seat</label>
           <Input defaultValue={seat} disabled />
         </div>}
+        <div>
+          <label className={s.label}>Price</label>
+          {renderPrice(seatsData)}
+        </div>
       </Flex>
       {fieldsToShow.filter(f => !['seat', 'row'].includes(f.value)).map(field => {
         const isCheckbox = field.type === 'checkbox'
         const rest = {
-          onChange: (val) => handleChange(field.value, isCheckbox ? val.target?.checked : (val.target?.value || val)),
+          onChange: (val) => val && handleChange(field.value, isCheckbox ? val.target?.checked : (val.target?.value || val)),
         }
         const isArrayField = isArray(values[field.value])
         if (isCheckbox) {

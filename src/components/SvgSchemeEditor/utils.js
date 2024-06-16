@@ -32,7 +32,6 @@ export const clearFillAndStringify = doc => {
   Array.from(doc.querySelectorAll('.svg-seat')).forEach(el => {
     el.removeAttribute('fill')
   })
-  console.log(doc);
   const s = new XMLSerializer()
   return s.serializeToString(doc)
 }

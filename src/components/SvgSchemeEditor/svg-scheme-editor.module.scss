@@ -1,3 +1,7 @@
+.root {
+  position: relative;
+}
+
 .addIcon,
 .catIcon {
   width: 32px;
@@ -44,21 +48,22 @@
   }
 }
 
-.form {
-  margin-top: 20px;
-}
-
 .scheme {
+  position: relative;
   flex: 1 1 auto;
   margin-right: 20px;
 
   svg {
-    border-radius: 8px;
+    border-radius: 10px;
   }
 }
 
 .params {
   flex: 0 0 420px;
+
+  :global(.ant-btn-circle) {
+    min-width: 0 !important;
+  }
 }
 
 .deleteCatOuter {
