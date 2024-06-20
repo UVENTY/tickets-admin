@@ -5,6 +5,8 @@ import { useParams } from 'react-router-dom'
 import { forEach } from 'lodash'
 import Wysiwyg from '../../components/Wysiwyg'
 import { getLang, getLangValue, updateLang } from '../../redux/config'
+import Sidebar from '../../components/Layout/sidebar'
+import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
 
 export default function PageContent() {
   const [ form ] = Form.useForm()
@@ -41,27 +43,17 @@ export default function PageContent() {
     dispatch(updateLang(obj))
   }, [contentKey, titleKey])
 
-  return (
+  return (<>
+    <Sidebar buttons sticky>
+      <Button icon={<SaveOutlined />} type='primary' onClick={() => form.submit()} loading={isUpdating} block>Save</Button>
+    </Sidebar>
     <Form
+      style={{ flex: '1 1 0'}}
       layout='vertical'
       initialValues={{ title, content }}
       onFinish={handleSubmit}
       form={form}
     >
-      <Row
-        style={{
-          borderBottom: '1px solid #ccc',
-          padding: '10px'
-        }}
-      >
-        <Button
-          type='primary'
-          htmlType='submit'
-          disabled={isUpdating}
-        >
-          Save
-        </Button>
-      </Row>
       <Row style={{ margin: '20px 0' }}>
         <Col span={22} offset={1}>
           <Select
@@ -100,5 +92,6 @@ export default function PageContent() {
         </Row>
       ))}
     </Form>
-  )
+    <Sidebar />
+ </> )
 }

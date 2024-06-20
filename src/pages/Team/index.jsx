@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Col, Row, Form, Button, Select, Upload } from 'antd'
-import { CaretLeftFilled } from '@ant-design/icons'
+import { ArrowLeftOutlined, CaretLeftFilled, SaveOutlined } from '@ant-design/icons'
 import InputImage from '../../components/InputImage'
 import MultilangInput from '../../components/MultilangInput'
 import { fetchData, getTeam, postData } from '../../redux/data'
 import { getCities, getCountries } from '../../redux/config'
+import Sidebar from '../../components/Layout/sidebar'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
@@ -35,7 +36,7 @@ export default function PageTeam() {
   const countriesOptions = useMemo(() => getOptions(countries), [countries])
   const citiesOptions = useMemo(() => getOptions(cities), [cities])
   const stadiumsOptions = useMemo(() => getOptions(stadiums), [stadiums])
-
+  const [ form ] = Form.useForm()
   useEffect(() => {
     if (!isLoaded && !isLoading) {
       dispatch(fetchData())
@@ -61,9 +62,15 @@ export default function PageTeam() {
   }
 
 
-  return (
+  return (<>
+    <Sidebar buttons sticky>
+      <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/teams')} block>Teams</Button>
+      <Button icon={<SaveOutlined />} type='primary' onClick={() => form.submit()} loading={isSubmitting} block>Save</Button>
+    </Sidebar>
     <Form
+      style={{ flex: '1 1 0'}}
       layout='vertical'
+      form={form}
       onFinish={values => {
         const { name: { en, ru, ar, fr, es }, country, city, stadium, logo } = values
         const team = { en, ru, ar, fr, es, country, city, stadium }
@@ -73,27 +80,6 @@ export default function PageTeam() {
       }}
       initialValues={initialValues}
     >
-      <Row
-        style={{
-          borderBottom: '1px solid #ccc',
-          padding: '10px'
-        }}
-      >
-        <Button
-          icon={<CaretLeftFilled />}
-          style={{ marginRight: '10px' }}
-          onClick={() => navigate('/teams')}
-        >
-          Back
-        </Button>
-        <Button
-          type='primary'
-          htmlType='submit'
-          loading={isSubmitting}
-        >
-          {isNew ? 'Create' : 'Save'}
-        </Button>
-      </Row>
       <Row>
         <Col span={3}>
           <Form.Item
@@ -189,5 +175,6 @@ export default function PageTeam() {
         </Col>
       </Row>
     </Form>
-  )
+    <Sidebar />
+  </>)
 }

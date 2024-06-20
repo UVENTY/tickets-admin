@@ -2,9 +2,10 @@ import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Button, Row, Table } from 'antd'
-import { PlusCircleFilled } from '@ant-design/icons'
+import { PlusCircleFilled, PlusOutlined } from '@ant-design/icons'
 import { getColumnSearch } from '../../utils/components'
 import { fetchData, getTournamentsList } from '../../redux/data'
+import Sidebar from '../../components/Layout/sidebar'
 
 const columns = [
   {
@@ -28,21 +29,11 @@ export default function PageTournaments() {
 
   return (
     <>
-      <Row
-        style={{
-          borderBottom: '1px solid #ccc',
-          padding: '10px'
-        }}
-      >
-        <Button
-          icon={<PlusCircleFilled />}
-          type='primary'
-          onClick={() => navigate('/tournaments/create')}
-        >
-          Create tournament
-        </Button>
-      </Row>
+      <Sidebar buttons sticky>
+        <Button icon={<PlusOutlined />} type='primary' onClick={() => navigate('/tournaments/create')} block>Create</Button>
+      </Sidebar>
       <Table
+        style={{ flex: '1 1 0'}}
         columns={columns}
         dataSource={tournaments}
         loading={isLoading}
@@ -51,6 +42,7 @@ export default function PageTournaments() {
             onClick: () => navigate(`/tournaments/${record.id}`)
         })}
       />
+      <Sidebar />
     </>
   )
 }

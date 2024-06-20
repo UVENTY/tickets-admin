@@ -2,9 +2,10 @@ import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Col, Row, Form, Button } from 'antd'
-import { CaretLeftFilled } from '@ant-design/icons'
+import { ArrowLeftOutlined, CaretLeftFilled, SaveOutlined } from '@ant-design/icons'
 import MultilangInput from '../../components/MultilangInput'
 import { fetchData, getTournament, postData } from '../../redux/data'
+import Sidebar from '../../components/Layout/sidebar'
 
 export default function PageTournament() {
   const dispatch = useDispatch()
@@ -15,7 +16,7 @@ export default function PageTournament() {
   const isLoaded = useSelector(state => state.data.isLoaded)
   const isLoading = useSelector(state => state.data.isLoading)
   const tournament = useSelector(state => getTournament(state, id))
-
+  const [ form ] = Form.useForm()
   useEffect(() => {
     if (!isLoaded && !isLoading) {
       dispatch(fetchData())
@@ -43,8 +44,14 @@ export default function PageTournament() {
     }
   }
 
-  return (
+  return (<>
+    <Sidebar buttons sticky>
+      <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/tournaments')} block>Back</Button>
+      <Button icon={<SaveOutlined />} type='primary' onClick={() => form.submit()} loading={isSubmitting} block>Save</Button>
+    </Sidebar>
     <Form
+      style={{ flex: '1 1 0'}}
+      form={form}
       layout='vertical'
       onFinish={values => {
         const { name, about } = values
@@ -61,27 +68,6 @@ export default function PageTournament() {
       }}
       initialValues={initialValues}
     >
-      <Row
-        style={{
-          borderBottom: '1px solid #ccc',
-          padding: '10px'
-        }}
-      >
-        <Button
-          icon={<CaretLeftFilled />}
-          style={{ marginRight: '10px' }}
-          onClick={() => navigate('/tournaments')}
-        >
-          Back
-        </Button>
-        <Button
-          type='primary'
-          htmlType='submit'
-          loading={isSubmitting}
-        >
-          {isNew ? 'Create' : 'Save'}
-        </Button>
-      </Row>
       <Row style={{ margin: '20px 20px 0 20px' }}>
         <Col
           span={12}
@@ -111,5 +97,6 @@ export default function PageTournament() {
         </Col>
       </Row>
     </Form>
-  )
+    <Sidebar />
+    </> )
 }

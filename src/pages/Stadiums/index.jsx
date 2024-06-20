@@ -2,11 +2,12 @@ import { useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Button, Row, Table } from 'antd'
-import { PlusCircleFilled } from '@ant-design/icons'
+import { PlusCircleFilled, PlusOutlined } from '@ant-design/icons'
 import { getColumnSearch } from '../../utils/components'
 import { getOptions } from '../../utils/utils'
 import { fetchData, getStadiumsList } from '../../redux/data'
 import { getCountries } from '../../redux/config'
+import Sidebar from '../../components/Layout/sidebar'
 
 export default function PageStadiums() {
   const dispatch = useDispatch()
@@ -48,21 +49,11 @@ export default function PageStadiums() {
 
   return (
     <>
-      <Row
-        style={{
-          borderBottom: '1px solid #ccc',
-          padding: '10px'
-        }}
-      >
-        <Button
-          icon={<PlusCircleFilled />}
-          type='primary'
-          onClick={() => navigate('/stadiums/create')}
-        >
-          Create stadium
-        </Button>
-      </Row>
+      <Sidebar buttons sticky>
+        <Button icon={<PlusOutlined />} type='primary' onClick={() => navigate('/stadiums/create')} block>Create</Button>
+      </Sidebar>
       <Table
+        style={{ flex: '1 1 0'}}
         columns={columns}
         dataSource={stadiums}
         loading={isLoading}
@@ -71,6 +62,7 @@ export default function PageStadiums() {
             onClick: () => navigate(`/stadiums/${record.id}`)
         })}
       />
+      <Sidebar />
     </>
   )
 }

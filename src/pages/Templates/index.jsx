@@ -5,6 +5,8 @@ import { useParams } from 'react-router-dom'
 import { forEach } from 'lodash'
 import HTMLPreview from '../../components/HTMLPreview'
 import { getLang, getLangValue, updateLang } from '../../redux/config'
+import Sidebar from '../../components/Layout/sidebar'
+import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
 
 const TEMPLATE_BY_PAGE = {
   signup: 'email_register',
@@ -47,28 +49,18 @@ export default function PageTemplates() {
     dispatch(updateLang(obj))
   }, [contentKey])
 
-  return (
+  return (<>
+    <Sidebar buttons sticky>
+      <Button icon={<SaveOutlined />} type='primary' onClick={() => form.submit()} block>Save</Button>
+    </Sidebar>
     <Form
+      style={{ flex: '1 1 0'}}
       layout='vertical'
       initialValues={{ subject, content }}
       onFinish={handleSubmit}
       form={form}
     >
-      <Row
-        style={{
-          borderBottom: '1px solid #ccc',
-          padding: '10px'
-        }}
-      >
-        <Button
-          type='primary'
-          htmlType='submit'
-          disabled={isUpdating}
-        >
-          Save
-        </Button>
-      </Row>
-      <Row style={{ margin: '20px 0' }}>
+      <Row>
         <Col span={22} offset={1}>
           <Select
             style={{ width: '100%' }}
@@ -133,5 +125,6 @@ export default function PageTemplates() {
         </Row>
       ))}
     </Form>
-  )
+    <Sidebar />
+    </> )
 }

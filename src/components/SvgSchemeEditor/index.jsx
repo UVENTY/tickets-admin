@@ -52,7 +52,7 @@ const isMac = isMacintosh()
 
 const labelClass = 'ant-col ant-form-item-label'
 
-export default function SvgSchemeEditor({ value, onChange, renderPriceInput = () => null, price = [] }) {
+export default function SvgSchemeEditor({ value, onChange, renderPriceInput = () => null, price = {} }) {
   const [ categories, setCategories ] = useState(value?.categories || EMPTY_ARRAY)
   const [ customProps, setCustomProps ] = useState(value?.customProps || defaultCustomProps)
   const [ scheme, setScheme ] = useState(value?.scheme || '')
@@ -185,7 +185,7 @@ export default function SvgSchemeEditor({ value, onChange, renderPriceInput = ()
               <SvgSchemeSeatPreview
                 className={s.preview}
                 categories={categories} 
-                price='' // {(price.find(({ row, seat }) => `${row}` === `${data.row}` && `${seat}` === `${data.seat}`) || {}).price}
+                price={price[`${data.row};${data.seat}`]} // {(price.find(({ row, seat }) => `${row}` === `${data.row}` && `${seat}` === `${data.seat}`) || {}).price}
                 {...data}
                 footer={<div className={s.previewFooter}>
                   <div><b>Click</b> to edit seat</div>

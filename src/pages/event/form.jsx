@@ -51,10 +51,17 @@ export default function EventForm() {
   })
   const tickets = useTickets({ event_id: id }, { order: 'section' }, {
     enabled: !isNew,
-    select: data => data.reduce((acc, item) => ({ ...acc, [`${item.row};${item.seat}`]: item.price }), {})
+    select: data => data.reduce((acc, { section, row, seat, price, currency }) => ({
+      ...acc, [`${row};${seat}`]: { price, currency, section }
+    }), {})
   })
 
-  const prices = useMemo(() => ({ ...tickets.data, ...changedPrice }), [tickets.data, changedPrice])
+  const prices = useMemo(() => Object.entries(changedPrice)
+    .reduce((acc, [key, value]) => ({
+      ...acc,
+      [key]: { ...acc[key], ...acc[value]}
+    }),
+  tickets.data), [tickets.data, changedPrice])
 
   const renderPriceInput = useCallback((data = []) => {
     const set = new Set(data.map(({ row, seat }) => prices[`${row};${seat}`] || ''))
@@ -103,20 +110,26 @@ export default function EventForm() {
             })
             stadium.scheme_blob = await (scheme_file ? toBase64(scheme_file) : Promise.resolve())
             event.datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
+
+            console.log(prices)
+
             if (!isNew) {
               await updateData({ stadiums: [stadium], schedule: [{ id, ...event }] })
               messageApi.success(`Event successfully ${isNew ? 'created' : 'updated'}`)
               return
             }
-            let created = await updateData({ stadiums: [stadium] })
-            const stadiumId = get(created, 'data.created_id.stadiums.0')
+            const createdStadium = await updateData({ stadiums: [stadium] })
+            const stadiumId = get(createdStadium, 'data.created_id.stadiums.0')
             if (!stadiumId) {
               messageApi.error('Error on creating stadium')
               return
             }
-            created = await updateData({ schedule: [{ ...event, stadium: stadiumId }] })
-            const eventId = get(created, 'data.created_id.schedule.0')
-            navigate(`/event/${eventId}`, { replace: true })
+            /* const [ createdEvent, createdTickets ] = await Promise.all([
+              updateData({ schedule: [{ ...event, stadium: stadiumId }] }),
+              editTickets({ stadium_id: stadiumId, event_id: id, price: prices })
+            ]) */
+            // const eventId = get(created, 'data.created_id.schedule.0')
+            // navigate(`/event/${eventId}`, { replace: true })
           } catch (e) {
             messageApi.error(e.message)
           } finally {
@@ -162,7 +175,7 @@ export default function EventForm() {
                       filterOption={(input, option) =>
                         (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                       }
-                      options={data.options?.teams || []}
+                      options={data?.options?.teams || []}
                       style={{ width: '100%' }}
                       showSearch
                     />
@@ -202,7 +215,7 @@ export default function EventForm() {
                       filterOption={(input, option) =>
                         (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                       }
-                      options={data.options?.t || []}
+                      options={data?.options?.t || []}
                       style={{ width: '100%' }}
                       showSearch
                     />
@@ -255,7 +268,7 @@ export default function EventForm() {
                 </Row>
                 <Form.Item className='scheme_blob' name={['stadium', 'scheme_blob']}>
                   <SvgSchemeEditor
-                    price={tickets.data}
+                    price={prices}
                     renderPriceInput={renderPriceInput}
                   />
                 </Form.Item>

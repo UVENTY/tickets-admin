@@ -74,6 +74,7 @@ export default function PageEvent() {
           onClick: () => user.u_role === '4' && navigate(`/event/${record.id}`)
         })}
       />
+      <Sidebar />
     </>
   )
 }

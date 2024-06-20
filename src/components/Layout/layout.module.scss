@@ -69,7 +69,14 @@
   z-index: 101;
   width: 100%;
   display: flex;
+  justify-content: space-between;
   align-items: stretch;
+  padding: 0;
   box-shadow: var(--ant-box-shadow-secondary);
   background-color: #fff;
+}
+:global(.ant-menu-overflow + .ant-menu-overflow) {
+  flex: 1 1 0;
+  justify-content: flex-end;
+  padding-right: 100px;
 }

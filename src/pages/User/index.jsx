@@ -26,7 +26,7 @@ export default function PageUser() {
   }
 
   return (
-    <Row style={{ margin: '20px' }}>
+    <Row style={{ margin: '0 100px', flex: '1 1 0' }}>
       <Col span={4}>
         <Avatar
           style={{ width: '128px', height: '128px', fontSize: '64px', lineHeight: '120px' }}

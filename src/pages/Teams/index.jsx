@@ -2,11 +2,12 @@ import { useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Button, Row, Table } from 'antd'
-import { PlusCircleFilled } from '@ant-design/icons'
+import { PlusCircleFilled, PlusOutlined } from '@ant-design/icons'
 import { fetchData, getTeams } from '../../redux/data'
 import { getCities, getCountries } from '../../redux/config'
 import { getColumnSearch } from '../../utils/components'
 import { getOptions } from '../../utils/utils'
+import Sidebar from '../../components/Layout/sidebar'
 
 export default function PageTeams() {
   const dispatch = useDispatch()
@@ -58,21 +59,11 @@ export default function PageTeams() {
 
   return (
     <>
-      <Row
-        style={{
-          borderBottom: '1px solid #ccc',
-          padding: '10px'
-        }}
-      >
-        <Button
-          icon={<PlusCircleFilled />}
-          type='primary'
-          onClick={() => navigate('/teams/create')}
-        >
-          Create team
-        </Button>
-      </Row>
+      <Sidebar buttons sticky>
+        <Button icon={<PlusOutlined />} type='primary' onClick={() => navigate('/teams/create')} block>Create</Button>
+      </Sidebar>
       <Table
+        style={{ flex: '1 1 0'}}
         columns={columns}
         dataSource={teams}
         loading={isLoading}
@@ -81,6 +72,7 @@ export default function PageTeams() {
             onClick: () => navigate(`/teams/${record.id}`)
         })}
       />
+      <Sidebar />
     </>
   )
 }

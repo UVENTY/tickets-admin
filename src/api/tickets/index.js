@@ -65,10 +65,9 @@ const useCreate = (options) => {
     t_options: {},
     price: [],
   })
-  params.t_start_address = `sc_id\u0000${event_id}`
   const data = JSON.stringify({
     ...params,
-    t_start_address: `sc_id\u0000${event_id}`
+    st_id: event_id
   })
   return useMutation({
     mutationFn: () => fetchTickets({ data })

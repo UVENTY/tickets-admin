@@ -1,5 +1,5 @@
 import cn from 'classnames'
-import s from './styles.module.scss'
+import s from './layout.module.scss'
 
 export default function Sidebar({ buttons, sticky, children }) {
   return (

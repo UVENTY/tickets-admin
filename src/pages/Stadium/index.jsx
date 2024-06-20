@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Col, Row, Form, Button, Select, Input, Upload, Flex } from 'antd'
-import { CaretLeftFilled, UploadOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, CaretLeftFilled, SaveOutlined, UploadOutlined } from '@ant-design/icons'
 import buildConfig from '../../buildConfig'
 import JSONEditor from '../../components/JSONEditor'
 import InputImage from '../../components/InputImage'
@@ -12,6 +12,7 @@ import { fetchData, getStadium, getStadiumSchemeStatus, fetchStadiumScheme, post
 import { getCities, getCountries } from '../../redux/config'
 import SvgSchemeEditor from '../../components/SvgSchemeEditor'
 import { toBase64 } from '../../utils/utils'
+import Sidebar from '../../components/Layout/sidebar'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
@@ -77,8 +78,13 @@ export default function PageStadium() {
     scheme: stadium.scheme
   }
 
-  return (
+  return (<>
+    <Sidebar buttons sticky>
+      <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/stadiums')} block>Stadiums</Button>
+      <Button icon={<SaveOutlined />} type='primary' onClick={() => form.submit()} loading={isSubmitting} block>Save</Button>
+    </Sidebar>
     <Form
+      style={{ flex: '1 1 0'}}
       layout='vertical'
       form={form}
       onFinish={async (values) => {
@@ -107,37 +113,6 @@ export default function PageStadium() {
       }}
       initialValues={initialValues}
     >
-      <Flex gap={20} justify='flex-end' style={{ padding: '10px 30px', position: 'sticky', zIndex: 50, background: '#fff', top: 0 }}>
-        <Button
-          type='primary'
-          htmlType='submit'
-          loading={isSubmitting}
-          size='large'
-        >
-          {isNew ? 'Create' : 'Save'}
-        </Button>
-      </Flex>
-      {/* <Row
-        style={{
-          borderBottom: '1px solid #ccc',
-          padding: '10px'
-        }}
-      >
-        <Button
-          icon={<CaretLeftFilled />}
-          style={{ marginRight: '10px' }}
-          onClick={() => navigate('/stadiums')}
-        >
-          Back
-        </Button>
-        <Button
-          type='primary'
-          htmlType='submit'
-          loading={isSubmitting}
-        >
-          {isNew ? 'Create' : 'Save'}
-        </Button>
-      </Row>
       <Row style={{ margin: '20px 20px 0 20px' }}>
         <Col
           span={12}
@@ -207,7 +182,7 @@ export default function PageStadium() {
             />
           </Form.Item>
         </Col>
-      </Row> */}
+      </Row>
       <Row style={{ margin: '20px 20px 0 20px' }}>
         <Col
           span={24}
@@ -242,5 +217,6 @@ export default function PageStadium() {
         </Col>
       </Row>}
     </Form>
-  )
+    <Sidebar />
+  </>)
 }

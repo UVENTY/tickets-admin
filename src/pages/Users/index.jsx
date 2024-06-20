@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Table, Tag } from 'antd'
-import { CheckOutlined } from '@ant-design/icons'
+import { Button, Table, Tag } from 'antd'
+import { CheckOutlined, PlusOutlined } from '@ant-design/icons'
 import axios from '../../utils/axios'
 import { getColumnSearch } from '../../utils/components'
 import { USER_ROLES, USER_ROLES_COLOR } from '../../consts'
+import Sidebar from '../../components/Layout/sidebar'
 
 const columns = [
   {
@@ -53,8 +54,10 @@ export default function PageUsers() {
     }
   })
 
-  return (
+  return (<>
+    <Sidebar />
     <Table
+      style={{ flex: '1 1 0'}}
       columns={columns}
       dataSource={data}
       loading={isLoading}
@@ -63,5 +66,7 @@ export default function PageUsers() {
         onClick: () => navigate(`/users/${record.id_user}`)
       })}
     />
+    <Sidebar />
+  </>
   )
 }
