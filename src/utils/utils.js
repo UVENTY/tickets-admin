@@ -42,10 +42,17 @@ export const toOptions = (arr, keys, sorter = (a, b) => localeCompare(a.label, b
 }
   
 
-export const getValidSvg = src => {
+export const getValidSvg = (src, type = 'image/svg+xml') => {
   const parser = new DOMParser()
   const doc = parser.parseFromString(src, 'image/svg+xml')
   return doc.querySelector('parsererror') === null ? doc : null
+}
+
+export const renderHiddenHTML = code => {
+  const el = document.createElement('div')
+  el.innerHTML = code
+  document.body.appendChild(el)
+  return el.firstChild
 }
 
 // Замена всех цветов в fill и stroke на currentColor для дальнейшего изменения цвета через CSS

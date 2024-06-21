@@ -9,7 +9,7 @@ import s from './svg-scheme-editor.module.scss'
 import axios from 'axios'
 import SvgSchemeSeatPreview from '../SvgScheme/preview'
 import SvgSchemeEditSeat from './edit-seat'
-import { isMacintosh, setCurrentColor, toText } from '../../utils/utils'
+import { getValidSvg, isMacintosh, renderHiddenHTML, setCurrentColor, toText } from '../../utils/utils'
 import FieldForm from './field-form'
 
 const { Title } = Typography
@@ -24,6 +24,12 @@ const defaultCustomProps = [
   }, {
     value: 'seat',
     label: 'Seat'
+  }, {
+    value: 'price',
+    label: 'Price',
+    type: 'number',
+    groupEditable: true,
+    system: true
   }, {
     value: 'icon',
     label: 'Place Icon',
@@ -52,7 +58,7 @@ const isMac = isMacintosh()
 
 const labelClass = 'ant-col ant-form-item-label'
 
-export default function SvgSchemeEditor({ value, onChange, renderPriceInput = () => null, price = {} }) {
+export default function SvgSchemeEditor({ value, onChange, tickets, onTicketsChange = EMPTY_FUNC}) {
   const [ categories, setCategories ] = useState(value?.categories || EMPTY_ARRAY)
   const [ customProps, setCustomProps ] = useState(value?.customProps || defaultCustomProps)
   const [ scheme, setScheme ] = useState(value?.scheme || '')
@@ -63,9 +69,23 @@ export default function SvgSchemeEditor({ value, onChange, renderPriceInput = ()
   useEffect(() => {
     if (typeof value === 'string' && value?.startsWith('http')) {
       axios.get(value).then(({ data }) => {
-        setScheme(data.scheme)
+        const svg = renderHiddenHTML(data.scheme)
+        if (!svg) return
+        tickets.forEach(({ row, seat, price }) => svg.querySelector(`.${seatClassName}[data-row="${row}"][data-seat="${seat}"]`).setAttribute('data-price', price))
+        const s = new XMLSerializer();
+        setScheme(s.serializeToString(svg))
         setCategories(data.categories)
+        if (!data.customProps.find(prop => prop.value == 'price')) {
+          data.customProps = [ ...data.customProps.slice(0, 2), {
+            value: 'price',
+            label: 'Price',
+            type: 'number',
+            groupEditable: true,
+            system: true
+          }, ...data.customProps.slice(2)]
+        }
         setCustomProps(data.customProps)
+        document.body.removeChild(svg.parentNode)
       })
     }
   }, [])
@@ -112,18 +132,27 @@ export default function SvgSchemeEditor({ value, onChange, renderPriceInput = ()
   }
 
   const changeSelected = (values) => {
+    const changesMap = {}
     setSelectedSeats(prev => prev.map(el => {
+      if (values.price) {
+        const [cat, seat, row] = ['category', 'seat', 'row'].map(key => el.getAttribute(`data-${key}`))
+        const key = [cat, row, seat].filter(Boolean).join(';')
+        changesMap[key] = values.price
+      }
       Object.entries(values).forEach(([key, value]) => value ?
         el.setAttribute(`data-${key}`, value) :
         el.removeAttribute(`data-${key}`)
       )
       return el
     }))
+    console.log(changesMap);
+    if (Object.keys(changesMap).length) onTicketsChange(changesMap)
     updateFromSvg()
   }
 
   const updateFromSvg = (cb) => {
     const node = svgRef.current.cloneNode(true)
+    node.querySelectorAll(`.${seatClassName}[data-price]`).forEach(el => el.removeAttribute('data-price'))
     node.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
     setScheme(node.innerHTML)
     cb && cb(null)
@@ -179,13 +208,13 @@ export default function SvgSchemeEditor({ value, onChange, renderPriceInput = ()
             categories={categories}
             src={scheme}
             ref={svgRef}
+            tickets={tickets}
             onSeatClick={toggleSelect}
             onSeatDoubleClick={toggleSelect}
             tooltip={data => (
               <SvgSchemeSeatPreview
                 className={s.preview}
                 categories={categories} 
-                price={price[`${data.row};${data.seat}`]} // {(price.find(({ row, seat }) => `${row}` === `${data.row}` && `${seat}` === `${data.seat}`) || {}).price}
                 {...data}
                 footer={<div className={s.previewFooter}>
                   <div><b>Click</b> to edit seat</div>
@@ -205,7 +234,6 @@ export default function SvgSchemeEditor({ value, onChange, renderPriceInput = ()
             categories={categories}
             seats={selectedSeats}
             fields={customProps}
-            renderPrice={renderPriceInput}
             onOk={() => updateFromSvg(() => setSelectedSeats([]))}
             onChange={changeSelected}
           />

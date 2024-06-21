@@ -1,17 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { get } from 'lodash'
+import { useMutation } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
-import { Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Card, Divider, Steps, Input, Collapse, InputNumber } from 'antd'
+import { Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
-import { useTickets } from '../../api/tickets'
+import TicketsApi from '../../api/tickets'
 import { useData, useUpdateData } from '../../api/data'
 import SvgSchemeEditor from '../../components/SvgSchemeEditor'
 import Sidebar from '../../components/Layout/sidebar'
-import { getCities, getCitiesOptions, getCountriesOptions } from '../../redux/config'
-import './event.scss'
+import { getCitiesOptions, getCountriesOptions } from '../../redux/config'
 import { toBase64 } from '../../utils/utils'
-import { get } from 'lodash'
+import './event.scss'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
@@ -30,6 +31,7 @@ export default function EventForm() {
 
   const isNew = id === 'create'
   const updateData = useUpdateData()
+  const mutateTickets = useMutation({ mutationFn: TicketsApi.updateTickets })
   const { data, isLoading } = useData(null, {
     enabled: !isNew,
     select: data => {
@@ -49,38 +51,11 @@ export default function EventForm() {
       }
     }
   })
-  const tickets = useTickets({ event_id: id }, { order: 'section' }, {
-    enabled: !isNew,
-    select: data => data.reduce((acc, { section, row, seat, price, currency }) => ({
-      ...acc, [`${row};${seat}`]: { price, currency, section }
-    }), {})
+  const tickets = TicketsApi.useTickets({ event_id: id }, { order: 'section' }, {
+    enabled: !isNew
   })
-
-  const prices = useMemo(() => Object.entries(changedPrice)
-    .reduce((acc, [key, value]) => ({
-      ...acc,
-      [key]: { ...acc[key], ...acc[value]}
-    }),
-  tickets.data), [tickets.data, changedPrice])
-
-  const renderPriceInput = useCallback((data = []) => {
-    const set = new Set(data.map(({ row, seat }) => prices[`${row};${seat}`] || ''))
-    const value = set.size === 1 ? set.values().next().value : ''
-    const placeholder = set.size === 1 ? '' : 'Multiple values'
-    return <InputNumber
-      value={value}
-      placeholder={placeholder}
-      onChange={value => setChangedPrice(prev => ({
-        ...prev,
-        ...data.reduce((acc, { row, seat }) => ({
-          ...acc,
-          [`${row};${seat}`]: value
-        }), {})
-      }))}
-    />
-  }, [prices])
-
-  if (!isNew && isLoading) return null
+  
+  if (!isNew && (isLoading || tickets.isLoading)) return null
 
   const panelStyle = {
     background: '#fff',
@@ -90,7 +65,6 @@ export default function EventForm() {
   }
 
   const initialValues = isNew ? {} : data.event
-
   return (
     <>
       <Sidebar buttons sticky>
@@ -111,10 +85,15 @@ export default function EventForm() {
             stadium.scheme_blob = await (scheme_file ? toBase64(scheme_file) : Promise.resolve())
             event.datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
 
-            console.log(prices)
-
             if (!isNew) {
-              await updateData({ stadiums: [stadium], schedule: [{ id, ...event }] })
+              try {
+                mutateTickets.mutate({ tickets: changedPrice, event_id: id, hall_id: stadium.id })
+                await Promise.all([
+                  updateData({ stadiums: [stadium], schedule: [{ id, ...event }] }),
+                ])
+              } catch (e) {
+                console.log(e);
+              }
               messageApi.success(`Event successfully ${isNew ? 'created' : 'updated'}`)
               return
             }
@@ -268,8 +247,8 @@ export default function EventForm() {
                 </Row>
                 <Form.Item className='scheme_blob' name={['stadium', 'scheme_blob']}>
                   <SvgSchemeEditor
-                    price={prices}
-                    renderPriceInput={renderPriceInput}
+                    tickets={tickets.data}
+                    onTicketsChange={val => setChangedPrice(prev => ({ ...prev, ...val }))}
                   />
                 </Form.Item>
               </>

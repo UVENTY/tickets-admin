@@ -15,7 +15,6 @@ export default function SvgSchemeEditSeat({
   categories = [],
   fields = [],
   seats = [],
-  renderPrice,
   onOk,
   onChange
 }) {
@@ -45,7 +44,8 @@ export default function SvgSchemeEditSeat({
     val => val.length <= 1 ? (val[0] || null) : val
   ), [seats, fieldsToShow])
 
-  const { category, row, seat } = values
+  const { disabled, category, row, seat, price } = values
+  const isDisabled = disabled === 'true'
   return (
     <Card
       className={s.edit}
@@ -91,10 +91,10 @@ export default function SvgSchemeEditSeat({
         </div>}
         <div>
           <label className={s.label}>Price</label>
-          {renderPrice(seatsData)}
+          <InputNumber defaultValue={price} onChange={value => handleChange('price', value)} disabled={isDisabled} />
         </div>
       </Flex>
-      {fieldsToShow.filter(f => !['seat', 'row'].includes(f.value)).map(field => {
+      {fieldsToShow.filter(f => !['seat', 'row', 'price'].includes(f.value)).map(field => {
         const isCheckbox = field.type === 'checkbox'
         const rest = {
           onChange: (val) => val && handleChange(field.value, isCheckbox ? val.target?.checked : (val.target?.value || val)),

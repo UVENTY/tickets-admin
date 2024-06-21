@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button, Table } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import { fetchData } from '../../redux/data'
-import { useTickets } from '../../api/tickets'
+import TicketsApi from '../../api/tickets'
 import { useData } from '../../api/data'
 import dayjs from 'dayjs'
 import Sidebar from '../../components/Layout/sidebar'
@@ -26,7 +26,7 @@ export default function PageEvent() {
     })
   }})
   const ids = events.data && events.data.map(({ id }) => id).join(',')
-  const tickets = useTickets(ids, { group: 'event_id' }, { enabled: !!ids })
+  const tickets = TicketsApi.useTickets(ids, { group: 'event_id' }, { enabled: !!ids })
 
   useEffect(() => {
     dispatch(fetchData())

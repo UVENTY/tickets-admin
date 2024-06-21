@@ -23,6 +23,7 @@ export const selectFlatArray = data =>
       sc_id: 'event_id',
       stadium: 'hall_id',
       t_start_datetime: 'date_start',
+      t_id: 'fuckingTrip'
     }, group, true)
     const { seats_sold = {}, price: pricesList = [] } = group.t_options || {}
     entries(seats_sold).forEach(([section, rows]) => {
