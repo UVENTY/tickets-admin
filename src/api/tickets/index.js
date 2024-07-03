@@ -18,7 +18,7 @@ export const transformFetchQuery = query => renameKeys({ event_id: 'filter', ski
 
 export default (function() {
   const eventTrip = {}
-  const eventTickets = []
+  const eventTickets = {}
 
   /**
    * @param { object } options
@@ -40,7 +40,7 @@ export default (function() {
       selectFlatArray,
       tickets => {
         eventTrip[event_id] = tickets[0]?.fuckingTrip
-        eventTickets[event_id] = tickets.map(({ section, row, seat }) => !row || !seat ? section : [row, seat].join(';'))
+        eventTickets[event_id] = tickets.map(({ section, row, seat }) => [section, row, seat].join(';'))
         return tickets
       },
       filter(fn.filter),
@@ -62,7 +62,6 @@ export default (function() {
     const { event_id, hall_id, category, row, tickets } = options
     if (!event_id || !hall_id) throw new Error('Не переданы обязательные параметры')
     const tripId = eventTrip[event_id]
-    console.log(Object.entries(tickets))
     const { editList, ...params } = Object.entries(tickets).reduce((acc, [key, value]) => {
       const fullKey = [hall_id, category, row, key].filter(Boolean).join(';')
       const price = parseInt(value, 10)
@@ -72,10 +71,11 @@ export default (function() {
         priceIndex = acc.price.length - 1
       }
       acc.seats_sold[fullKey] = priceIndex
-      const parts = fullKey.split(';').slice(-2).join(';')
+      const parts = fullKey.split(';').slice(-3).join(';')
       acc.editList.push({
         seat: fullKey,
-        price,
+        price: price > 0 ? price : undefined,
+        del: price < 0,
         new: !eventTickets[event_id].includes(parts)
       })
       return acc

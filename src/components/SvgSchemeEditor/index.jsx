@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Card, Upload, Input, Typography, ColorPicker, Flex, Select, Form, Space } from 'antd'
 import { DeleteOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import { clearFillAndStringify, getCategories, transformScheme } from './utils'
-import { EMPTY_ARRAY, EMPTY_FUNC } from '../../consts'
+import { EMPTY_ARRAY, EMPTY_FUNC, NON_SEAT_ROW } from '../../consts'
 import SvgScheme from '../SvgScheme'
 import s from './svg-scheme-editor.module.scss'
 import axios from 'axios'
@@ -24,6 +24,14 @@ const defaultCustomProps = [
   }, {
     value: 'seat',
     label: 'Seat'
+  }, {
+    value: 'count',
+    label: 'Tickets leave',
+    type: 'number',
+  }, {
+    value: 'busyCount',
+    label: 'Booking / Sold',
+    type: 'number',
   }, {
     value: 'price',
     label: 'Price',
@@ -71,17 +79,38 @@ export default function SvgSchemeEditor({ value, onChange, tickets, onTicketsCha
       axios.get(value).then(({ data }) => {
         const svg = renderHiddenHTML(data.scheme)
         if (!svg) return
-        tickets.forEach(({ row, seat, price }) => svg.querySelector(`.${seatClassName}[data-row="${row}"][data-seat="${seat}"]`).setAttribute('data-price', price))
+        const nonSeatCount = {}
+        tickets.forEach(({ section, row, seat, price, is_sold, is_reserved }) => {
+          if (row === NON_SEAT_ROW) {
+            const key = is_sold || is_reserved ? 'busyCount' : 'count'
+            nonSeatCount[section] = (nonSeatCount[section] || {})
+            nonSeatCount[section][key] = (nonSeatCount[section][key] || 0) + 1
+            if (!nonSeatCount[section].price) nonSeatCount[section].price = price
+            return
+          }
+          svg.querySelector(`.${seatClassName}[data-row="${row}"][data-seat="${seat}"]`)?.setAttribute('data-price', price)
+        })
+        Object.entries(nonSeatCount).map(([ key, value ]) => {
+          const el = svg.querySelector(`.${seatClassName}[data-category="${key}"]`)
+          el?.setAttribute('data-price', value.price || 0)
+          el?.setAttribute('data-count', value.count || 0)
+          el?.setAttribute('data-busyCount', value.busyCount || 0)
+        })
         const s = new XMLSerializer();
         setScheme(s.serializeToString(svg))
         setCategories(data.categories)
-        if (!data.customProps.find(prop => prop.value == 'price')) {
+        
+        // Первые билеты создавались без цены, для таких вручную добавляем это поле
+        // Вообще, скорее всего, уже все билеты давно с ценой. Проверить и удалить блок
+        if (!data.customProps.find(prop => prop.value == 'count')) {
           data.customProps = [ ...data.customProps.slice(0, 2), {
-            value: 'price',
-            label: 'Price',
+            value: 'count',
+            label: 'Tickets leave',
             type: 'number',
-            groupEditable: true,
-            system: true
+          }, {
+            value: 'busyCount',
+            label: 'Booking / Sold',
+            type: 'number',
           }, ...data.customProps.slice(2)]
         }
         setCustomProps(data.customProps)
@@ -134,10 +163,15 @@ export default function SvgSchemeEditor({ value, onChange, tickets, onTicketsCha
   const changeSelected = (values) => {
     const changesMap = {}
     setSelectedSeats(prev => prev.map(el => {
-      if (values.price) {
+      // Вытаскиваем цену из свг для сохранения в бд. Атрибут с ценой перед сохранением удаляем
+      if (values.price || values.count) {
         const [cat, seat, row] = ['category', 'seat', 'row'].map(key => el.getAttribute(`data-${key}`))
-        const key = [cat, row, seat].filter(Boolean).join(';')
-        changesMap[key] = values.price
+        if (!seat && !row) {
+          changesMap[cat] = values
+        } else if (values.price) {
+          const key = [cat, row, seat].filter(Boolean).join(';')
+          changesMap[key] = values.price
+        }
       }
       Object.entries(values).forEach(([key, value]) => value ?
         el.setAttribute(`data-${key}`, value) :
@@ -145,7 +179,6 @@ export default function SvgSchemeEditor({ value, onChange, tickets, onTicketsCha
       )
       return el
     }))
-    console.log(changesMap);
     if (Object.keys(changesMap).length) onTicketsChange(changesMap)
     updateFromSvg()
   }
@@ -153,6 +186,7 @@ export default function SvgSchemeEditor({ value, onChange, tickets, onTicketsCha
   const updateFromSvg = (cb) => {
     const node = svgRef.current.cloneNode(true)
     node.querySelectorAll(`.${seatClassName}[data-price]`).forEach(el => el.removeAttribute('data-price'))
+    node.querySelectorAll(`.${seatClassName}[data-count]`).forEach(el => el.removeAttribute('data-count'))
     node.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
     setScheme(node.innerHTML)
     cb && cb(null)
@@ -245,7 +279,7 @@ export default function SvgSchemeEditor({ value, onChange, tickets, onTicketsCha
               size='large'
               value={editProp}
               onChange={setEditProp}
-              options={propOptions.filter(({ value }) => !['row', 'seat'].includes(value)).map(({ label, value }) => ({ label, value }))}
+              options={propOptions.filter(({ value }) => !['row', 'seat', 'count', 'count_sold'].includes(value)).map(({ label, value }) => ({ label, value }))}
               disabled={editProp === 'new'}
             />
             <Button

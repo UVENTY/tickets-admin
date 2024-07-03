@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
-import { Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse } from 'antd'
+import { Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse, InputNumber } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
 import TicketsApi from '../../api/tickets'
 import { useData, useUpdateData } from '../../api/data'
@@ -17,6 +17,41 @@ import './event.scss'
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
   .sort((item1, item2) => item1.label > item2.label ? 1 : -1)
+
+const expandNonSeats = (changed, tickets) => {
+  const { nonSeats, seats } = Object.entries(changed).reduce((acc, [key, value]) => {
+    if (!key.includes(';')) acc.nonSeats = [...acc.nonSeats, [key, value]]
+    else acc.seats[key] = value
+    return acc
+  }, { nonSeats: [], seats: {} })
+  return nonSeats.reduce((acc, [key, data]) => {
+    const { price, count } = data
+    if (!price && !count && count !== 0) return []
+    const freeTickets = tickets.filter(ticket => ticket.section === key && !ticket.is_sold && !ticket.is_reserved)
+    const lastSeat = Math.max(...tickets.map(ticket => ticket.seat))
+    if (price) {
+      acc = freeTickets.reduce((acc, ticket) => ({
+        ...acc,
+        [`${key};-1;${ticket.seat}`]: price,
+      }), acc)
+    }
+    if (count) {
+      const diff = count - freeTickets.length
+      if (diff < 0) {
+        acc = freeTickets.slice(0, diff * -1).reduce((acc, ticket) => ({
+          ...acc,
+          [`${key};-1;${ticket.seat}`]: -1,
+        }), acc)
+      } else if (diff > 0) {
+        acc = Array.from({ length: diff }, (_, i) => i + lastSeat + 1).reduce((acc, i) => ({
+          ...acc,
+          [`${key};-1;${i}`]: price || freeTickets[0].price,
+        }), acc)
+      }
+    }
+    return acc
+  }, seats)
+}
 
 export default function EventForm() {
   const [ messageApi, contextHolder ] = message.useMessage()
@@ -84,10 +119,10 @@ export default function EventForm() {
             })
             stadium.scheme_blob = await (scheme_file ? toBase64(scheme_file) : Promise.resolve())
             event.datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
-
             if (!isNew) {
               try {
-                mutateTickets.mutate({ tickets: changedPrice, event_id: id, hall_id: stadium.id })
+                const postTickets = expandNonSeats(changedPrice, tickets.data)
+                mutateTickets.mutate({ tickets: postTickets, event_id: id, hall_id: stadium.id })
                 await Promise.all([
                   updateData({ stadiums: [stadium], schedule: [{ id, ...event }] }),
                 ])
@@ -200,6 +235,14 @@ export default function EventForm() {
                     />
                   </Form.Item>
                 </Col>
+                <Col span={6} style={{ marginTop: 20 }}>
+                  <Form.Item
+                    label='Fee'
+                    name='fee'
+                  >
+                    <InputNumber style={{ width: '100%' }} addonAfter='%' />
+                  </Form.Item>
+                </Col>
               </Row>
             },
             {
@@ -259,5 +302,5 @@ export default function EventForm() {
       </Form>
       <Sidebar />
     </>
-  ) 
+  )
 }

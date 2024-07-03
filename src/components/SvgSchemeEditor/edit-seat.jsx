@@ -44,7 +44,7 @@ export default function SvgSchemeEditSeat({
     val => val.length <= 1 ? (val[0] || null) : val
   ), [seats, fieldsToShow])
 
-  const { disabled, category, row, seat, price } = values
+  const { disabled, category, row, seat, price, count, busyCount } = values
   const isDisabled = disabled === 'true'
   return (
     <Card
@@ -89,12 +89,22 @@ export default function SvgSchemeEditSeat({
           <label className={s.label}>Seat</label>
           <Input defaultValue={seat} disabled />
         </div>}
+        {!row && !seat && <>
+          <div>
+            <label className={s.label}>Booking / sold</label>
+            <InputNumber defaultValue={busyCount} style={{ width: '100%' }} disabled />
+          </div>
+          <div>
+            <label className={s.label}>Tickets leave</label>
+            <InputNumber defaultValue={count} style={{ width: '100%' }} onChange={value => handleChange('count', value)} />
+          </div>
+        </>}
         <div>
           <label className={s.label}>Price</label>
           <InputNumber defaultValue={price} onChange={value => handleChange('price', value)} disabled={isDisabled} />
         </div>
       </Flex>
-      {fieldsToShow.filter(f => !['seat', 'row', 'price'].includes(f.value)).map(field => {
+      {fieldsToShow.filter(f => !['seat', 'row', 'price', 'count', 'count_sold'].includes(f.value)).map(field => {
         const isCheckbox = field.type === 'checkbox'
         const rest = {
           onChange: (val) => val && handleChange(field.value, isCheckbox ? val.target?.checked : (val.target?.value || val)),

@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import cn from 'classnames'
+import QRCode from 'react-qr-code'
 import s from './svg-scheme.module.scss'
 
 export default function SvgSchemeTooltop({
   for: el,
   className,
   children,
-}) {
+}) {  
   const [ styles, setStyles ] = useState()
 
   useEffect(() => {
@@ -22,7 +23,6 @@ export default function SvgSchemeTooltop({
       setStyles({ left: left, top, opacity: 1 })
     }
   }, [el])
-
   return (
     <div className={cn(s.svgSchemeTooltip, className)} style={styles}>
       {children}

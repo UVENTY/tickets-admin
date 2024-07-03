@@ -13,6 +13,16 @@ const entries = Object.entries
  * @property {number} seat - Seat
  * @property {number} price - Price
  * @property {string} currency - Currency
+ * @property {boolean} disabled - Is ticket sold
+ * @property {boolean} is_sold - Is ticket sold
+ * @property {boolean} is_reserved - Is ticket reserved
+ * @property {object} sold_info - Sold info
+ * @property {string} sold_info.user_id
+ * @property {string} sold_info.buy_id
+ * @property {object} reserved_info - Reserved info
+ * @property {string} reserved_info.user_id
+ * @property {string} reserved_info.until_date - Reserved until date
+ *
  *
  * @param {*} data
  * @returns {Ticket[]} Array of tickets
@@ -33,6 +43,24 @@ export const selectFlatArray = data =>
           const [ price, currency ] = typeof priceString === 'string' ? priceString.split(' ') : []
           const range = seat.split(';').map(Number).filter(Boolean)
           if (range.length < 1) return
+          let status = {}
+          if (seatOptions.length > 1) {
+            const [ , user_id, buy_id, until_date ] = seatOptions
+            status = {
+              disabled: true,
+              is_sold: seatOptions.length === 3,
+              is_reserved: seatOptions.length === 4,
+              sold_info: until_date ? {} : {
+                user_id,
+                buy_id
+              },
+              reserved_info: !until_date ? {} : {
+                user_id,
+                buy_id,
+                until_date
+              }
+            }
+          }
           Array.from(
             { length: range.length === 2 ? range[1] - range[0] + 1 : 1 },
             (_, i) => i + range[0]
@@ -43,9 +71,10 @@ export const selectFlatArray = data =>
             seat,
             price: Number(price),
             currency,
+            ...status
           }))
         })
       })
     })
-    return tickets
+    return tickets.filter(seat => seat.row !== '0')
   }, [])

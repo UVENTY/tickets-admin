@@ -64,6 +64,10 @@
   :global(.ant-btn-circle) {
     min-width: 0 !important;
   }
+
+  :global(.ant-input-number) {
+    width: 100%;
+  }
 }
 
 .deleteCatOuter {
