@@ -11,7 +11,7 @@ import { useData, useUpdateData } from '../../api/data'
 import SvgSchemeEditor from '../../components/SvgSchemeEditor'
 import Sidebar from '../../components/Layout/sidebar'
 import { getCitiesOptions, getCountriesOptions } from '../../redux/config'
-import { toBase64 } from '../../utils/utils'
+import { qrBase64, toBase64 } from '../../utils/utils'
 import './event.scss'
 
 const getOptions = obj => Object.values(obj)
@@ -121,11 +121,29 @@ export default function EventForm() {
             event.datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
             if (!isNew) {
               try {
-                const postTickets = expandNonSeats(changedPrice, tickets.data)
-                mutateTickets.mutate({ tickets: postTickets, event_id: id, hall_id: stadium.id })
-                await Promise.all([
-                  updateData({ stadiums: [stadium], schedule: [{ id, ...event }] }),
-                ])
+                Promise.all(
+                  tickets.data.filter(ticket => !ticket.code_qr)
+                    .map(ticket =>
+                      qrBase64( )
+                        .then(qr => ({ ...ticket, code_qr: qr }))
+                        .catch(e => console.error(ticket.fullSeat, e.message))
+                    )
+                ).then(withQr => {
+                  const postTickets = expandNonSeats(changedPrice, tickets.data)
+                  const update = withQr.reduce((acc, item) => {
+                    const key = item.fullSeat.split(';').slice(1).join(';')
+                    console.log(key, acc[key])
+                    acc[key] = acc[key] || {}
+                    if (typeof acc[key] === 'number' && acc[key] > 0) acc[key] = { price: acc[key] }
+                    if (acc[key] !== -1) acc[key].code_qr = item.code_qr
+                    return acc
+                  }, postTickets)
+                  console.log(update);
+                  mutateTickets.mutate({ tickets: update, event_id: id, hall_id: stadium.id })
+                  return Promise.all([
+                    updateData({ stadiums: [stadium], schedule: [{ id, ...event }] }),
+                  ])
+                })
               } catch (e) {
                 console.log(e);
               }

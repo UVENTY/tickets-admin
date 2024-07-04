@@ -1,6 +1,5 @@
 import cn from 'classnames'
 import s from './svg-scheme.module.scss'
-import QRCode from 'react-qr-code'
 
 export default function SvgSchemeSeatPreview({
   className,
@@ -33,7 +32,6 @@ export default function SvgSchemeSeatPreview({
         <div className={s.seat}><span>Seat </span>{seat}</div>
       </div>}
       {!!footer && <div className={s.footer}>{footer}</div>}
-      {!!val && <div style={{ width: 64, margin: '0 auto' }}><QRCode value={val} size={64} /></div>}
     </div>
   )
 }

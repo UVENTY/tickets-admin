@@ -1,4 +1,5 @@
 import { map, uniq, orderBy } from 'lodash'
+import QRCode from 'qrcode'
 import { EMPTY_FUNC } from '../consts'
 
 export const capitalizeFirstLetter = str => {
@@ -104,3 +105,14 @@ export const translit = word => {
 	answer = answer.replace(/^-|-$/g, ''); 
 	return answer
 }
+
+export const qrBase64 = async (encode) =>
+  await new Promise((resolve, reject) => {
+    QRCode.toDataURL(encode, function (err, code) {
+      if (err) {
+        reject(reject)
+        return
+      }
+      resolve(code)
+    })
+  })

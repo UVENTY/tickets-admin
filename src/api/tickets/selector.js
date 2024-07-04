@@ -27,8 +27,15 @@ const entries = Object.entries
  * @param {*} data
  * @returns {Ticket[]} Array of tickets
  */
-export const selectFlatArray = data =>
-  Object.values(data.trip).reduce((tickets, group) => {
+export const selectFlatArray = ({ old: data, new: list }) => {
+  const newDataMap = (list?.ticket || []).reduce((acc, item) => {
+    const [ , section, row, seat ] = item.seat.split(';')
+    const { currency, code, code_qr_base64 } = item
+    const key = [section, row, seat].join(';')
+    acc[key] = { currency, code, code_qr_base64, fullSeat: item.seat }
+    return acc
+  }, {})
+  return Object.values(data.trip).reduce((tickets, group) => {
     const commonData = renameKeys({
       sc_id: 'event_id',
       stadium: 'hall_id',
@@ -71,10 +78,12 @@ export const selectFlatArray = data =>
             seat,
             price: Number(price),
             currency,
-            ...status
+            ...status,
+            ...newDataMap[[section, row, seat].join(';')]
           }))
         })
       })
     })
     return tickets.filter(seat => seat.row !== '0')
   }, [])
+}

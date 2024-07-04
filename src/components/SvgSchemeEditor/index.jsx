@@ -242,21 +242,29 @@ export default function SvgSchemeEditor({ value, onChange, tickets, onTicketsCha
             categories={categories}
             src={scheme}
             ref={svgRef}
-            tickets={tickets}
             onSeatClick={toggleSelect}
             onSeatDoubleClick={toggleSelect}
-            tooltip={data => (
-              <SvgSchemeSeatPreview
-                className={s.preview}
-                categories={categories} 
-                {...data}
-                footer={<div className={s.previewFooter}>
-                  <div><b>Click</b> to edit seat</div>
-                  {selectedSeats.length > 0 && <div><b>{isMac ? '⌘' : 'Ctrl'} + click</b> to add to edit list</div>}
-                  <div><b>Double click</b> to edit all seats with the same category</div>
-                </div>}
-              />
-            )}
+            tooltip={data => {
+              const ticket = tickets.find(t => t.section === data.category && t.row === data.row && `${t.seat}` === `${data.seat}`)
+              return (
+                <SvgSchemeSeatPreview
+                  className={s.preview}
+                  categories={categories}
+                  {...data}
+                  footer={<div className={s.previewFooter}>
+                    {!!ticket &&<div className={s.previewQr}>
+                      <b>QR-code</b><br />
+                      {ticket.code_qr_base64 ? <img src={ticket?.code_qr_base64} alt='QR-code' /> : 'would generated after next save'}
+                    </div>}
+                    <div className={s.previewActions}>
+                      <div><b>Click</b> to edit seat</div>
+                      {selectedSeats.length > 0 && <div><b>{isMac ? '⌘' : 'Ctrl'} + click</b> to add to edit list</div>}
+                      <div><b>Double click</b> to edit all seats with the same category</div>
+                    </div>
+                  </div>}
+                />
+              )
+            }}
           />
         </div>
       </div>

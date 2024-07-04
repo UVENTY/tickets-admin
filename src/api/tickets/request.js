@@ -1,8 +1,11 @@
 import { axios } from '../axios'
 
 export async function fetchTickets(params) {
-  const response = await axios.post('/trip/get', params)
-  return response.data?.data
+  const [response, response2] = await Promise.all([
+    axios.post('/trip/get', params),
+    axios.post('/schedule/ticket/select', { sc_id: params.filter, code_qr: true })
+  ])
+  return { old: response.data?.data, new: response2.data?.data }
 }
 
 export async function createTickets(params) {
@@ -13,5 +16,4 @@ export async function createTickets(params) {
 export async function editTickets(t_id, params) {
   const response = await axios.post(`/trip/get/${t_id}/ticket/edit`, params)
   return response.data
-
 }

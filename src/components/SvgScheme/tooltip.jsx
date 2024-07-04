@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import cn from 'classnames'
-import QRCode from 'react-qr-code'
 import s from './svg-scheme.module.scss'
 
 export default function SvgSchemeTooltop({

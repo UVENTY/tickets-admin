@@ -62,28 +62,38 @@ export default (function() {
     const { event_id, hall_id, category, row, tickets } = options
     if (!event_id || !hall_id) throw new Error('Не переданы обязательные параметры')
     const tripId = eventTrip[event_id]
-    const { editList, ...params } = Object.entries(tickets).reduce((acc, [key, value]) => {
+    const { editList, ...params } = Object.entries(tickets).reduce((acc, [key, data]) => {
       const fullKey = [hall_id, category, row, key].filter(Boolean).join(';')
-      const price = parseInt(value, 10)
-      let priceIndex = acc.price.indexOf(price)
-      if (priceIndex === -1) {
-        acc.price.push(price)
-        priceIndex = acc.price.length - 1
+      const value = typeof data === 'object' ? data.price : data
+      const price = value && parseInt(value, 10)
+      if (value) {
+        let priceIndex = acc.price.indexOf(price)
+        if (priceIndex === -1) {
+          acc.price.push(price)
+          priceIndex = acc.price.length - 1
+        }
+        acc.seats_sold[fullKey] = priceIndex
       }
-      acc.seats_sold[fullKey] = priceIndex
       const parts = fullKey.split(';').slice(-3).join(';')
-      acc.editList.push({
+      const itm = {
         seat: fullKey,
-        price: price > 0 ? price : undefined,
         del: price < 0,
         new: !eventTickets[event_id].includes(parts)
-      })
+      }
+      if (price) {
+        itm.price = price > 0 ? price : undefined
+      }
+      if (data.code_qr) {
+        itm.code_qr_base64 = data.code_qr
+      }
+      acc.editList.push(itm)
       return acc
     }, {
       seats_sold: {},
       price: [],
       editList: []
     })
+    console.log(editList);
     if (tripId) {
        const data = JSON.stringify(editList)
        return editTickets(tripId, { data })

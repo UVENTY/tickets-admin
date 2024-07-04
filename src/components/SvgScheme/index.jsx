@@ -14,7 +14,6 @@ const SvgScheme = forwardRef(({
   onSeatOut,
 }, ref) => {
   const initial = useRef(src)
-
   useEffect(() => {
     if (!initial.current) initial.current = src
     else if (!src) {
@@ -22,13 +21,12 @@ const SvgScheme = forwardRef(({
       initial.current = null
     }
   }, [src])
-  
   const handleMouseEvent = useCallback((e, cb) => {
     const { target: el } = e
     if (!el.matches(seatSelector)) return
     cb && cb(e)
   })
-
+  
   const handleMouseOver = useCallback(e => {
     const { target: el } = e
     if (!el.matches(seatSelector)) return;
