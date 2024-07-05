@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse, InputNumber } from 'antd'
-import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, SaveOutlined, DownloadOutlined } from '@ant-design/icons'
 import TicketsApi from '../../api/tickets'
 import { useData, useUpdateData } from '../../api/data'
 import SvgSchemeEditor from '../../components/SvgSchemeEditor'
@@ -51,6 +51,44 @@ const expandNonSeats = (changed, tickets) => {
     }
     return acc
   }, seats)
+}
+
+const exportTickets = ( tickets, eventId ) => {
+  const stringify = ( data ) => {
+    const re = /^\s|\s$|[",\n\r]/;
+    let ret = String( data || '' )
+    if (re.test( ret )) ret = `"${ret.replaceAll( '"', '""' )}"`;
+    return ret;
+  }
+  const headerRow = '\uFEFF' + [ 'Event', 'Category', 'Row', 'Seat', 'Price', 'Currency', 'Code', 'Status' ].join( ',' ) + '\r\n'
+  const rows = tickets.
+    sort( ( a, b ) =>
+      a.section < b.section ? -1 : a.section > b.section ? 1 : 
+      a.row < b.row ? -1 : a.row > b.row ? 1 : 
+      Number( a.seat ) < Number( b.seat ) ? -1 : Number( a.seat ) > Number( b.seat ) ? 1 : 0
+    ).
+    map( ticket => [
+      ticket.event_id,
+      ticket.section,
+      ticket.row == -1 || ticket.row == '-1' ? '' : ticket.row,
+      ticket.seat,
+      ticket.price,
+      ticket.currency,
+      ticket.code,
+      ticket.is_sold ? 'sold' : ticket.is_reserved ? 'ordered' : ticket.disabled ? 'block' : ''
+    ].
+    map( stringify ).
+    join( ',' ) +
+    '\r\n'
+  )
+  rows.unshift( headerRow)
+  const blob = new Blob( rows, { type : 'text/csv; charset=utf-8' } )
+  const url = URL.createObjectURL( blob )
+  const a = document.createElement( 'a' )
+  a.href = url
+  a.download = `tickets_${eventId}_${(new Date).toISOString().substring(0,10)}.csv`
+  a.click()
+  URL.revokeObjectURL( url )
 }
 
 export default function EventForm() {
@@ -314,6 +352,21 @@ export default function EventForm() {
                 </Form.Item>
               </>
             },
+            {
+              key: '3',
+              label: <b>Tickets</b>,
+              style: panelStyle,
+              children:
+                <Button
+                  size='large'
+                  type='default'
+                  htmlType='button'
+                  icon={<DownloadOutlined />}
+                  onClick={ () => exportTickets( tickets.data, id ) }
+                >
+                  Download CSV
+                </Button>
+            }
           ]}
         />
         {contextHolder}
