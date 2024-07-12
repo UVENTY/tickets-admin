@@ -104,7 +104,7 @@ export default function SvgSchemeEditSeat({
           <InputNumber defaultValue={price} onChange={value => handleChange('price', value)} disabled={isDisabled} />
         </div>
       </Flex>
-      {fieldsToShow.filter(f => !['seat', 'row', 'price', 'count', 'count_sold'].includes(f.value)).map(field => {
+      {fieldsToShow.filter(f => !['seat', 'row', 'price', 'count', 'busyCount'].includes(f.value)).map(field => {
         const isCheckbox = field.type === 'checkbox'
         const rest = {
           onChange: (val) => val && handleChange(field.value, isCheckbox ? val.target?.checked : (val.target?.value || val)),

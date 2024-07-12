@@ -56,6 +56,7 @@ const NAVBAR_RIGHT = [
       { label: <Link to='/templates/checking-ticket-available'>Tickets are in stock</Link>, key: 'checking-ticket-available' },
       { label: <Link to='/templates/feedback'>Feedback</Link>,key:  'feedback' },
       { label: <Link to='/templates/restore-password'>Restore password</Link>, key: 'restore-password' },
+      { label: <Link to='/templates/html_pdf_ticket_paid_body'>PDF Ticket Body</Link>, key: 'html_pdf_ticket_paid_body' },
     ],
   }, {
     label: 'Content',

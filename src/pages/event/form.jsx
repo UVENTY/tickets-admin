@@ -170,7 +170,6 @@ export default function EventForm() {
                   const postTickets = expandNonSeats(changedPrice, tickets.data)
                   const update = withQr.reduce((acc, item) => {
                     const key = item.fullSeat.split(';').slice(1).join(';')
-                    console.log(key, acc[key])
                     acc[key] = acc[key] || {}
                     if (typeof acc[key] === 'number' && acc[key] > 0) acc[key] = { price: acc[key] }
                     if (acc[key] !== -1) acc[key].code_qr = item.code_qr
