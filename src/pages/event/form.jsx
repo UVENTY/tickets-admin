@@ -106,7 +106,6 @@ export default function EventForm() {
   const updateData = useUpdateData()
   const mutateTickets = useMutation({ mutationFn: TicketsApi.updateTickets })
   const { data, isLoading } = useData(null, {
-    enabled: !isNew,
     select: data => {
       const { schedule, stadiums, teams, tournaments } = data
       const event = { ...schedule[id] }
@@ -150,12 +149,16 @@ export default function EventForm() {
         onFinish={async (values) => {
           setIsSending(true)
           try {
-            const { stadium: { scheme_blob, ...stadium }, date, time, ...event } = values
-            stadium.id = data.event?.stadium?.id || ''
-            const scheme_file = scheme_blob && new File([JSON.stringify(scheme_blob)], 'scheme.json', {
-              type: 'application/json',
-            })
-            stadium.scheme_blob = await (scheme_file ? toBase64(scheme_file) : Promise.resolve())
+            let { stadium: { scheme_blob, ...stadium }, date, time, ...event } = values
+            if (scheme_blob) {
+              stadium.id = data.event?.stadium?.id || ''
+              const scheme_file = scheme_blob && new File([JSON.stringify(scheme_blob)], 'scheme.json', {
+                type: 'application/json',
+              })
+              if (scheme_file) {
+                stadium.scheme_blob = await (scheme_file ? toBase64(scheme_file) : Promise.resolve())
+              }
+            }
             event.datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
             if (!isNew) {
               try {
@@ -169,17 +172,28 @@ export default function EventForm() {
                 ).then(withQr => {
                   const postTickets = expandNonSeats(changedPrice, tickets.data)
                   const update = withQr.reduce((acc, item) => {
+                    if (!item) return acc
                     const key = item.fullSeat.split(';').slice(1).join(';')
                     acc[key] = acc[key] || {}
                     if (typeof acc[key] === 'number' && acc[key] > 0) acc[key] = { price: acc[key] }
                     if (acc[key] !== -1) acc[key].code_qr = item.code_qr
                     return acc
                   }, postTickets)
-                  console.log(update);
-                  mutateTickets.mutate({ tickets: update, event_id: id, hall_id: stadium.id })
-                  return Promise.all([
-                    updateData({ stadiums: [stadium], schedule: [{ id, ...event }] }),
-                  ])
+                  const sendData = { event_id: id }
+                  if (stadium) {
+                    sendData.hall_id = stadium
+                    sendData.tickets = update
+                  }
+                  mutateTickets.mutateAsync(sendData).then(res => {
+                    console.log(res);
+                    const dataUpdate = { schedule: [{ id, ...event }] }
+                    if (stadium) {
+                      dataUpdate.stadiums = [stadium]
+                    }
+                    return Promise.all([
+                      updateData(dataUpdate),
+                    ])
+                  })
                 })
               } catch (e) {
                 console.log(e);
@@ -187,19 +201,24 @@ export default function EventForm() {
               messageApi.success(`Event successfully ${isNew ? 'created' : 'updated'}`)
               return
             }
-            const createdStadium = await updateData({ stadiums: [stadium] })
-            const stadiumId = get(createdStadium, 'data.created_id.stadiums.0')
-            if (!stadiumId) {
-              messageApi.error('Error on creating stadium')
-              return
+            const eventData = { ...event }
+            if (Object.values(stadium).filter(Boolean).length > 0) {
+              const createdStadium = await updateData({ stadiums: [stadium] })
+              const stadiumId = get(createdStadium, 'data.created_id.stadiums.0')
+              if (!stadiumId) {
+                messageApi.error('Error on creating stadium')
+                return
+              }
+              eventData.stadium = stadiumId
             }
-            /* const [ createdEvent, createdTickets ] = await Promise.all([
-              updateData({ schedule: [{ ...event, stadium: stadiumId }] }),
-              editTickets({ stadium_id: stadiumId, event_id: id, price: prices })
-            ]) */
-            // const eventId = get(created, 'data.created_id.schedule.0')
-            // navigate(`/event/${eventId}`, { replace: true })
+            const [ createdEvent, createdTickets ] = await Promise.all([
+              updateData({ schedule: [eventData] }),
+              Promise.resolve()//editTickets({ stadium_id: stadiumId, event_id: id, price: prices })
+            ])
+            const eventId = get(createdEvent, 'data.created_id.schedule.0')
+            navigate(`/event/${eventId}`, { replace: true })
           } catch (e) {
+            console.log(e)
             messageApi.error(e.message)
           } finally {
             setIsSending(false)

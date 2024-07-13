@@ -58,7 +58,7 @@ const defaultCustomProps = [
 ]
 
 const getSelectionKey = selected => {
-  const key = selected.map(el => `${el.getAttribute('data-row')}-${el.getAttribute('data-seat')}`).join('_')
+  const key = selected.map(el => el.getAttribute('data-row') ? `${el.getAttribute('data-row')}-${el.getAttribute('data-seat')}` : el.getAttribute('data-category')).join('_')
   return key
 }
 
@@ -156,6 +156,7 @@ export default function SvgSchemeEditor({ value, onChange, tickets = [], onTicke
       if (ctrlKey || metaKey) {
         return prev.includes(el) ? prev.filter(item => item !== el) : [...prev, el] 
       }
+      const next = prev.length === 1 ? (prev[0] === el ? [] : [el]) : [el]
       return prev.length === 1 ? (prev[0] === el ? [] : [el]) : [el]
     })
   }
