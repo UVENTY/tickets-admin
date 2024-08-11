@@ -7,12 +7,10 @@ export const login = params => async (dispatch) => {
   dispatch(setLoading(true))
   try {
     const formData = toFormData({ ...params, type: 'e-mail' })
-    const res = await axios.post('/auth', formData)
-    const { data } = res
+    const { data } = await axios.post('/auth', formData)
     if (!data.auth_hash || !['2', '4'].includes(data.auth_user?.u_role)) {
       return false
     }
-    
     await dispatch(getToken(data.auth_hash))
     dispatch(setProfile({ ...data.auth_user, authorized: true }))
     return data.auth_user?.u_role

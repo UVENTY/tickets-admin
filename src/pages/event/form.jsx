@@ -181,7 +181,7 @@ export default function EventForm() {
                   }, postTickets)
                   const sendData = { event_id: id }
                   if (stadium) {
-                    sendData.hall_id = stadium
+                    sendData.hall_id = stadium?.id
                     sendData.tickets = update
                   }
                   mutateTickets.mutateAsync(sendData).then(res => {

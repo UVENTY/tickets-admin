@@ -93,7 +93,6 @@ export default (function() {
       price: [],
       editList: []
     })
-    console.log(editList);
     if (tripId) {
        const data = JSON.stringify(editList)
        return editTickets(tripId, { data })
