@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
-import { Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse, InputNumber } from 'antd'
+import { Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse, InputNumber, List } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined, DownloadOutlined } from '@ant-design/icons'
 import TicketsApi from '../../api/tickets'
 import { useData, useUpdateData } from '../../api/data'
@@ -13,6 +13,7 @@ import Sidebar from '../../components/Layout/sidebar'
 import { getCitiesOptions, getCountriesOptions } from '../../redux/config'
 import { qrBase64, toBase64 } from '../../utils/utils'
 import './event.scss'
+import { EMPTY_ARRAY } from '../../consts'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
@@ -102,6 +103,8 @@ export default function EventForm() {
   const cities = useSelector(getCitiesOptions)
   const countries = useSelector(getCountriesOptions)
 
+  const schemeData = Form.useWatch(['stadium', 'scheme_blob'], form)
+  
   const isNew = id === 'create'
   const updateData = useUpdateData()
   const mutateTickets = useMutation({ mutationFn: TicketsApi.updateTickets })
@@ -135,7 +138,8 @@ export default function EventForm() {
     boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03),0 1px 6px -1px rgba(0, 0, 0, 0.02),0 2px 4px 0 rgba(0, 0, 0, 0.02)',
     marginBottom: 20,
   }
-
+  console.log(schemeData);
+  
   const initialValues = isNew ? {} : data.event
   return (
     <>
@@ -371,6 +375,38 @@ export default function EventForm() {
             },
             {
               key: '3',
+              label: <b>Remainings</b>,
+              style: panelStyle,
+              children:
+                <div>
+                  <List
+                    grid={{ gutter: 16, column: 4 }}
+                    dataSource={schemeData?.categories || EMPTY_ARRAY}
+                    renderItem={(item, index) => {
+                      const t = tickets?.data || EMPTY_ARRAY
+                      const totalCount = t.filter(ticket => ticket.section === item.value).length
+                      const soldCount = t.filter(ticket => ticket.section === item.value && ticket.is_sold).length
+                      const reservedCount = t.filter(ticket => ticket.section === item.value && ticket.is_reserved).length
+                      const disabledCount = t.filter(ticket => ticket.section === item.value && ticket.disabled).length
+                      const remainsCount = totalCount - (soldCount + reservedCount + disabledCount)
+                      return (
+                        <List.Item style={{ marginBottom: 40, textAlign: 'right' }}>
+                          <List.Item.Meta
+                            title={<span style={{ color: item.color }}><div dangerouslySetInnerHTML={{ __html: item.icon }} />{item.label}</span>}
+                            description={<>Total <b>{totalCount}</b> tickets</>}
+                          />
+                          Sold <b>{soldCount}</b><br />
+                          Reserved <b>{reservedCount}</b><br />
+                          Disabled <b>{disabledCount}</b><br />
+                          Remains <b>{remainsCount}</b>
+                        </List.Item>
+                      )
+                    }}
+                  />
+                </div>
+            },
+            {
+              key: '4',
               label: <b>Tickets</b>,
               style: panelStyle,
               children:

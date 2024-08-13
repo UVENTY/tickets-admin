@@ -66,7 +66,8 @@ const isMac = isMacintosh()
 
 const labelClass = 'ant-col ant-form-item-label'
 
-export default function SvgSchemeEditor({ value, onChange, tickets = [], onTicketsChange = EMPTY_FUNC}) {
+export default function SvgSchemeEditor(props) {
+  const { value, onChange, tickets = [], onTicketsChange = EMPTY_FUNC } = props
   const [ categories, setCategories ] = useState(value?.categories || EMPTY_ARRAY)
   const [ customProps, setCustomProps ] = useState(value?.customProps || defaultCustomProps)
   const [ scheme, setScheme ] = useState(value?.scheme || '')
@@ -122,7 +123,8 @@ export default function SvgSchemeEditor({ value, onChange, tickets = [], onTicke
     }
   }, [])
 
-  useEffect(() => onChange({
+  useEffect(() => 
+   onChange({
     categories,
     customProps,
     scheme,
