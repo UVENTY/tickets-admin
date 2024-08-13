@@ -185,7 +185,6 @@ export default function EventForm() {
                     sendData.tickets = update
                   }
                   mutateTickets.mutateAsync(sendData).then(res => {
-                    console.log(res);
                     const dataUpdate = { schedule: [{ id, ...event }] }
                     if (stadium) {
                       dataUpdate.stadiums = [stadium]

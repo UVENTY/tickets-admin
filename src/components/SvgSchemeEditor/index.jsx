@@ -89,6 +89,9 @@ export default function SvgSchemeEditor({ value, onChange, tickets = [], onTicke
             return
           }
           svg.querySelector(`.${seatClassName}[data-row="${row}"][data-seat="${seat}"]`)?.setAttribute('data-price', price)
+          if (is_sold || is_reserved) {
+            svg.querySelector(`.${seatClassName}[data-row="${row}"][data-seat="${seat}"]`)?.setAttribute('data-disabled', '')
+          }
         })
         Object.entries(nonSeatCount).map(([ key, value ]) => {
           const el = svg.querySelector(`.${seatClassName}[data-category="${key}"]`)
