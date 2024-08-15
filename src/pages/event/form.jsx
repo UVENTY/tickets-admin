@@ -1,7 +1,7 @@
 import { get } from 'lodash'
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse, InputNumber, List } from 'antd'
@@ -10,10 +10,11 @@ import TicketsApi from '../../api/tickets'
 import { useData, useUpdateData } from '../../api/data'
 import SvgSchemeEditor from '../../components/SvgSchemeEditor'
 import Sidebar from '../../components/Layout/sidebar'
-import { getCitiesOptions, getCountriesOptions } from '../../redux/config'
+import { getCitiesOptions, getCountriesOptions, getLangValue, updateLang } from '../../redux/config'
 import { qrBase64, toBase64 } from '../../utils/utils'
 import './event.scss'
 import { EMPTY_ARRAY } from '../../consts'
+import Wysiwyg from '../../components/Wysiwyg'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
@@ -99,9 +100,14 @@ export default function EventForm() {
   const [ form ] = Form.useForm()
   const [ isSending, setIsSending ] = useState(false)
   const [ changedPrice, setChangedPrice ] = useState({})
+  const dispatch = useDispatch()
 
   const cities = useSelector(getCitiesOptions)
   const countries = useSelector(getCountriesOptions)
+
+  const emailSubject = useSelector(state => getLangValue(state, `email_ticket_paid_subject_${id}`))
+  const emailContent = useSelector(state => getLangValue(state, `email_ticket_paid_body_${id}`))
+  const pdfContent = useSelector(state => getLangValue(state, `html_pdf_ticket_paid_body_${id}`))
 
   const schemeData = Form.useWatch(['stadium', 'scheme_blob'], form)
   
@@ -150,8 +156,16 @@ export default function EventForm() {
       <Form
         style={{ flex: '1 1 0'}}
         layout='vertical'
-        onFinish={async (values) => {
+        onFinish={async (dataValues) => {
           setIsSending(true)
+          const { template_subject, template_body, pdf_body, ...values } = dataValues
+
+          const lang_vls = {}
+          lang_vls[ `email_ticket_paid_subject_${id}` ] = { '1': template_subject }
+          lang_vls[ `email_ticket_paid_body_${id}` ] = { '1': template_body }
+          lang_vls[ `html_pdf_ticket_paid_body_${id}` ] = { '1': pdf_body }
+          dispatch(updateLang( lang_vls ))
+
           try {
             let { stadium: { scheme_blob, ...stadium }, date, time, ...event } = values
             if (scheme_blob) {
@@ -387,12 +401,12 @@ export default function EventForm() {
                       const totalCount = t.filter(ticket => ticket.section === item.value).length
                       const soldCount = t.filter(ticket => ticket.section === item.value && ticket.is_sold).length
                       const reservedCount = t.filter(ticket => ticket.section === item.value && ticket.is_reserved).length
-                      const disabledCount = t.filter(ticket => ticket.section === item.value && ticket.disabled).length
+                      const disabledCount = t.filter(ticket => ticket.section === item.value && ticket.disabled).length - soldCount - reservedCount
                       const remainsCount = totalCount - (soldCount + reservedCount + disabledCount)
                       return (
                         <List.Item style={{ marginBottom: 40, textAlign: 'right' }}>
                           <List.Item.Meta
-                            title={<span style={{ color: item.color }}><div dangerouslySetInnerHTML={{ __html: item.icon }} />{item.label}</span>}
+                            title={<span style={{ color: item.color }}><span style={{ verticalAlign: 'middle', marginRight: 6 }} dangerouslySetInnerHTML={{ __html: item.icon }} />{item.label}</span>}
                             description={<>Total <b>{totalCount}</b> tickets</>}
                           />
                           Sold <b>{soldCount}</b><br />
@@ -407,6 +421,31 @@ export default function EventForm() {
             },
             {
               key: '4',
+              label: <b>E-mail template</b>,
+              style: panelStyle,
+              children:
+                <div>
+                  <Form.Item initialValue={emailSubject[1]} label='Subject' name='template_subject'>
+                    <Input />
+                  </Form.Item>
+                  <Form.Item initialValue={emailContent[1]} label='Body' name='template_body'>
+                    <Wysiwyg />
+                  </Form.Item>
+                </div>
+            },
+            {
+              key: '5',
+              label: <b>PDF ticket</b>,
+              style: panelStyle,
+              children:
+                <div>
+                  <Form.Item initialValue={pdfContent[1]} name='pdf_body'>
+                    <Wysiwyg />
+                  </Form.Item>
+                </div>
+            },
+            {
+              key: '6',
               label: <b>Tickets</b>,
               style: panelStyle,
               children:
