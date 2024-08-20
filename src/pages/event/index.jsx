@@ -14,7 +14,7 @@ export default function PageEvent() {
   const navigate = useNavigate()
   const user = useSelector(state => state.user.profile)
 
-  const events = useData(null, { select: data => {
+  const events = useData(null, { select: ({ data }) => {
     const { schedule, stadiums, teams, tournaments } = data
     return Object.keys(schedule).map(id => {
       const event = { ...schedule[id] }
@@ -27,7 +27,7 @@ export default function PageEvent() {
   }})
   const ids = events.data && events.data.map(({ id }) => id).join(',')
   const tickets = TicketsApi.useTickets(ids, { group: 'event_id' }, { enabled: !!ids })
-
+  
   useEffect(() => {
     dispatch(fetchData())
   }, [])
