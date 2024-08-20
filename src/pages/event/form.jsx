@@ -30,7 +30,8 @@ const expandNonSeats = (changed, tickets) => {
     const { price, count } = data
     if (!price && !count && count !== 0) return []
     const freeTickets = tickets.filter(ticket => ticket.section === key && !ticket.is_sold && !ticket.is_reserved)
-    const lastSeat = Math.max(...tickets.map(ticket => ticket.seat))
+    let lastSeat = Math.max(...tickets.map(ticket => ticket.seat))
+    lastSeat = isFinite(lastSeat) ? lastSeat : 0
     if (price) {
       acc = freeTickets.reduce((acc, ticket) => ({
         ...acc,
@@ -47,8 +48,10 @@ const expandNonSeats = (changed, tickets) => {
       } else if (diff > 0) {
         acc = Array.from({ length: diff }, (_, i) => i + lastSeat + 1).reduce((acc, i) => ({
           ...acc,
-          [`${key};-1;${i}`]: price || freeTickets[0].price,
+          [`${key};-1;${i}`]: price || freeTickets[0]?.price,
         }), acc)
+        console.log(acc, diff);
+        
       }
     }
     return acc
@@ -83,7 +86,7 @@ const exportTickets = ( tickets, eventId ) => {
     join( ',' ) +
     '\r\n'
   )
-  rows.unshift( headerRow)
+  rows.unshift(headerRow)
   const blob = new Blob( rows, { type : 'text/csv; charset=utf-8' } )
   const url = URL.createObjectURL( blob )
   const a = document.createElement( 'a' )

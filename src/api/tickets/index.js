@@ -83,7 +83,7 @@ export default (function() {
       if (price) {
         itm.price = price > 0 ? price : undefined
       }
-      if (data.code_qr) {
+      if (data?.code_qr) {
         itm.code_qr_base64 = data.code_qr
       }
       acc.editList.push(itm)
