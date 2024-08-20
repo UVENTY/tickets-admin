@@ -2,7 +2,7 @@ import { axios } from '../axios'
 
 export async function fetchData(params) {
   const response = await axios.get('/data', { params })
-  return response.data?.data?.data
+  return response.data?.data
 }
 
 export async function updateData(params) {

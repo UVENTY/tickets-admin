@@ -105,17 +105,13 @@ export default function EventForm() {
   const cities = useSelector(getCitiesOptions)
   const countries = useSelector(getCountriesOptions)
 
-  const emailSubject = useSelector(state => getLangValue(state, `email_ticket_paid_subject_${id}`))
-  const emailContent = useSelector(state => getLangValue(state, `email_ticket_paid_body_${id}`))
-  const pdfContent = useSelector(state => getLangValue(state, `html_pdf_ticket_paid_body_${id}`))
-
   const schemeData = Form.useWatch(['stadium', 'scheme_blob'], form)
   
   const isNew = id === 'create'
   const updateData = useUpdateData()
   const mutateTickets = useMutation({ mutationFn: TicketsApi.updateTickets })
   const { data, isLoading } = useData(null, {
-    select: data => {
+    select: ({ data, default_lang }) => {
       const { schedule, stadiums, teams, tournaments } = data
       const event = { ...schedule[id] }
       event.date = dayjs(event.datetime)
@@ -128,10 +124,16 @@ export default function EventForm() {
       }
       return {
         event,
-        options
+        options,
+        defaultLang: default_lang
       }
     }
   })
+
+  const emailSubject = useSelector(state => getLangValue(state, `email_ticket_paid_subject_${id}`))
+  const emailContent = useSelector(state => getLangValue(state, `email_ticket_paid_body_${id}`))
+  const pdfContent = useSelector(state => getLangValue(state, `html_pdf_ticket_paid_body_${id}`))
+  
   const tickets = TicketsApi.useTickets({ event_id: id }, { order: 'section' }, {
     enabled: !isNew
   })
@@ -144,7 +146,6 @@ export default function EventForm() {
     boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03),0 1px 6px -1px rgba(0, 0, 0, 0.02),0 2px 4px 0 rgba(0, 0, 0, 0.02)',
     marginBottom: 20,
   }
-  console.log(schemeData);
   
   const initialValues = isNew ? {} : data.event
   return (
@@ -161,9 +162,9 @@ export default function EventForm() {
           const { template_subject, template_body, pdf_body, ...values } = dataValues
 
           const lang_vls = {}
-          lang_vls[ `email_ticket_paid_subject_${id}` ] = { '1': template_subject }
-          lang_vls[ `email_ticket_paid_body_${id}` ] = { '1': template_body }
-          lang_vls[ `html_pdf_ticket_paid_body_${id}` ] = { '1': pdf_body }
+          lang_vls[ `email_ticket_paid_subject_${id}` ] = { [data.defaultLang]: template_subject }
+          lang_vls[`email_ticket_paid_body_${id}`] = { [data.defaultLang]: template_body }
+          lang_vls[`html_pdf_ticket_paid_body_${id}`] = { [data.defaultLang]: pdf_body }
           dispatch(updateLang( lang_vls ))
 
           try {
@@ -425,10 +426,10 @@ export default function EventForm() {
               style: panelStyle,
               children:
                 <div>
-                  <Form.Item initialValue={emailSubject[1]} label='Subject' name='template_subject'>
+                  <Form.Item initialValue={emailSubject[data.defaultLang]} label='Subject' name='template_subject'>
                     <Input />
                   </Form.Item>
-                  <Form.Item initialValue={emailContent[1]} label='Body' name='template_body'>
+                  <Form.Item initialValue={emailContent[data.defaultLang]} label='Body' name='template_body'>
                     <Wysiwyg />
                   </Form.Item>
                 </div>
@@ -439,7 +440,7 @@ export default function EventForm() {
               style: panelStyle,
               children:
                 <div>
-                  <Form.Item initialValue={pdfContent[1]} name='pdf_body'>
+                  <Form.Item initialValue={pdfContent[data.defaultLang]} name='pdf_body'>
                     <Wysiwyg />
                   </Form.Item>
                 </div>
