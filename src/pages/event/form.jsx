@@ -13,7 +13,7 @@ import Sidebar from '../../components/Layout/sidebar'
 import { getCitiesOptions, getCountriesOptions, getLangValue, updateLang } from '../../redux/config'
 import { qrBase64, toBase64 } from '../../utils/utils'
 import './event.scss'
-import { EMPTY_ARRAY } from '../../consts'
+import { EMPTY_ARRAY, NON_SEAT_ROW } from '../../consts'
 import Wysiwyg from '../../components/Wysiwyg'
 
 const getOptions = obj => Object.values(obj)
@@ -35,7 +35,7 @@ const expandNonSeats = (changed, tickets) => {
     if (price) {
       acc = freeTickets.reduce((acc, ticket) => ({
         ...acc,
-        [`${key};-1;${ticket.seat}`]: price,
+        [`${key};${NON_SEAT_ROW};${ticket.seat}`]: price,
       }), acc)
     }
     if (count) {
@@ -43,15 +43,13 @@ const expandNonSeats = (changed, tickets) => {
       if (diff < 0) {
         acc = freeTickets.slice(0, diff * -1).reduce((acc, ticket) => ({
           ...acc,
-          [`${key};-1;${ticket.seat}`]: -1,
+          [`${key};${NON_SEAT_ROW};${ticket.seat}`]: -1,
         }), acc)
       } else if (diff > 0) {
         acc = Array.from({ length: diff }, (_, i) => i + lastSeat + 1).reduce((acc, i) => ({
           ...acc,
-          [`${key};-1;${i}`]: price || freeTickets[0]?.price,
+          [`${key};${NON_SEAT_ROW};${i}`]: price || freeTickets[0]?.price,
         }), acc)
-        console.log(acc, diff);
-        
       }
     }
     return acc
@@ -75,7 +73,7 @@ const exportTickets = ( tickets, eventId ) => {
     map( ticket => [
       ticket.event_id,
       ticket.section,
-      ticket.row == -1 || ticket.row == '-1' ? '' : ticket.row,
+      ticket.row == NON_SEAT_ROW ? '' : ticket.row,
       ticket.seat,
       ticket.price,
       ticket.currency,
@@ -433,7 +431,7 @@ export default function EventForm() {
                     <Input />
                   </Form.Item>
                   <Form.Item initialValue={emailContent[data.defaultLang]} label='Body' name='template_body'>
-                    <Wysiwyg />
+                    <Input.TextArea />
                   </Form.Item>
                 </div>
             },
@@ -444,7 +442,7 @@ export default function EventForm() {
               children:
                 <div>
                   <Form.Item initialValue={pdfContent[data.defaultLang]} name='pdf_body'>
-                    <Wysiwyg />
+                    <Input.TextArea />
                   </Form.Item>
                 </div>
             },
