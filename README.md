@@ -1,15 +1,15 @@
-# Getting Started with Create React App
+# Админ-панель
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+### Сборка:
+Create React App
 
-# .env.json
-В этот файл выносим настраиваемые для разных проектов параметры. Формат объекта
-```ts
-{
-  // Хранение стадионов/залов
-  stadium: {
-    scheme_type: 'svg' | 'json' | null, // Формат интерактивной схемы
-    scheme_image: boolean, // 
-  }
-}
-```
+### Стек:
+React, Redux, SCSS, react-query (постепенно заменяю redux)
+
+### Команды:
+`npm start` - запуск dev-сборки
+
+`npm run build` - сборка prod-версии
+
+### Переменные окружения:
+`REACT_APP_API_URL` - адрес апи

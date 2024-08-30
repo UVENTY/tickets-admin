@@ -1,4 +1,4 @@
-export const API_URL = 'https://uticket.uventy.com/uventy/c/TikShow/api/v1'
+export const API_URL = process.env.REACT_APP_API_URL
 
 export const USER_ROLES_COLOR = {
   '1': '#2db7f5',
