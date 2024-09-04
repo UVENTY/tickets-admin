@@ -35,7 +35,9 @@ export const selectFlatArray = ({ old: data, new: list }) => {
     acc[key] = { currency, code, code_qr_base64, fullSeat: item.seat }
     return acc
   }, {})
-  return Object.values(data.trip).reduce((tickets, group) => {
+  console.log(newDataMap);
+  
+  return Object.values(data.trip).reduce((tickets, group) => {    
     const commonData = renameKeys({
       sc_id: 'event_id',
       stadium: 'hall_id',
@@ -48,8 +50,8 @@ export const selectFlatArray = ({ old: data, new: list }) => {
         entries(seats).forEach(([seat, seatOptions]) => {
           const priceString = pricesList[isArray(seatOptions) ? seatOptions[0] : null]
           const [ price, currency ] = typeof priceString === 'string' ? priceString.split(' ') : []
-          const range = seat.split(';').map(Number).filter(Boolean)
-          if (range.length < 1) return
+          let range = seat.split(';').map(Number).filter(Boolean)
+          if (range.length <= 1) range = [seat]
           let status = {}
           if (seatOptions.length > 1) {
             const [ , user_id, buy_id, until_date ] = seatOptions
@@ -70,8 +72,8 @@ export const selectFlatArray = ({ old: data, new: list }) => {
           }
           Array.from(
             { length: range.length === 2 ? range[1] - range[0] + 1 : 1 },
-            (_, i) => i + range[0]
-          ).forEach(seat => tickets.push({
+            (_, i) => Number(range[0]) ? i + Number(range[0]) : range[0]
+          ).forEach(seat => console.log(seat) || tickets.push({
             ...commonData,
             section,
             row,
@@ -84,6 +86,7 @@ export const selectFlatArray = ({ old: data, new: list }) => {
         })
       })
     })
+
     return tickets.filter(seat => seat.row !== '0')
   }, [])
 }
