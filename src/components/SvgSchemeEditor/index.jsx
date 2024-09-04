@@ -2,60 +2,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Card, Upload, Input, Typography, ColorPicker, Flex, Select, Form, Space } from 'antd'
 import { DeleteOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
+import axios from 'axios'
 import { clearFillAndStringify, getCategories, transformScheme } from './utils'
 import { EMPTY_ARRAY, EMPTY_FUNC, NON_SEAT_ROW } from '../../consts'
-import SvgScheme from '../SvgScheme'
-import s from './svg-scheme-editor.module.scss'
-import axios from 'axios'
-import SvgSchemeSeatPreview from '../SvgScheme/preview'
+import SvgScheme, { SeatPreview as SvgSchemeSeatPreview  } from '../SvgScheme'
 import SvgSchemeEditSeat from './edit-seat'
-import { getValidSvg, isMacintosh, renderHiddenHTML, setCurrentColor, toText } from '../../utils/utils'
 import FieldForm from './field-form'
+import { activeSeatClassName, defaultCustomProps, labelClass, seatClassName } from './consts'
+import { isMacintosh, renderHiddenHTML, setCurrentColor, toText } from '../../utils/utils'
+import s from './svg-scheme-editor.module.scss'
 
 const { Title } = Typography
-
-const seatClassName = 'svg-seat'
-const activeSeatClassName = 'active'
-
-const defaultCustomProps = [
-  {
-    value: 'row',
-    label: 'Row'
-  }, {
-    value: 'seat',
-    label: 'Seat'
-  }, {
-    value: 'count',
-    label: 'Tickets leave',
-    type: 'number',
-  }, {
-    value: 'busyCount',
-    label: 'Booking / Sold',
-    type: 'number',
-  }, {
-    value: 'price',
-    label: 'Price',
-    type: 'number',
-    groupEditable: true,
-    system: true
-  }, {
-    value: 'icon',
-    label: 'Place Icon',
-    type: 'file',
-    accept: '.svg',
-    originalColors: false,
-    groupEditable: true
-  }, {
-    value: 'text',
-    label: 'Text',
-    groupEditable: true
-  }, {
-    value: 'disabled',
-    label: 'Disabled',
-    type: 'checkbox',
-    groupEditable: true
-  }
-]
 
 const getSelectionKey = selected => {
   const key = selected.map(el => el.getAttribute('data-row') ? `${el.getAttribute('data-row')}-${el.getAttribute('data-seat')}` : el.getAttribute('data-category')).join('_')
@@ -64,17 +21,15 @@ const getSelectionKey = selected => {
 
 const isMac = isMacintosh()
 
-const labelClass = 'ant-col ant-form-item-label'
-
 export default function SvgSchemeEditor(props) {
-  const { value, onChange, tickets = [], onTicketsChange = EMPTY_FUNC } = props
+  const { initialValue, value, onChange, tickets = [], onTicketsChange = EMPTY_FUNC } = props
   const [ categories, setCategories ] = useState(value?.categories || EMPTY_ARRAY)
-  const [ customProps, setCustomProps ] = useState(value?.customProps || defaultCustomProps)
+  const [customProps, setCustomProps] = useState(value?.customProps || defaultCustomProps)
   const [ scheme, setScheme ] = useState(value?.scheme || '')
   const [ selectedSeats, setSelectedSeats ] = useState([])
   const [ editProp, setEditProp ] = useState('categories')
   const svgRef = useRef()
-
+  
   useEffect(() => {
     if (typeof value === 'string' && value?.startsWith('http')) {
       axios.get(value).then(({ data }) => {
@@ -278,6 +233,7 @@ export default function SvgSchemeEditor(props) {
         {!!scheme && selectedSeats.length > 0 && <>
           <div className={labelClass}>Seating properties</div>
           <SvgSchemeEditSeat
+            tickets={tickets}
             key={getSelectionKey(selectedSeats)}
             categories={categories}
             seats={selectedSeats}

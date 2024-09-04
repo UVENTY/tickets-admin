@@ -1,25 +1,30 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Button, Card, Checkbox, ColorPicker, Flex, Input, InputNumber, Select, Typography, Upload } from 'antd'
+import { ArrowLeftOutlined, DownloadOutlined } from '@ant-design/icons'
+import { mapValues } from 'lodash'
 import cn from 'classnames'
 import InputSvg from '../InputSvg'
 import s from './svg-scheme-editor.module.scss'
+import { axios } from '../../api/axios'
 import { setCurrentColor } from '../../utils/utils'
-import { ArrowLeftOutlined } from '@ant-design/icons'
-import { mapValues } from 'lodash'
+import { API_URL } from '../../consts'
 
 const { Title } = Typography
 
 const isArray = val => (ifTrue, ifFalse = val) => Array.isArray(val) ? ifTrue : ifFalse
 
 export default function SvgSchemeEditSeat({
+  tickets = [],
   categories = [],
   fields = [],
   seats = [],
   onOk,
   onChange
 }) {
+  const formRef = useRef()
   const [ changedValues, setChangedValue ] = useState({})
-
+  
   const handleChange = (name, value) => setChangedValue(prev => {
     const changed = { ...prev, [name]: value}
     onChange && onChange(changed)
@@ -46,6 +51,7 @@ export default function SvgSchemeEditSeat({
 
   const { disabled, category, row, seat, price, count, busyCount } = values
   const isDisabled = disabled === 'true'
+  const ticket = tickets.find(item => String(item.section) === String(category) && (String(item.row) === '-1' || (String(item.row) === String(row) && String(item.seat) === String(seat))))
   return (
     <Card
       className={s.edit}
@@ -138,6 +144,32 @@ export default function SvgSchemeEditSeat({
           </Fragment>
         )
       })}
+      {seats.length === 1 && !!ticket && false &&
+        <Flex gap={16} style={{ marginTop: 20 }}>
+          <Button type='primary' icon={<DownloadOutlined />} size='large' onClick={async () => {
+            const params = { seat: ticket.fullSeat, pdf: true }
+            const response = await axios.post(`trip/get/${ticket.fuckingTrip}/ticket/read/`, params)
+            const blob = new Blob([response.data], { type: 'application/pdf' })
+            const eblob = new Blob([], { type: 'application/pdf' })
+            console.log(blob.size, eblob.size);
+            var reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = function () {
+              var base64data = reader.result;
+              console.log(base64data);
+            }
+            console.log(blob)
+            const downloadUrl = URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = downloadUrl
+            a.download = "ticket.pdf"
+            document.body.appendChild(a)
+            a.click()
+          }}>
+            Download pdf
+          </Button>
+        </Flex>
+      }
       <Flex gap={16} style={{ marginTop: 20 }}>
         <Button type='primary' icon={<ArrowLeftOutlined />} size='large' ghost onClick={() => onOk && onOk(changedValues)} style={{ flex: '1 1 0' }}>
           Back

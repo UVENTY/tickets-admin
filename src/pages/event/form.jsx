@@ -1,6 +1,6 @@
 import { get } from 'lodash'
 import { useMutation } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
@@ -11,7 +11,7 @@ import { useData, useUpdateData } from '../../api/data'
 import SvgSchemeEditor from '../../components/SvgSchemeEditor'
 import Sidebar from '../../components/Layout/sidebar'
 import { getCitiesOptions, getCountriesOptions, getLangValue, updateLang } from '../../redux/config'
-import { qrBase64, toBase64 } from '../../utils/utils'
+import { jsonBase64, qrBase64, toBase64 } from '../../utils/utils'
 import './event.scss'
 import { EMPTY_ARRAY, NON_SEAT_ROW } from '../../consts'
 import Wysiwyg from '../../components/Wysiwyg'
@@ -111,17 +111,18 @@ export default function EventForm() {
   const isNew = id === 'create'
   const updateData = useUpdateData()
   const mutateTickets = useMutation({ mutationFn: TicketsApi.updateTickets })
-  const { data, isLoading } = useData(null, {
+  const { data, error, isLoading } = useData(null, {
     select: ({ data, default_lang }) => {
       const { schedule, stadiums, teams, tournaments } = data
       const event = { ...schedule[id] }
       event.date = dayjs(event.datetime)
       event.time = event.date?.utc()
-      event.stadium = event.stadium ? { id: event.stadium, ...stadiums[event.stadium] } : null
+      event.stadium = event.stadium ? { id: event.stadium, ...stadiums?.[event.stadium] } : null
+      
       const options = {
-        s: getOptions(Object.keys(stadiums).map(id => ({ id, ...stadiums[id] })), 'en'),
-        t: getOptions(Object.keys(tournaments).map(id => ({ id, ...tournaments[id] })), 'en'),
-        teams: getOptions(Object.keys(teams).map(id => ({ id, ...teams[id] })), 'en'),
+        s: getOptions(Object.keys(stadiums || {}).map(id => ({ id, ...stadiums?.[id] })), 'en'),
+        t: getOptions(Object.keys(tournaments || {}).map(id => ({ id, ...tournaments?.[id] })), 'en'),
+        teams: getOptions(Object.keys(teams || {}).map(id => ({ id, ...teams?.[id] })), 'en'),
       }
       return {
         event,
@@ -130,7 +131,7 @@ export default function EventForm() {
       }
     }
   })
-
+  
   const emailSubject = useSelector(state => getLangValue(state, `email_ticket_paid_subject_${id}`))
   const emailContent = useSelector(state => getLangValue(state, `email_ticket_paid_body_${id}`))
   const pdfContent = useSelector(state => getLangValue(state, `html_pdf_ticket_paid_body_${id}`))
@@ -139,7 +140,7 @@ export default function EventForm() {
     enabled: !isNew
   })
   
-  if (!isNew && (isLoading || tickets.isLoading)) return null
+  if ((!isNew && (isLoading || tickets.isLoading)) || !data) return null
 
   const panelStyle = {
     background: '#fff',
@@ -161,80 +162,47 @@ export default function EventForm() {
         onFinish={async (dataValues) => {
           setIsSending(true)
           const { template_subject, template_body, pdf_body, ...values } = dataValues
-
-          const lang_vls = {}
-          lang_vls[ `email_ticket_paid_subject_${id}` ] = { [data.defaultLang]: template_subject }
-          lang_vls[`email_ticket_paid_body_${id}`] = { [data.defaultLang]: template_body }
-          lang_vls[`html_pdf_ticket_paid_body_${id}`] = { [data.defaultLang]: pdf_body }
-          dispatch(updateLang( lang_vls ))
-
+          const templates = {
+            [`email_ticket_paid_subject_${id}`]: { [data.defaultLang]: template_subject },
+            [`email_ticket_paid_body_${id}`]: { [data.defaultLang]: template_body },
+            [`html_pdf_ticket_paid_body_${id}`]: { [data.defaultLang]: template_body }
+          }
           try {
             let { stadium: { scheme_blob, ...stadium }, date, time, ...event } = values
-            if (scheme_blob) {
-              stadium.id = data.event?.stadium?.id || ''
-              const scheme_file = scheme_blob && new File([JSON.stringify(scheme_blob)], 'scheme.json', {
-                type: 'application/json',
-              })
-              if (scheme_file) {
-                stadium.scheme_blob = await (scheme_file ? toBase64(scheme_file) : Promise.resolve())
-              }
-            }
+            stadium.scheme_blob = await jsonBase64(scheme_blob)
             event.datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
             if (!isNew) {
-              try {
-                Promise.all(
-                  tickets.data.filter(ticket => !ticket.code_qr)
-                    .map(ticket =>
-                      qrBase64( )
-                        .then(qr => ({ ...ticket, code_qr: qr }))
-                        .catch(e => console.error(ticket.fullSeat, e.message))
-                    )
-                ).then(withQr => {
-                  const postTickets = expandNonSeats(changedPrice, tickets.data)
-                  const update = withQr.reduce((acc, item) => {
-                    if (!item) return acc
-                    const key = item.fullSeat.split(';').slice(1).join(';')
-                    acc[key] = acc[key] || {}
-                    if (typeof acc[key] === 'number' && acc[key] > 0) acc[key] = { price: acc[key] }
-                    if (acc[key] !== -1) acc[key].code_qr = item.code_qr
-                    return acc
-                  }, postTickets)
-                  const sendData = { event_id: id }
-                  if (stadium) {
-                    sendData.hall_id = stadium?.id
-                    sendData.tickets = update
-                  }
-                  mutateTickets.mutateAsync(sendData).then(res => {
-                    const dataUpdate = { schedule: [{ id, ...event }] }
-                    if (stadium) {
-                      dataUpdate.stadiums = [stadium]
-                    }
-                    return Promise.all([
-                      updateData(dataUpdate),
-                    ])
-                  })
-                })
-              } catch (e) {
-                console.log(e);
-              }
+              stadium.id = data.event?.stadium?.id
+              await mutateTickets.mutateAsync({
+                event_id: id,
+                hall_id: stadium?.id,
+                tickets: expandNonSeats(changedPrice, tickets.data)
+              }).then(res => updateData({
+                schedule: [{ id, ...event }],
+                stadiums: [stadium],
+                ...templates
+              }))
               messageApi.success(`Event successfully ${isNew ? 'created' : 'updated'}`)
               return
             }
             const eventData = { ...event }
-            if (Object.values(stadium).filter(Boolean).length > 0) {
-              const createdStadium = await updateData({ stadiums: [stadium] })
-              const stadiumId = get(createdStadium, 'data.created_id.stadiums.0')
-              if (!stadiumId) {
-                messageApi.error('Error on creating stadium')
-                return
-              }
-              eventData.stadium = stadiumId
+            const createdStadium = await updateData({ stadiums: [stadium] })
+            const stadiumId = get(createdStadium, 'data.created_id.stadiums.0')
+            if (!stadiumId) {
+              messageApi.error(`Error on creating stadium: ${JSON.stringify(data)}`)
+              return
             }
-            const [ createdEvent, createdTickets ] = await Promise.all([
-              updateData({ schedule: [eventData] }),
-              Promise.resolve()//editTickets({ stadium_id: stadiumId, event_id: id, price: prices })
-            ])
+            eventData.stadium = stadiumId
+            const createdEvent = await updateData({
+              schedule: [eventData],
+              ...templates
+            })
             const eventId = get(createdEvent, 'data.created_id.schedule.0')
+            await mutateTickets.mutateAsync({
+              event_id: eventId,
+              hall_id: stadiumId,
+              tickets: expandNonSeats(changedPrice, tickets.data)
+            })
             navigate(`/event/${eventId}`, { replace: true })
           } catch (e) {
             console.log(e)
@@ -384,7 +352,7 @@ export default function EventForm() {
                 <Form.Item className='scheme_blob' name={['stadium', 'scheme_blob']}>
                   <SvgSchemeEditor
                     tickets={tickets.data}
-                    onTicketsChange={val => setChangedPrice(prev => ({ ...prev, ...val }))}
+                    onTicketsChange={val => console.log(val) || setChangedPrice(prev => ({ ...prev, ...val }))}
                   />
                 </Form.Item>
               </>

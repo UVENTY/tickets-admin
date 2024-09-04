@@ -84,3 +84,5 @@ const SvgScheme = forwardRef(({
 })
 
 export default SvgScheme
+
+export { default as SeatPreview } from './preview'

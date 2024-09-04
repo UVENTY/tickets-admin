@@ -116,3 +116,12 @@ export const qrBase64 = async (encode) =>
       resolve(code)
     })
   })
+
+export const jsonBase64 = async (obj, filename = 'file.json') => {
+  const content = JSON.stringify(obj)
+  if (!content || content === '{}') Promise.resolve()
+    const scheme_file = new File([content], 'scheme.json', {
+    type: 'application/json',
+  })
+  return await (scheme_file ? toBase64(scheme_file) : Promise.resolve())
+}
