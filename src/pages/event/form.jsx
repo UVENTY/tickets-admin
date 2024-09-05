@@ -8,9 +8,10 @@ import { Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input,
 import { ArrowLeftOutlined, SaveOutlined, DownloadOutlined } from '@ant-design/icons'
 import TicketsApi from '../../api/tickets'
 import { useData, useUpdateData } from '../../api/data'
+import { axios } from '../../api/axios'
 import SvgSchemeEditor from '../../components/SvgSchemeEditor'
 import Sidebar from '../../components/Layout/sidebar'
-import { getCitiesOptions, getCountriesOptions, getLangValue, updateLang } from '../../redux/config'
+import { getCitiesOptions, getCountriesOptions, getLangValue } from '../../redux/config'
 import { jsonBase64, qrBase64, toBase64 } from '../../utils/utils'
 import './event.scss'
 import { EMPTY_ARRAY, NON_SEAT_ROW } from '../../consts'
@@ -20,7 +21,11 @@ const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
   .sort((item1, item2) => item1.label > item2.label ? 1 : -1)
 
-const expandNonSeats = (changed, tickets) => {
+const updateLang = (lang_vls) => axios.post('/data', {
+  data: JSON.stringify({ lang_vls })
+})
+
+const expandNonSeats = (changed, tickets = []) => {
   const { nonSeats, seats } = Object.entries(changed).reduce((acc, [key, value]) => {
     if (!key.includes(';')) acc.nonSeats = [...acc.nonSeats, [key, value]]
     else acc.seats[key] = value
@@ -162,15 +167,17 @@ export default function EventForm() {
         onFinish={async (dataValues) => {
           setIsSending(true)
           const { template_subject, template_body, pdf_body, ...values } = dataValues
-          const templates = {
-            [`email_ticket_paid_subject_${id}`]: { [data.defaultLang]: template_subject },
-            [`email_ticket_paid_body_${id}`]: { [data.defaultLang]: template_body },
-            [`html_pdf_ticket_paid_body_${id}`]: { [data.defaultLang]: template_body }
-          }
           try {
             let { stadium: { scheme_blob, ...stadium }, date, time, ...event } = values
             stadium.scheme_blob = await jsonBase64(scheme_blob)
             event.datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
+            
+            await updateLang({
+              [`email_ticket_paid_subject_${id}`]: { [data.defaultLang]: template_subject },
+              [`email_ticket_paid_body_${id}`]: { [data.defaultLang]: template_body },
+              [`html_pdf_ticket_paid_body_${id}`]: { [data.defaultLang]: template_body }
+            })
+
             if (!isNew) {
               stadium.id = data.event?.stadium?.id
               await mutateTickets.mutateAsync({
@@ -180,7 +187,6 @@ export default function EventForm() {
               }).then(res => updateData({
                 schedule: [{ id, ...event }],
                 stadiums: [stadium],
-                ...templates
               }))
               messageApi.success(`Event successfully ${isNew ? 'created' : 'updated'}`)
               return
@@ -195,13 +201,17 @@ export default function EventForm() {
             eventData.stadium = stadiumId
             const createdEvent = await updateData({
               schedule: [eventData],
-              ...templates
             })
             const eventId = get(createdEvent, 'data.created_id.schedule.0')
             await mutateTickets.mutateAsync({
               event_id: eventId,
               hall_id: stadiumId,
               tickets: expandNonSeats(changedPrice, tickets.data)
+            })
+            await updateLang({
+              [`email_ticket_paid_subject_${eventId}`]: { [data.defaultLang]: template_subject },
+              [`email_ticket_paid_body_${eventId}`]: { [data.defaultLang]: template_body },
+              [`html_pdf_ticket_paid_body_${eventId}`]: { [data.defaultLang]: template_body }
             })
             navigate(`/event/${eventId}`, { replace: true })
           } catch (e) {

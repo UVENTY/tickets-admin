@@ -73,7 +73,7 @@ export const selectFlatArray = ({ old: data, new: list }) => {
           Array.from(
             { length: range.length === 2 ? range[1] - range[0] + 1 : 1 },
             (_, i) => Number(range[0]) ? i + Number(range[0]) : range[0]
-          ).forEach(seat => console.log(seat) || tickets.push({
+          ).forEach(seat => tickets.push({
             ...commonData,
             section,
             row,
