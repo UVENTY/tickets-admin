@@ -175,7 +175,7 @@ export default function EventForm() {
             await updateLang({
               [`email_ticket_paid_subject_${id}`]: { [data.defaultLang]: template_subject },
               [`email_ticket_paid_body_${id}`]: { [data.defaultLang]: template_body },
-              [`html_pdf_ticket_paid_body_${id}`]: { [data.defaultLang]: template_body }
+              [`html_pdf_ticket_paid_body_${id}`]: { [data.defaultLang]: pdf_body }
             })
 
             if (!isNew) {
@@ -211,7 +211,7 @@ export default function EventForm() {
             await updateLang({
               [`email_ticket_paid_subject_${eventId}`]: { [data.defaultLang]: template_subject },
               [`email_ticket_paid_body_${eventId}`]: { [data.defaultLang]: template_body },
-              [`html_pdf_ticket_paid_body_${eventId}`]: { [data.defaultLang]: template_body }
+              [`html_pdf_ticket_paid_body_${eventId}`]: { [data.defaultLang]: pdf_body }
             })
             navigate(`/event/${eventId}`, { replace: true })
           } catch (e) {
