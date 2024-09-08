@@ -51,6 +51,7 @@ export default function SvgSchemeEditSeat({
   ), [seats, fieldsToShow])
 
   const { disabled, category, row, seat, price, count, busyCount } = values
+  
   const isDisabled = disabled === 'true'
   const ticket = tickets.find(item => String(item.section) === String(category) && (String(item.row) === '-1' || (String(item.row) === String(row) && String(item.seat) === String(seat))))
   return (
@@ -145,7 +146,7 @@ export default function SvgSchemeEditSeat({
           </Fragment>
         )
       })}
-      {seats.length === 1 && !!ticket &&
+      {seats.length === 1 && !!ticket && !!row &&
         <Flex gap={16} style={{ marginTop: 20 }}>
           <Button type='primary' icon={<DownloadOutlined />} size='large' onClick={async () => {
             const pdf = await getTicketPdf({ t_id: ticket.fuckingTrip, seat: ticket.fullSeat })
