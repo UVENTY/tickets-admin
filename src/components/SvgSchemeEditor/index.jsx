@@ -11,6 +11,7 @@ import FieldForm from './field-form'
 import { activeSeatClassName, defaultCustomProps, labelClass, seatClassName } from './consts'
 import { isMacintosh, renderHiddenHTML, setCurrentColor, toText } from '../../utils/utils'
 import s from './svg-scheme-editor.module.scss'
+import Categories from './categories'
 
 const { Title } = Typography
 
@@ -93,6 +94,13 @@ export default function SvgSchemeEditor(props) {
   const handleChangeCategory = useCallback((index, key, value) => {
     setCategories(prev => prev.map((item, i) => i === index ? { ...item, [key]: value } : item))
   }, [setCategories])
+
+  const reorderCategories = useCallback((index, targetIndex) => {
+    const items = [ ...categories ]
+    const [removed] = items.splice(index, 1)
+    items.splice(targetIndex, 0, removed)
+    setCategories(items)
+  })
 
   const deleteCategory = useCallback((value) => {
     if (svgRef.current) {
@@ -268,43 +276,7 @@ export default function SvgSchemeEditor(props) {
           {editProp === 'categories' ?
             <Card>
               <Title level={5} className={s.title}>Options</Title>
-              <Flex gap={16} wrap>
-                {categories.map((item, i) => (
-                  <Flex gap={8} key={item.value} className={s.catItem} align='center'>
-                    {!item.icon ?
-                      <Upload
-                        accept='.svg'
-                        itemRender={() => null}
-                        customRequest={e => toText(e.file).then(setCurrentColor).then(icon => handleChangeCategory(i, 'icon', icon))}
-                      >
-                        <Button className={s.addIcon} type='dashed' shape='circle'><UploadOutlined /><div>Icon</div></Button>
-                      </Upload> :
-                      <Flex
-                        className={s.catIcon}
-                        align='center'
-                        justify='center'
-                        title='Clear Icon'
-                        style={{ color: item.color }}
-                        onClick={() => handleChangeCategory(i, 'icon', null)}
-                        dangerouslySetInnerHTML={{ __html: item.icon }}
-                      />
-                    }
-                    <Input
-                      placeholder='Label'
-                      defaultValue={item.label}
-                      className={s.catName}
-                      onBlur={e => handleChangeCategory(i, 'label', e.target.value)}
-                    />
-                    <ColorPicker
-                      defaultValue={item.color}
-                      onChangeComplete={(color) => handleChangeCategory(i, 'color', `#${color.toHex()}`)}
-                      className={s.catColor}
-                      showText
-                    />
-                    <Button className={s.deleteCat} icon={<DeleteOutlined />} onClick={() => deleteCategory(item.value)} danger />
-                  </Flex>
-                ))}
-              </Flex>
+              <Categories items={categories} onChange={handleChangeCategory} reorder={reorderCategories} deleteCategory={deleteCategory} />
               <Button type='dashed' className={s.addCat} onClick={() => setCategories([...categories, { value: `cat${categories.length + 1}`, label: '', icon: null, color: '#000' }])} block>
                 <PlusOutlined /> Add category
               </Button>
