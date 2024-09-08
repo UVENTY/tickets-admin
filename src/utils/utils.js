@@ -125,3 +125,18 @@ export const jsonBase64 = async (obj, filename = 'file.json') => {
   })
   return await (scheme_file ? toBase64(scheme_file) : Promise.resolve())
 }
+
+export const downloadBlob = (blob, filename) => {
+  try {
+    const downloadUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = downloadUrl
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    URL.revokeObjectURL(a.href)
+    document.body.removeChild(a)
+  } catch (e) {
+    console.error(e)
+  }
+}

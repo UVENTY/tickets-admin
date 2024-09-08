@@ -17,3 +17,16 @@ export async function editTickets(t_id, params) {
   const response = await axios.post(`/trip/get/${t_id}/ticket/edit`, params)
   return response.data
 }
+
+export async function getTicketPdf(params: { seat: string, t_id: string }) {
+  const response = await axios.post(
+    `trip/get/${params.t_id}/ticket/read/`, {
+      seat: params.seat,
+      pdf: true
+    },
+    {
+      responseType: 'blob'
+    }
+  )
+  return response.data
+}

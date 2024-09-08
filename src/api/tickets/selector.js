@@ -35,7 +35,6 @@ export const selectFlatArray = ({ old: data, new: list }) => {
     acc[key] = { currency, code, code_qr_base64, fullSeat: item.seat }
     return acc
   }, {})
-  console.log(newDataMap);
   
   return Object.values(data.trip).reduce((tickets, group) => {    
     const commonData = renameKeys({

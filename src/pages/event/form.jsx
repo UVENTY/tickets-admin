@@ -1,21 +1,24 @@
 import { get } from 'lodash'
-import { useMutation } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
+import { keyBy } from 'lodash'
 import dayjs from 'dayjs'
-import { Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse, InputNumber, List } from 'antd'
-import { ArrowLeftOutlined, SaveOutlined, DownloadOutlined } from '@ant-design/icons'
+import { Table, Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse, InputNumber, List } from 'antd'
+import { ArrowLeftOutlined, SaveOutlined, DownloadOutlined, FilePdfOutlined } from '@ant-design/icons'
 import TicketsApi from '../../api/tickets'
 import { useData, useUpdateData } from '../../api/data'
 import { axios } from '../../api/axios'
 import SvgSchemeEditor from '../../components/SvgSchemeEditor'
 import Sidebar from '../../components/Layout/sidebar'
 import { getCitiesOptions, getCountriesOptions, getLangValue } from '../../redux/config'
-import { jsonBase64, qrBase64, toBase64 } from '../../utils/utils'
+import { downloadBlob, jsonBase64, qrBase64, toBase64 } from '../../utils/utils'
 import './event.scss'
 import { EMPTY_ARRAY, NON_SEAT_ROW } from '../../consts'
 import Wysiwyg from '../../components/Wysiwyg'
+import { getTicketPdf } from '../../api/tickets/request'
+import { getColumnSearch } from '../../utils/components'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
@@ -112,6 +115,16 @@ export default function EventForm() {
   const countries = useSelector(getCountriesOptions)
 
   const schemeData = Form.useWatch(['stadium', 'scheme_blob'], form)
+
+  const { isLoading: isLoadingUsers, data: usersMap } = useQuery({
+    queryKey: ['usersMap'],
+    queryFn: async () => {
+      const response = await axios.post('/query/select', {
+        sql: `SELECT id_user,id_role,phone,email,name,family,middle,id_verification_status FROM users WHERE active=1 AND deleted!=1`
+      })
+      return (response.data?.data || []).reduce((acc, item) => ({ ...acc, [item.id_user]: item }), {})
+    }
+  })
   
   const isNew = id === 'create'
   const updateData = useUpdateData()
@@ -137,6 +150,51 @@ export default function EventForm() {
     }
   })
   
+  const ticketsColumns = useMemo(() => [
+    {
+      dataIndex: 'section',
+      title: 'Section',
+      sorter: (a, b) => a.section?.localeCompare(b.section),
+      ...getColumnSearch('section', { options: schemeData?.categories })
+    }, {
+      dataIndex: 'row',
+      title: 'Row',
+      sorter: (a, b) => parseInt(a.row, 10) < parseInt(b.row, 10) ? -1 : 1,
+      ...getColumnSearch('row')
+    }, {
+      dataIndex: 'seat',
+      title: 'Seat',
+      sorter: (a, b) => parseInt(a.seat, 10) < parseInt(b.seat, 10) ? -1 : 1,
+      ...getColumnSearch('seat')
+    }, {
+      dataIndex: 'price',
+      title: 'Price',
+    }, {
+      dataIndex: 'sold_info',
+      title: 'Buyer',
+      ...getColumnSearch('sold_info', { getData: item => usersMap[item.sold_info?.user_id]?.email }),
+      render: info => {
+        const user = usersMap[info?.user_id]
+        if (!user) return info?.user_id
+        return user.email
+      }
+    }, {
+      key: 'actions',
+      title: 'Download',
+      render: (_, item) => {
+        return (
+          <Button
+            icon={<FilePdfOutlined />}
+            onClick={async () => {
+              const pdf = await getTicketPdf({ seat: item.fullSeat, t_id: item.fuckingTrip })
+              downloadBlob(pdf, 'ticket.pdf')
+            }}
+          />
+        )
+      }
+    }
+  ], [usersMap, schemeData?.categories])
+    
   const emailSubject = useSelector(state => getLangValue(state, `email_ticket_paid_subject_${id}`))
   const emailContent = useSelector(state => getLangValue(state, `email_ticket_paid_body_${id}`))
   const pdfContent = useSelector(state => getLangValue(state, `html_pdf_ticket_paid_body_${id}`))
@@ -429,15 +487,22 @@ export default function EventForm() {
               label: <b>Tickets</b>,
               style: panelStyle,
               children:
-                <Button
-                  size='large'
-                  type='default'
-                  htmlType='button'
-                  icon={<DownloadOutlined />}
-                  onClick={ () => exportTickets( tickets.data, id ) }
-                >
-                  Download CSV
-                </Button>
+                <>
+                  <Button
+                    size='large'
+                    type='default'
+                    htmlType='button'
+                    icon={<DownloadOutlined />}
+                    onClick={() => exportTickets(tickets.data, id)}
+                  >
+                    Download CSV
+                  </Button>
+                  <Table
+                    dataIndex='code'
+                    columns={ticketsColumns}
+                    dataSource={tickets.data}
+                  />
+                </>
             }
           ]}
         />

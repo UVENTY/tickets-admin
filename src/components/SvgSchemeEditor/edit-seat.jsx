@@ -7,8 +7,9 @@ import cn from 'classnames'
 import InputSvg from '../InputSvg'
 import s from './svg-scheme-editor.module.scss'
 import { axios } from '../../api/axios'
-import { setCurrentColor } from '../../utils/utils'
+import { downloadBlob, setCurrentColor } from '../../utils/utils'
 import { API_URL } from '../../consts'
+import { getTicketPdf } from '../../api/tickets/request'
 
 const { Title } = Typography
 
@@ -144,27 +145,11 @@ export default function SvgSchemeEditSeat({
           </Fragment>
         )
       })}
-      {seats.length === 1 && !!ticket && false &&
+      {seats.length === 1 && !!ticket &&
         <Flex gap={16} style={{ marginTop: 20 }}>
           <Button type='primary' icon={<DownloadOutlined />} size='large' onClick={async () => {
-            const params = { seat: ticket.fullSeat, pdf: true }
-            const response = await axios.post(`trip/get/${ticket.fuckingTrip}/ticket/read/`, params)
-            const blob = new Blob([response.data], { type: 'application/pdf' })
-            const eblob = new Blob([], { type: 'application/pdf' })
-            console.log(blob.size, eblob.size);
-            var reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = function () {
-              var base64data = reader.result;
-              console.log(base64data);
-            }
-            console.log(blob)
-            const downloadUrl = URL.createObjectURL(blob)
-            const a = document.createElement("a")
-            a.href = downloadUrl
-            a.download = "ticket.pdf"
-            document.body.appendChild(a)
-            a.click()
+            const pdf = await getTicketPdf({ t_id: ticket.fuckingTrip, seat: ticket.fullSeat })
+            downloadBlob(pdf, 'ticket.pdf')
           }}>
             Download pdf
           </Button>
