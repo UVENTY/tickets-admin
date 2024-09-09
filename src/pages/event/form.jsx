@@ -125,7 +125,7 @@ export default function EventForm() {
       return (response.data?.data || []).reduce((acc, item) => ({ ...acc, [item.id_user]: item }), {})
     }
   })
-  
+
   const isNew = id === 'create'
   const updateData = useUpdateData()
   const mutateTickets = useMutation({ mutationFn: TicketsApi.updateTickets })
@@ -259,6 +259,14 @@ export default function EventForm() {
     boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03),0 1px 6px -1px rgba(0, 0, 0, 0.02),0 2px 4px 0 rgba(0, 0, 0, 0.02)',
     marginBottom: 20,
   }
+
+
+  const t = tickets?.data || EMPTY_ARRAY
+  const sumTotal = t.length
+  const sumSold = t.filter(ticket => ticket.is_sold).length
+  const sumReserved = t.filter(ticket => ticket.is_reserved).length
+  const sumDisabled = t.filter(ticket => ticket.disabled).length - sumSold - sumReserved
+  const sumRemains = sumTotal - (sumSold + sumReserved + sumDisabled)
   
   const initialValues = isNew ? {} : data.event
   return (
@@ -478,7 +486,7 @@ export default function EventForm() {
               label: <b>Remainings</b>,
               style: panelStyle,
               children:
-                <div>
+                <div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
                   <List
                     grid={{ gutter: 16, column: 4 }}
                     dataSource={schemeData?.categories || EMPTY_ARRAY}
@@ -490,7 +498,7 @@ export default function EventForm() {
                       const disabledCount = t.filter(ticket => ticket.section === item.value && ticket.disabled).length - soldCount - reservedCount
                       const remainsCount = totalCount - (soldCount + reservedCount + disabledCount)
                       return (
-                        <List.Item style={{ marginBottom: 40, textAlign: 'right' }}>
+                        <List.Item  style={{ marginBottom: 40, width: 300, textAlign: 'right' }}>
                           <List.Item.Meta
                             title={<span style={{ color: item.color }}><span style={{ verticalAlign: 'middle', marginRight: 6 }} dangerouslySetInnerHTML={{ __html: item.icon }} />{item.label}</span>}
                             description={<>Total <b>{totalCount}</b> tickets</>}
@@ -503,6 +511,16 @@ export default function EventForm() {
                       )
                     }}
                   />
+                  <div style={{ width: 300, marginTop: -30 }}>
+                    <List.Item.Meta
+                      title={<span style={{ color: '#000' }}>Summary</span>}
+                      description={<>Total <b>{sumTotal}</b> tickets</>}
+                    />
+                    Sold <b>{sumSold}</b><br />
+                    Reserved <b>{sumReserved}</b><br />
+                    Disabled <b>{sumDisabled}</b><br />
+                    Remains <b>{sumRemains}</b>
+                  </div>
                 </div>
             },
             {
