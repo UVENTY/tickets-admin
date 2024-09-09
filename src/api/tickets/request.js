@@ -8,6 +8,16 @@ export async function fetchTickets(params) {
   return { old: response.data?.data, new: response2.data?.data }
 }
 
+export async function fetchTicketsPaymentData(tickets = []) {
+  const ids = tickets
+    .map(item => item.sold_info?.buy_id)
+    .filter((item, i, arr) => Boolean(item) && arr.indexOf(item) === i)
+  
+  if (!ids.length) return { data: [] }
+  const response = await axios.post(`/drive/get/${ids.join(',')}`)
+  return response.data
+}
+
 export async function createTickets(params) {
   const response = await axios.post('/trip', params)
   return response.data

@@ -17,7 +17,7 @@ import { downloadBlob, jsonBase64, qrBase64, toBase64 } from '../../utils/utils'
 import './event.scss'
 import { EMPTY_ARRAY, NON_SEAT_ROW } from '../../consts'
 import Wysiwyg from '../../components/Wysiwyg'
-import { getTicketPdf } from '../../api/tickets/request'
+import { fetchTicketsPaymentData, getTicketPdf } from '../../api/tickets/request'
 import { getColumnSearch } from '../../utils/components'
 
 const getOptions = obj => Object.values(obj)
@@ -149,6 +149,32 @@ export default function EventForm() {
       }
     }
   })
+
+
+  const baseTickets = TicketsApi.useTickets({ event_id: id }, { order: 'section' }, {
+    enabled: !isNew
+  })
+
+  const tickets = useQuery({
+    queryKey: ['purchases', id],
+    queryFn: () => fetchTicketsPaymentData(baseTickets?.data),
+    select: data => {
+      const { booking } = data?.data || {}
+      return baseTickets.data?.map(({ sold_info, ...ticket }) => {
+        const date = booking[sold_info?.buy_id]?.b_payment_datetime
+        const day = dayjs(date).isValid() ? dayjs(date) : null
+        const sold = sold_info ? {
+          ...sold_info,
+          date: day
+        } : null
+        return {
+          ...ticket,
+          sold_info: sold
+        }
+      })
+    },
+    enabled: !!baseTickets?.data  
+  })
   
   const ticketsColumns = useMemo(() => [
     {
@@ -169,14 +195,40 @@ export default function EventForm() {
     }, {
       dataIndex: 'price',
       title: 'Price',
+      sorter: (a, b) => parseInt(a.price, 10) < parseInt(b.price, 10) ? -1 : 1,
     }, {
+      key: 'email',
       dataIndex: 'sold_info',
-      title: 'Buyer',
+      title: 'Buyer e-mail',
       ...getColumnSearch('sold_info', { getData: item => usersMap[item.sold_info?.user_id]?.email }),
       render: info => {
         const user = usersMap[info?.user_id]
         if (!user) return info?.user_id
         return user.email
+      }
+    }, {
+      key: 'phone',
+      dataIndex: 'sold_info',
+      title: 'Buyer phone',
+      ...getColumnSearch('phone', { getData: item => usersMap[item.sold_info?.user_id]?.phone }),
+      render: info => {
+        const user = usersMap[info?.user_id]
+        return user?.phone
+      }
+    }, {
+      key: 'date',
+      dataIndex: 'sold_info',
+      title: 'Date',
+      ...getColumnSearch('date', { getData: item => item.sold_info?.date, type: 'date' }),
+      render: (_, item) => {
+        return item.sold_info?.date?.format('DD.MM.YYYY')
+      },
+      sorter: (a, b) => {
+        const d1 = a.sold_info?.date
+        const d2 = b.sold_info?.date
+        if (!d1?.isValid() && d2?.isValid()) return -1
+        if (!d2?.isValid()) return 1
+        return d1?.isBefore(d2) ? -1 : 1
       }
     }, {
       key: 'actions',
@@ -198,10 +250,6 @@ export default function EventForm() {
   const emailSubject = useSelector(state => getLangValue(state, `email_ticket_paid_subject_${id}`))
   const emailContent = useSelector(state => getLangValue(state, `email_ticket_paid_body_${id}`))
   const pdfContent = useSelector(state => getLangValue(state, `html_pdf_ticket_paid_body_${id}`))
-  
-  const tickets = TicketsApi.useTickets({ event_id: id }, { order: 'section' }, {
-    enabled: !isNew
-  })
   
   if ((!isNew && (isLoading || tickets.isLoading)) || !data) return null
 
