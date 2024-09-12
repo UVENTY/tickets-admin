@@ -263,7 +263,7 @@ export default function EventForm() {
                 setChangingTicket(fullSeat)
                 let promise = Promise.resolve()
                 // Реально купленный билет
-                if (item.sold_info?.buy_id !== -1) {
+                if (item.sold_info && item.sold_info?.buy_id !== -1) {
                   promise = axios.post(`/drive/get/${item.sold_info?.buy_id}`, { action: 'set_cancel_state' })
                 } else {
                   promise = axios.post(`/trip/get/${item.fuckingTrip}/ticket/edit`, { data: JSON.stringify([{ seat: fullSeat, status: onSale ? 2 : 1 }]) })
