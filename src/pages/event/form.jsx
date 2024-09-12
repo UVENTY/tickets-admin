@@ -172,6 +172,8 @@ export default function EventForm() {
           ...ticket,
           sold_info: sold
         }
+      }).sort((a, b) => {
+        return a.fullSeat.localeCompare(b.fullSeat)
       })
     },
     enabled: !!baseTickets?.data  

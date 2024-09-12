@@ -61,6 +61,7 @@ export default function SvgSchemeEditor(props) {
           const el = svg.querySelector(`.${seatClassName}[data-row="${ticket.row}"][data-seat="${ticket.seat}"]`)
           el?.setAttribute('data-disabled', '')
           el?.setAttribute('style', 'stroke: red; stroke-width: 2px;')
+          el?.classList.add('unavailable')
         })
         
         const s = new XMLSerializer();
@@ -85,6 +86,20 @@ export default function SvgSchemeEditor(props) {
       })
     }
   }, [])
+
+  useEffect(() => {
+    svgRef.current.querySelectorAll('.unavailable').forEach(el => {
+      el.removeAttribute('data-disabled')
+      el.removeAttribute('style')
+      el.classList.remove('unavailable')
+    })
+    tickets.filter(item => item.status === 2).forEach(ticket => {
+      const el = svgRef.current.querySelector(`.${seatClassName}[data-row="${ticket.row}"][data-seat="${ticket.seat}"]`)
+      el?.setAttribute('data-disabled', '')
+      el?.setAttribute('style', 'stroke: red; stroke-width: 2px;')
+      el?.classList.add('unavailable')
+    })
+  }, [tickets])
 
   useEffect(() => 
    onChange({
