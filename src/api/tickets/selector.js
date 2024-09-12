@@ -30,9 +30,9 @@ const entries = Object.entries
 export const selectFlatArray = ({ old: data, new: list }) => {
   const newDataMap = (list?.ticket || []).reduce((acc, item) => {
     const [ , section, row, seat ] = item.seat.split(';')
-    const { currency, code, code_qr_base64 } = item
+    const { currency, code, code_qr_base64, status } = item
     const key = [section, row, seat].join(';')
-    acc[key] = { currency, code, code_qr_base64, fullSeat: item.seat }
+    acc[key] = { currency, code, code_qr_base64, status: Number(status), fullSeat: item.seat }
     return acc
   }, {})
   

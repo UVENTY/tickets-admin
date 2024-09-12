@@ -56,6 +56,13 @@ export default function SvgSchemeEditor(props) {
           el?.setAttribute('data-count', value.count || 0)
           el?.setAttribute('data-busyCount', value.busyCount || 0)
         })
+        
+        tickets.filter(item => item.status === 2).forEach(ticket => {
+          const el = svg.querySelector(`.${seatClassName}[data-row="${ticket.row}"][data-seat="${ticket.seat}"]`)
+          el?.setAttribute('data-disabled', '')
+          el?.setAttribute('style', 'stroke: red; stroke-width: 2px;')
+        })
+        
         const s = new XMLSerializer();
         setScheme(s.serializeToString(svg))
         setCategories(data.categories)

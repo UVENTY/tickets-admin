@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import { keyBy } from 'lodash'
 import dayjs from 'dayjs'
-import { Table, Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse, InputNumber, List } from 'antd'
+import { Table, Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse, InputNumber, Switch, List } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined, DownloadOutlined, FilePdfOutlined } from '@ant-design/icons'
 import TicketsApi from '../../api/tickets'
 import { useData, useUpdateData } from '../../api/data'
@@ -109,6 +109,7 @@ export default function EventForm() {
   const [ form ] = Form.useForm()
   const [ isSending, setIsSending ] = useState(false)
   const [ changedPrice, setChangedPrice ] = useState({})
+  const [statusMap, setStatusMap] = useState({})
   const dispatch = useDispatch()
 
   const cities = useSelector(getCitiesOptions)
@@ -175,6 +176,8 @@ export default function EventForm() {
     },
     enabled: !!baseTickets?.data  
   })
+
+  const [changingTicket, setChangingTicket] = useState(false)
   
   const ticketsColumns = useMemo(() => [
     {
@@ -244,8 +247,41 @@ export default function EventForm() {
           />
         )
       }
+    }, {
+      key: 'actions',
+      title: 'Actions',
+      render: (_, item) => {
+        const { fullSeat, status, is_sold } = item
+        const onSale = status === 1 && !is_sold
+        return (
+          <div>
+            <Button
+              disabled={changingTicket}
+              loading={changingTicket === fullSeat}
+              danger={!onSale}
+              onClick={e => {
+                setChangingTicket(fullSeat)
+                let promise = Promise.resolve()
+                // Реально купленный билет
+                if (item.sold_info?.buy_id !== -1) {
+                  promise = axios.post(`/drive/get/${item.sold_info?.buy_id}`, { action: 'set_cancel_state' })
+                } else {
+                  promise = axios.post(`/trip/get/${item.fuckingTrip}/ticket/edit`, { data: JSON.stringify([{ seat: fullSeat, status: onSale ? 2 : 1 }]) })
+                }
+                promise.then(() => baseTickets.refetch()).finally(() => {
+                  setChangingTicket(false)
+                })
+              }}
+            >
+              {onSale ? 'Remove from sail' : (
+                status === 1 ? 'Remove order and return to sale' : 'Return to sale'
+              )}
+            </Button>
+          </div>
+        )
+      }
     }
-  ], [usersMap, schemeData?.categories])
+  ], [usersMap, changingTicket, schemeData?.categories])
     
   const emailSubject = useSelector(state => getLangValue(state, `email_ticket_paid_subject_${id}`))
   const emailContent = useSelector(state => getLangValue(state, `email_ticket_paid_body_${id}`))
@@ -474,10 +510,10 @@ export default function EventForm() {
                   </Col>
                 </Row>
                 <Form.Item className='scheme_blob' name={['stadium', 'scheme_blob']}>
-                  <SvgSchemeEditor
+                  {!!tickets.data && <SvgSchemeEditor
                     tickets={tickets.data}
-                    onTicketsChange={val => console.log(val) || setChangedPrice(prev => ({ ...prev, ...val }))}
-                  />
+                    onTicketsChange={val => setChangedPrice(prev => ({ ...prev, ...val }))}
+                  />}
                 </Form.Item>
               </>
             },
