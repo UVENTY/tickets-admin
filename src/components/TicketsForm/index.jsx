@@ -19,7 +19,7 @@ import {
 import { PlusCircleFilled, MinusCircleOutlined, QuestionCircleOutlined  } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import InputFile from '../InputFile'
-import axios from '../../utils/axios'
+import { axios } from 'api/axios'
 import { capitalizeFirstLetter, toBase64, getFileExt } from '../../utils/utils'
 import { getColumnSearch } from '../../utils/components'
 import { getCurrencyList, getDefaultCurrency } from '../../redux/config'

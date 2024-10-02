@@ -1,4 +1,4 @@
-import axios from '../../utils/axios'
+import { axios } from 'api/axios'
 import { setTicketByMatch, setLoading, setTicketsFile } from '.'
 
 function parseTrips(trips) {

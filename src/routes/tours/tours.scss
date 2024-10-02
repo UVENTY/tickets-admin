@@ -1,0 +1,86 @@
+.tours {
+  flex: 1 1 0;
+  margin: 0;
+
+  .list {
+    &-field,
+
+
+    &_actions-pos {
+      &_left {
+        .ant-list-item {
+          position: relative;
+          margin-block-start: 20px;
+          margin-block-end: 0 !important;
+
+          &:hover .ant-list-item-action {
+            opacity: 1;
+          }
+        }
+
+      }
+    }
+  }
+  
+  .list-item {
+    padding-left: 40px;
+  }
+
+  .ant-form-item {
+    margin-bottom: 6px;
+  }
+
+  .ant-list-item-meta-description {
+    padding-top: 4px;
+  }
+
+  .ant-list-item-action {
+    position: absolute;
+    left: 0;
+    top: 2px;
+    flex-direction: column;
+    display: flex;
+    margin-top: 0 !important;
+    gap: 6px;
+    text-align: right;
+    opacity: 0.2;
+    transition: ease-in-out .2s opacity;
+
+    &>li {
+      padding: 0 !important;
+      margin-right: 6px;
+    }
+  }
+  
+  .ant-form + .ant-list-item-action {
+    opacity: 1;
+  }
+
+  .create-item {
+    display: block;
+    border: 1px dashed #ccc;
+    border-radius: 10px;
+    padding: 20px;
+    cursor: pointer;
+    height: 100%;
+    font-size: 1.4em;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #999;
+    margin-right: 40px;
+    transition: ease-in-out .2s;
+    transition-property: color, border-color;
+
+    &:hover {
+      border-color: var(--ant-color-link);
+      color: var(--ant-color-link);
+    }
+  }
+
+  .description-textarea,
+  .ant-list-item-meta-description {
+    min-height: 72px;;
+  }
+}

@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom'
 import { forEach } from 'lodash'
 import HTMLPreview from '../../components/HTMLPreview'
 import { getLang, getLangValue, updateLang } from '../../redux/config'
-import Sidebar from '../../components/Layout/sidebar'
+import Sidebar from '../../components/layout/sidebar'
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
 
 const TEMPLATE_BY_PAGE = {

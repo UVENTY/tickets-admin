@@ -9,7 +9,7 @@ import { useData } from '../../api/data'
 import dayjs from 'dayjs'
 import Sidebar from '../../components/layout/sidebar'
 
-export default function PageEvent() {
+export default function Events() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const user = useSelector(state => state.user.profile)

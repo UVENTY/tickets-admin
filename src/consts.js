@@ -1,5 +1,7 @@
 export const API_URL = process.env.REACT_APP_API_URL
 
+export const NEW_ITEM_ID = 'create'
+
 export const USER_ROLES_COLOR = {
   '1': '#2db7f5',
   '2': '#87d068',

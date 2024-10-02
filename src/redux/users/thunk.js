@@ -1,4 +1,4 @@
-import axios from '../../utils/axios'
+import { axios } from 'api/axios'
 import { setLoading, setCurrentProfile, updateCurrentProfile, setUserList, setUpdating } from '.'
 
 export const fetchUserList = (page, perPage) => async (dispatch) => {

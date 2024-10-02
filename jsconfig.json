@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src/",
+    "paths": {
+      "api/*": ["api/*"],
+      "components/*": ["components/*"],
+      "routes/*": ["routes/*"],
+      "shared/*": ["shared/*"]
+    }
+  }
+}

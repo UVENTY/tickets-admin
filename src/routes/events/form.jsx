@@ -1,5 +1,5 @@
 import { get } from 'lodash'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -111,9 +111,13 @@ export default function EventForm() {
   const [ changedPrice, setChangedPrice ] = useState({})
   const [statusMap, setStatusMap] = useState({})
   const dispatch = useDispatch()
+  const queryClient = useQueryClient()
 
-  const cities = useSelector(getCitiesOptions)
-  const countries = useSelector(getCountriesOptions)
+  const config = queryClient.getQueryData(['config'])?.options
+  console.log(config);
+  
+  const cities = [] // useSelector(getCitiesOptions)
+  const countries = [] // useSelector(getCountriesOptions)
 
   const schemeData = Form.useWatch(['stadium', 'scheme_blob'], form)
 

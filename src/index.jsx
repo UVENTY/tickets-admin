@@ -1,24 +1,26 @@
 import React from 'react'
+import { ConfigProvider, theme } from 'antd'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, RouterProvider } from 'react-router-dom'
 import { Provider } from 'react-redux'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
+import { LoadingProvider, useLoading, AppStateProvider, useAppState } from 'shared/contexts'
 import store from './redux'
-import App from './App'
 import reportWebVitals from './reportWebVitals'
 import './index.css'
-import { ConfigProvider, theme } from 'antd'
+import App from './App'
 
 dayjs.extend(utc)
+export const queryClient = new QueryClient()
 
-const queryClient = new QueryClient()
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(
   <React.StrictMode>
     <ConfigProvider
       theme={{
+        cssVar: true,
         token: {
           colorPrimary: "#0476D0",
           colorInfo: "#0476D0",
@@ -30,9 +32,11 @@ root.render(
     >
       <Provider store={store}>
         <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <LoadingProvider>
+            <AppStateProvider>
+              <App />
+            </AppStateProvider>
+          </LoadingProvider>
         </QueryClientProvider>
       </Provider>
     </ConfigProvider>

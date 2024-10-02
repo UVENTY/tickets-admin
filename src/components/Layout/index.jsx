@@ -1,8 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   CalendarOutlined,
+  CompassFilled,
+  CompassOutlined,
   DashboardOutlined,
   FileTextOutlined,
+  GlobalOutlined,
+  HomeOutlined,
   MailOutlined,
   TeamOutlined,
   TrophyOutlined,
@@ -10,19 +14,41 @@ import {
 } from '@ant-design/icons'
 import {
   Menu,
-  Layout,
+  Layout as AntLayout,
   Divider,
 } from 'antd'
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
+import { Outlet, Link, useNavigate, useLocation, useLoaderData } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import StadiumIcon from './stadiumIcon'
 import s from './layout.module.scss'
 import Logo from '../../instance/components/logo'
+import { axios } from 'api/axios'
+import { fetchConfig } from 'redux/config'
+import { authorizeByTokens } from 'redux/user'
+import { pick } from 'lodash'
+import { useAppState } from 'shared/contexts'
 
-const { Header, Content, Footer } = Layout
+export const query = {
+  queryKey: ['config'],
+  queryFn: () => axios.get('/data').then(res => ({
+    values: ['country', 'currency', 'lang', 'lang_vls'].reduce((acc, key) => ({
+      ...acc,
+      [key]: res.data?.data[`default_${key}`]
+    }), {}),
+    options: pick(res.data?.data?.data, ['cities', 'countries', 'langs', 'ticket_statuses', 'user_roles'])
+  })),
+}
+
+const { Header, Content, Footer } = AntLayout
 
 const NAVBAR_TOP = [
   {
+    key: 'tours',
+    label: <Link to='/tours'><GlobalOutlined />&nbsp;&nbsp;Tours</Link>,
+  }, {
+    key: 'halls',
+    label: <Link to='/halls'><HomeOutlined />&nbsp;&nbsp;Concert halls</Link>,
+  }, {
     key: 'events',
     label: <Link to='/events'><CalendarOutlined />&nbsp;&nbsp;Events</Link>,
   }, {
@@ -31,9 +57,6 @@ const NAVBAR_TOP = [
   }, {
     key: 'stadiums',
     label: <Link to='/stadiums'><StadiumIcon width={14} heiht={14} />&nbsp;&nbsp;Stadiums</Link>,
-  }, {
-    key: 'tournaments',
-    label: <Link to='/tournaments'><TrophyOutlined />&nbsp;&nbsp;Tournaments</Link>,
   }, {
     key: 'd1',
     label: <Divider type='vertical' />
@@ -73,14 +96,34 @@ const NAVBAR_RIGHT = [
   { key: 'users', label:<Link to='/users'>Users</Link>, icon: <UserOutlined /> }
 ]
 
-export default function PageLayout() {
+export default function Layout() {
   const location = useLocation()
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const config = useLoaderData()
+  const appState = useAppState()
+  
+  const path = location.pathname.split('/').filter(Boolean)
+  const rootPage = path[0]
+  const isLoginPage = location.pathname === '/login'
 
-   const path = location.pathname.split('/').filter(Boolean)
-   const rootPage = path[0]
-
+  useEffect(() => {
+    const [langId, lang] = Object.entries(config.options.langs).find(([id, lang]) => Number(id) === config.values.lang)
+    appState.setState({ ...config.values, langId, langCode: lang?.iso, lang })
+  }, [config])
+  
+  useEffect(() => {
+    dispatch(authorizeByTokens).then(role => {
+      if (!role) {
+        navigate('/login', { replace: true })
+      } else if (isLoginPage) {
+        navigate(role === '4' ? '/users' : '/tickets', { replace: true })
+      }
+    })
+  }, [isLoginPage])
+  
   return (
-    <Layout>
+    <AntLayout>
       <Header className={s.header}>
         <Logo />
         <Menu
@@ -89,16 +132,16 @@ export default function PageLayout() {
           items={NAVBAR_TOP}
           style={{ flex: 1, minWidth: 0 }}
           triggerSubMenuAction='click'
-          selectedKeys={NAVBAR_TOP.filter(item => rootPage === item.key).map(item => item.key)}
+          selectedKeys={[rootPage]}
         />
         <Menu style={{ flex: '1 1 0'}} mode='horizontal' items={NAVBAR_RIGHT} />
       </Header>
       <Content className={s.content}>
-        <Outlet />
+        <Outlet config={config} />
       </Content>
       <Footer style={{ textAlign: 'center' }}>
         
       </Footer>
-    </Layout>
+    </AntLayout>
   )
 }

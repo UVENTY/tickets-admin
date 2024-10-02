@@ -1,5 +1,5 @@
 import Cookies from 'universal-cookie'
-import axios from '../../utils/axios'
+import { axios } from 'api/axios'
 import toFormData from '../../utils/formData'
 import { setToken, setLoading, setProfile } from '.'
 

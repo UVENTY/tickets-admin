@@ -2,10 +2,10 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Table, Tag } from 'antd'
 import { CheckOutlined, PlusOutlined } from '@ant-design/icons'
-import axios from '../../utils/axios'
+import { axios } from 'api/axios'
 import { getColumnSearch } from '../../utils/components'
 import { USER_ROLES, USER_ROLES_COLOR } from '../../consts'
-import Sidebar from '../../components/Layout/sidebar'
+import Sidebar from '../../components/layout/sidebar'
 
 const columns = [
   {

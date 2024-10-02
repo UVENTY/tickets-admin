@@ -1,4 +1,4 @@
-import axios from '../../utils/axios'
+import { axios } from 'api/axios'
 import { setLoading, setLoaded, setConfig, setUpdating } from '.'
 
 export const fetchConfig = async (dispatch) => {
