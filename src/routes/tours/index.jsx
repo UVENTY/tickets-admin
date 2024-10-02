@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Dropdown, Form, List, Typography } from 'antd'
-import { Link, redirect, useNavigate, useParams } from 'react-router-dom'
+import { Link, redirect, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CloseOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons'
 import { axios } from 'api/axios'
 import Sidebar from 'components/layout/sidebar'
@@ -22,7 +22,8 @@ export const query = {
 export default function Tours() {
   const { state: appState } = useAppState()
   const { langCode } = appState
-  const { id } = useParams()
+  const [ searchParams, setSearchParams ] = useSearchParams()
+  const id = searchParams.get('inline')
   const tours = useQuery(query)
   const navigate = useNavigate()
   const [ form ] = Form.useForm()
@@ -43,7 +44,7 @@ export default function Tours() {
           icon={<PlusOutlined />}
           size='large'
           style={{ verticalAlign: 'middle', marginLeft: 20 }}
-          onClick={() => navigate(`/tours/create`)}
+          onClick={() => setSearchParams({ inline: 'create' })}
         >
           Create tour
         </Button>
@@ -87,7 +88,7 @@ export default function Tours() {
               <Button
                 icon={<EditOutlined />}
                 title='Edit tour'
-                onClick={() => navigate(`/tours/${item.id}`)}
+                onClick={() => setSearchParams({ inline: item.id })}
               />,
               /* <Dropdown menu={{ items: [] }}>
                 <Button
@@ -102,7 +103,10 @@ export default function Tours() {
                 initialValues={item}
                 labels={false}
                 beforeSubmit={() => setIsSending(true)}
-                afterSubmit={() => setIsSending(false)}
+                afterSubmit={() => {
+                  setIsSending(false)
+                  searchParams.delete('inline')
+                }}
               /> :
               <List.Item.Meta
                 style={{ padding: '5.5px 0 0 12px' }}

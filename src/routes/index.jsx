@@ -19,7 +19,7 @@ const getRouter = queryClient => createBrowserRouter([
         path: '/',
         element: <>Test</>
       }, {
-        path: '/tours/:id?',
+        path: '/tours',
         element: <Tours />,
         loader: getLoader(queryClient, toursQuery),
       }, {

@@ -37,7 +37,6 @@ export default function TourForm({ idProp = 'id', initialValues = {}, beforeSubm
             [...prev.map(item => item[idProp] === initialValues[idProp] ? { ...item, ...values } : item)]
         )
         afterSubmit && afterSubmit(response)
-        navigate('/tours', { state: response.data })
       }}
       layout='vertical'
     >
