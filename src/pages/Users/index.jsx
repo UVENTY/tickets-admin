@@ -5,7 +5,7 @@ import { CheckOutlined, PlusOutlined } from '@ant-design/icons'
 import { axios } from 'api/axios'
 import { getColumnSearch } from '../../utils/components'
 import { USER_ROLES, USER_ROLES_COLOR } from '../../consts'
-import Sidebar from '../../components/layout/sidebar'
+import Sidebar from '../../routes/layout/sidebar'
 
 const columns = [
   {

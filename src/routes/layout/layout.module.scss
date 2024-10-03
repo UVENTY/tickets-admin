@@ -10,8 +10,11 @@
 .topNavbar {
   margin-right: 100px;
   li {
-    font-size: 16px;
-    font-weight: 400;
+    
+    a {
+      font-size: 16px;
+      font-weight: 400;
+    }
 
     &:after {
       left: 0 !important;

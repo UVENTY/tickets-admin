@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom'
 import { forEach } from 'lodash'
 import Wysiwyg from '../../components/Wysiwyg'
 import { getLang, getLangValue, updateLang } from '../../redux/config'
-import Sidebar from '../../components/layout/sidebar'
+import Sidebar from '../../routes/layout/sidebar'
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
 
 export default function PageContent() {

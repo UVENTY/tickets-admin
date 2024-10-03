@@ -11,7 +11,7 @@ import TicketsApi from '../../api/tickets'
 import { useData, useUpdateData } from '../../api/data'
 import { axios } from '../../api/axios'
 import SvgSchemeEditor from '../../components/SvgSchemeEditor'
-import Sidebar from '../../components/layout/sidebar'
+import Sidebar from '../layout/sidebar'
 import { getCitiesOptions, getCountriesOptions, getLangValue } from '../../redux/config'
 import { downloadBlob, jsonBase64, qrBase64, toBase64 } from '../../utils/utils'
 import './event.scss'
@@ -289,9 +289,9 @@ export default function EventForm() {
     }
   ], [usersMap, changingTicket, schemeData?.categories])
     
-  const emailSubject = useSelector(state => getLangValue(state, `email_ticket_paid_subject_${id}`))
-  const emailContent = useSelector(state => getLangValue(state, `email_ticket_paid_body_${id}`))
-  const pdfContent = useSelector(state => getLangValue(state, `html_pdf_ticket_paid_body_${id}`))
+  const emailSubject = '' //useSelector(state => getLangValue(state, `email_ticket_paid_subject_${id}`))
+  const emailContent = '' //useSelector(state => getLangValue(state, `email_ticket_paid_body_${id}`))
+  const pdfContent = '' //useSelector(state => getLangValue(state, `html_pdf_ticket_paid_body_${id}`))
   
   if ((!isNew && (isLoading || tickets.isLoading)) || !data) return null
 
@@ -449,7 +449,7 @@ export default function EventForm() {
                   <Form.Item
                     label='Tournament'
                     name='tournament'
-                    rules={[{ required: true, message: 'Please input tournament' }]}
+                    // rules={[{ required: true, message: 'Please input tournament' }]}
                   >
                     <Select
                       placeholder='Tournament'

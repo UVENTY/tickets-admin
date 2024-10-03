@@ -31,11 +31,11 @@ import { useAppState } from 'shared/contexts'
 export const query = {
   queryKey: ['config'],
   queryFn: () => axios.get('/data').then(res => ({
-    values: ['country', 'currency', 'lang', 'lang_vls'].reduce((acc, key) => ({
+    values: ['country', 'currency', 'lang'].reduce((acc, key) => ({
       ...acc,
       [key]: res.data?.data[`default_${key}`]
     }), {}),
-    options: pick(res.data?.data?.data, ['cities', 'countries', 'langs', 'ticket_statuses', 'user_roles'])
+    options: pick(res.data?.data?.data, ['cities', 'countries', 'langs', 'ticket_statuses', 'user_roles', 'lang_vls'])
   })),
 }
 
@@ -101,7 +101,7 @@ export default function Layout() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const config = useLoaderData()
-  const appState = useAppState()
+  const [, setAppState] = useAppState()
   
   const path = location.pathname.split('/').filter(Boolean)
   const rootPage = path[0]
@@ -109,7 +109,7 @@ export default function Layout() {
 
   useEffect(() => {
     const [langId, lang] = Object.entries(config.options.langs).find(([id, lang]) => Number(id) === config.values.lang)
-    appState.setState({ ...config.values, langId, langCode: lang?.iso, lang })
+    setAppState({ ...config.values, langId, langCode: lang?.iso, lang })
   }, [config])
   
   useEffect(() => {
