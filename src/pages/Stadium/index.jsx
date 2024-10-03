@@ -12,7 +12,7 @@ import { fetchData, getStadium, getStadiumSchemeStatus, fetchStadiumScheme, post
 import { getCities, getCountries } from '../../redux/config'
 import SvgSchemeEditor from '../../components/SvgSchemeEditor'
 import { toBase64 } from '../../utils/utils'
-import Sidebar from '../../routes/layout/sidebar'
+import Sidebar from '../../shared/layout/sidebar'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))

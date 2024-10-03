@@ -7,7 +7,7 @@ import InputImage from '../../components/InputImage'
 import MultilangInput from '../../components/MultilangInput'
 import { fetchData, getTeam, postData } from '../../redux/data'
 import { getCities, getCountries } from '../../redux/config'
-import Sidebar from '../../routes/layout/sidebar'
+import Sidebar from '../../shared/layout/sidebar'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))

@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Dropdown, Form, List, Typography } from 'antd'
 import { Link, redirect, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CloseOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons'
 import { axios } from 'api/axios'
-import Sidebar from 'routes/layout/sidebar'
+import Sidebar from 'shared/layout/sidebar'
 import { useAppState } from 'shared/contexts'
 import TourForm from './form'
 import './tours.scss'
@@ -20,8 +20,8 @@ export const query = {
 }
 
 export default function Tours() {
-  const { state: appState } = useAppState()
-  const { langCode } = appState
+  const [ appState ] = useAppState()
+  const langCode = appState?.langCode
   const [ searchParams, setSearchParams ] = useSearchParams()
   const id = searchParams.get('inline')
   const tours = useQuery(query)
@@ -33,6 +33,10 @@ export default function Tours() {
     id === 'create' ? { id: 'create' } : null,
     ...(tours.data || [])
   ].filter(Boolean), [id, tours.data])
+
+  useEffect(() => {
+    form && form.resetFields()
+  }, [id])
   
   return (<>
     <Sidebar />
@@ -45,16 +49,11 @@ export default function Tours() {
           size='large'
           style={{ verticalAlign: 'middle', marginLeft: 20 }}
           onClick={() => setSearchParams({ inline: 'create' })}
-        >
-          Create tour
-        </Button>
+        />
       </Typography.Title>
       <List
         className='list list_actions-pos_left'
-        pagination={{
-          position: 'both',
-          align: 'start'
-        }}
+        pagination={false}
         itemLayout='vertical'
         grid={{ gutter: 16, column: 2 }}
         dataSource={data}

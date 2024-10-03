@@ -8,14 +8,14 @@ import { axios } from 'api/axios'
 import { useAppState } from 'shared/contexts'
 
 export default function TourForm({ idProp = 'id', initialValues = {}, beforeSubmit, afterSubmit, labels = true, form, onSubmit }) {
-  const { state: appState } = useAppState()
+  const [ appState ] = useAppState()
   const { langCode } = appState
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   
-  useEffect(() => {
-    form && form.resetFields()
-  }, [initialValues])
+  /* useEffect(() => {
+    form && form.setFieldsValue(initialValues)
+  }, [initialValues]) */
   
   return (
     <Form

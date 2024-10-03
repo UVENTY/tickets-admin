@@ -5,7 +5,7 @@ import { Button, Row, Table } from 'antd'
 import { PlusCircleFilled, PlusOutlined } from '@ant-design/icons'
 import { getColumnSearch } from '../../utils/components'
 import { fetchData, getTournamentsList } from '../../redux/data'
-import Sidebar from '../../routes/layout/sidebar'
+import Sidebar from '../../shared/layout/sidebar'
 
 const columns = [
   {

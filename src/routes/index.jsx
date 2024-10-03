@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { QueryClient, useQueryClient } from '@tanstack/react-query'
-import Layout, { query as layoutQuery } from 'routes/layout'
+import Layout, { query as layoutQuery } from 'shared/layout'
 import Tours, { query as toursQuery } from './tours'
 import PageLogin from 'pages/Login'
 import { useMemo } from 'react'

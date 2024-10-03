@@ -7,7 +7,7 @@ import { fetchData } from '../../redux/data'
 import TicketsApi from '../../api/tickets'
 import { useData } from '../../api/data'
 import dayjs from 'dayjs'
-import Sidebar from '../../routes/layout/sidebar'
+import Sidebar from '../../shared/layout/sidebar'
 
 export default function PageEvent() {
   const dispatch = useDispatch()

@@ -12,8 +12,12 @@ export const axios = axiosHttp.create({
 axios.interceptors.request.use(config => {
   const { data } = config
   const formData = (data instanceof URLSearchParams || data instanceof FormData) ? data : getFormData(data)
-  formData.append('token', cookies.get('token'))
-  formData.append('u_hash', cookies.get('u_hash'))
+  const token = cookies.get('token')
+  const u_hash = cookies.get('u_hash')
+  if (token && u_hash) {
+    formData.append('token', token)
+    formData.append('u_hash', u_hash)
+  }
   config.data = formData
   return config
 })

@@ -5,7 +5,7 @@ import { Col, Row, Form, Button } from 'antd'
 import { ArrowLeftOutlined, CaretLeftFilled, SaveOutlined } from '@ant-design/icons'
 import MultilangInput from '../../components/MultilangInput'
 import { fetchData, getTournament, postData } from '../../redux/data'
-import Sidebar from '../../routes/layout/sidebar'
+import Sidebar from '../../shared/layout/sidebar'
 
 export default function PageTournament() {
   const dispatch = useDispatch()

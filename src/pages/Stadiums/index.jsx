@@ -7,7 +7,7 @@ import { getColumnSearch } from '../../utils/components'
 import { getOptions } from '../../utils/utils'
 import { fetchData, getStadiumsList } from '../../redux/data'
 import { getCountries } from '../../redux/config'
-import Sidebar from '../../routes/layout/sidebar'
+import Sidebar from '../../shared/layout/sidebar'
 
 export default function PageStadiums() {
   const dispatch = useDispatch()

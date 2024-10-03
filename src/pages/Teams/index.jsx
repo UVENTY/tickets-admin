@@ -7,7 +7,7 @@ import { fetchData, getTeams } from '../../redux/data'
 import { getCities, getCountries } from '../../redux/config'
 import { getColumnSearch } from '../../utils/components'
 import { getOptions } from '../../utils/utils'
-import Sidebar from '../../routes/layout/sidebar'
+import Sidebar from '../../shared/layout/sidebar'
 
 export default function PageTeams() {
   const dispatch = useDispatch()
