@@ -1,14 +1,20 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useCallback, useContext, useState } from 'react'
 
-const AppStateContext = createContext({
-  state: {},
-  setState: () => {},
-})
+const initialAppState = {
+  isLoading: false,
+  config: null,
+  state: null,
+}
+
+const AppStateContext = createContext([
+  initialAppState,
+  () => {}
+])
 
 export function AppStateProvider({ children }) {
-  const [state, setState] = useState(false)
+  const [appState, setState] = useState(initialAppState)
   
-  const customSetState = (key, value) => {
+  const setAppState = useCallback((key, value) => {
     if (value !== undefined) {
       setState(prevState => ({ ...prevState, [key]: value }))
       return
@@ -20,17 +26,17 @@ export function AppStateProvider({ children }) {
         break
     
       case 'function':
-        setState(prevState => key(prevState))
+        setState(key)
         break
 
       default:
         console.warn(`Invalid key type, ${typeof key} passed instead object or function`)
         break
     }
-  }
+  }, [])
 
   return (
-    <AppStateContext.Provider value={{ state, setState: customSetState }}>{children}</AppStateContext.Provider>
+    <AppStateContext.Provider value={[ appState, setAppState ]}>{children}</AppStateContext.Provider>
   )
 }
 
