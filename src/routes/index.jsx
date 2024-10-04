@@ -7,6 +7,9 @@ import { useMemo } from 'react'
 import { getAction, getLoader } from './utils'
 import Events from './events'
 import EventForm from './events/form'
+import Halls from './halls'
+import { query as hallsQuery } from './halls/api'
+import HallForm from './halls/form'
 
 const getRouter = queryClient => createBrowserRouter([
   {
@@ -23,11 +26,9 @@ const getRouter = queryClient => createBrowserRouter([
         element: <Tours />,
         loader: getLoader(queryClient, toursQuery),
       }, {
-        path: '/events',
-        element: <Events />
-      }, {
-        path: '/event/:id',
-        element: <EventForm />
+        path: '/halls/:id?/:dataType?',
+        element: <Halls />,
+        loader: getLoader(queryClient, hallsQuery),
       }
     ]
   }, {

@@ -5,9 +5,15 @@
 .addIcon,
 .catIcon {
   width: 32px;
-  height: 32px;
+  height: 40px;
   cursor: pointer;
   font-size: .8em;
+  text-align: center;
+
+  :global(.ant-btn-icon) {
+    margin-right: 0 !important;
+    position: relative;
+  }
 
   div {
     margin-top: -7px;
@@ -34,7 +40,7 @@
 }
 
 .addIcon {
-  padding-top: 3px;
+  padding: 3px 0 !important; 
 }
   
 .catIcon {
@@ -81,7 +87,20 @@
 }
 
 .catColor {
-  width: 100px;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  overflow: hidden;
+  width: 20px;
+  min-width: auto !important;
+  padding: 0 !important;
+
+  :global(.ant-color-picker-color-block) {
+    height: 100% !important;
+  }
+
+  :global(.ant-color-picker-color-block-inner) {
+    border-radius: 0 !important;
+  }
 }
 
 .addCat {
@@ -134,4 +153,19 @@
 .placeholderLikeValue::placeholder {
   color: rgba(0, 0, 0, 0.88) !important;
   opacity: 1 !important;
+}
+
+.orderArrows {
+  opacity: 0;
+  transition: ease-in-out .2s opacity;
+  pointer-events: none;
+}
+
+.catItem {
+  &:hover {
+    .orderArrows {
+      pointer-events: all;
+      opacity: 1;
+    }
+  }
 }

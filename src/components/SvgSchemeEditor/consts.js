@@ -9,11 +9,11 @@ export const defaultCustomProps = [
     value: 'count',
     label: 'Tickets leave',
     type: 'number',
-  }, {
+  }, /* {
     value: 'busyCount',
     label: 'Booking / Sold',
     type: 'number',
-  }, {
+  },  */{
     value: 'price',
     label: 'Price',
     type: 'number',

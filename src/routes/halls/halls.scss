@@ -1,0 +1,80 @@
+.halls {
+  flex: 1 1 0;
+  margin: 0;
+
+ &-header {
+    position: relative;
+  }
+
+  &-action {
+    position: absolute;
+    left: 2px;
+    top: -20px;
+    color: var(--primary);
+    font-size: .6em;
+    color: #0476D0;
+  }
+  
+  .hall-form {
+    margin-left: 230px;
+  }
+
+  .hall-title {
+    margin-top: -74px;
+    margin-bottom: 50px;  
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .hall-name {
+    border-bottom: 1px solid #00000033;
+    border-left: none;
+    border-radius: 0;
+    height: 60px;
+    font-size: 1.4em;
+    color: var(--ant-color-text-heading);
+    font-weight: var(--ant-font-weight-strong);
+    font-size: var(--ant-font-size-heading-1);
+    line-height: var(--ant-line-height-heading-1);
+
+    &:focus {
+      border-bottom-color: #000000cc;
+    }
+  }
+  
+  .hall-search input {
+    font-size: 1.8rem;
+  }
+  
+/*   .ant-upload-select {
+    display: block !important;
+  } */
+
+  .hall-scheme {
+    &-upload {
+      display: flex;
+      margin-top: 30px;
+      gap: 20px;
+    }
+
+    &-column {
+      flex: 0 0 25%;
+
+      &:first-child {
+        flex: 0 0 50%;
+      }
+    }
+
+    &-label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 1rem;;
+    }
+
+  }
+
+  .hall-actions {
+    margin-top: 50px;
+  }
+}

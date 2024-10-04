@@ -314,7 +314,7 @@ export default function EventForm() {
         <Button icon={<SaveOutlined />} type='primary' onClick={() => form.submit()} loading={isSending} block>Save</Button>
       </Sidebar>
       <Form
-        style={{ flex: '1 1 0'}}
+        style={{ flex: '1 1 0' }}
         layout='vertical'
         onFinish={async (dataValues) => {
           setIsSending(true)
@@ -364,18 +364,18 @@ export default function EventForm() {
               [`email_ticket_paid_subject_${eventId}`]: { [data.defaultLang]: template_subject },
               [`email_ticket_paid_body_${eventId}`]: { [data.defaultLang]: template_body },
               [`html_pdf_ticket_paid_body_${eventId}`]: { [data.defaultLang]: pdf_body }
-            })
+            }) 
             navigate(`/event/${eventId}`, { replace: true })
           } catch (e) {
             console.log(e)
             messageApi.error(e.message)
           } finally {
             setIsSending(false)
-          }
+          } 
 
           /* const datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
           const match = { team1, team2, stadium, tournament, datetime, top: top ? '1' : '0' }
-          if (!isNew) match.id = id
+          if (!isNew) matcwa s.id = id
           dispatch(postData({ schedule: [match] }))
             .then(resp => {
               if (resp.status === 'error') {

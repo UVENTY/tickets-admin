@@ -61,3 +61,8 @@ export const group = grouper => data => grouper ? data.reduce((acc, item) => {
   acc[key].push(item)
   return acc
 }, {}) : data
+
+export const isLowerIncludes = (searchStr, targetStr) =>
+  String(targetStr).toLowerCase().includes(
+    String(searchStr).toLowerCase()
+  )

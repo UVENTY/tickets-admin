@@ -6,12 +6,13 @@ import { CloseOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined
 import { axios } from 'api/axios'
 import Sidebar from 'shared/layout/sidebar'
 import { useAppState } from 'shared/contexts'
+import { NEW_ITEM_ID } from 'consts'
 import TourForm from './form'
 import './tours.scss'
 
 export const query = {
   queryKey: ['tours'],
-  queryFn: () => axios.get('/data', { params: { fields: 9 } })
+  queryFn: () => axios.get('/data', { params: { fields: 8 } })
     .then(res =>
       Object.entries(res.data?.data?.data?.tournaments || {})
       .map(([id, item]) => ({ id, ...item }))
@@ -30,7 +31,7 @@ export default function Tours() {
   const [isSending, setIsSending] = useState(false)
 
   const data = useMemo(() => [
-    id === 'create' ? { id: 'create' } : null,
+    id === NEW_ITEM_ID ? { id: NEW_ITEM_ID } : null,
     ...(tours.data || [])
   ].filter(Boolean), [id, tours.data])
 
@@ -46,9 +47,9 @@ export default function Tours() {
         <Button
           type='primary'
           icon={<PlusOutlined />}
-          size='large'
+          size='middle'
           style={{ verticalAlign: 'middle', marginLeft: 20 }}
-          onClick={() => setSearchParams({ inline: 'create' })}
+          onClick={() => setSearchParams({ inline: NEW_ITEM_ID })}
         />
       </Typography.Title>
       <List

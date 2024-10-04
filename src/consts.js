@@ -1,6 +1,10 @@
 export const API_URL = process.env.REACT_APP_API_URL
 
+const SCHEME_PREFIX = 'svg-scheme-'
+
 export const NEW_ITEM_ID = 'create'
+
+export const HALL_DATA_BLOCKS = ['location', 'scheme', 'seats']
 
 export const USER_ROLES_COLOR = {
   '1': '#2db7f5',

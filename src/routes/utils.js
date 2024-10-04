@@ -6,3 +6,14 @@ export const getLoader = (queryClient, query, callback) => async ({ params }) =>
   )
   return callback ? callback(res) : res
 }
+
+
+export const parseJson = (str, catchFn = () => { }) => {
+  let result = null
+  try {
+    result = JSON.parse(str)
+  } catch (e) {
+    catchFn(e)
+  }
+  return result
+}

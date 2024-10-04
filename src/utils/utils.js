@@ -37,11 +37,23 @@ export const localeCompare = (str1, str2) => (str1 || '').localeCompare(str2 || 
 export const getOptions = (arr, path) =>
   orderBy(uniq(map(arr, path))).filter(item => item)
 
-export const toOptions = (arr, keys, sorter = (a, b) => localeCompare(a.label, b.label)) => {
+export const listToOptions = (arr, keys, sorter = (a, b) => localeCompare(a.label, b.label)) => {
   const { label = 'en', value = 'id' } = keys || {}
   return Object.values(arr).map(item => ({ value: item[value], label: item[label] })).sort(sorter)
 }
-  
+
+export const mapToOptions = (obj, valueKey, leaveProps = []) => {
+  if (!obj) return
+  return Object.entries(obj).map(([value, item]) => leaveProps.reduce((acc, prop) => {
+    if (item[prop]) {
+      acc[prop] = item[prop]
+    }
+    return acc
+  }, {
+    value,
+    label: valueKey ? item[valueKey] : item,
+  }))
+}
 
 export const getValidSvg = (src, type = 'image/svg+xml') => {
   const parser = new DOMParser()
@@ -138,5 +150,31 @@ export const downloadBlob = (blob, filename) => {
     document.body.removeChild(a)
   } catch (e) {
     console.error(e)
+  }
+}
+
+export const parseJson = (str, catchFn = () => {}) => {
+  let result = null
+  try {
+    result = JSON.parse(str)
+  } catch (e) {
+    catchFn(e)
+  }
+  return result
+}
+
+export function debounce(func, wait, immediate) {
+  let timeout
+
+  return function executedFunction(...args) {
+    const context = this
+    const later = function () {
+      timeout = null
+      if (!immediate) func.apply(context, args)
+    }
+    const callNow = immediate && !timeout
+    clearTimeout(timeout)
+    timeout = setTimeout(later, wait)
+    if (callNow) func.apply(context, args)
   }
 }

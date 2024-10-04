@@ -37,6 +37,7 @@ export const query = {
     }), {}),
     options: pick(res.data?.data?.data, ['cities', 'countries', 'langs', 'ticket_statuses', 'user_roles', 'lang_vls'])
   })),
+  staleTime: 5 * 60 * 1000
 }
 
 const { Header, Content, Footer } = AntLayout
