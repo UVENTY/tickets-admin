@@ -52,7 +52,7 @@ const NAVBAR_TOP = [
   }, {
     key: 'events',
     label: <Link to='/events'><CalendarOutlined />&nbsp;&nbsp;Events</Link>,
-  }, {
+  }/* , {
     key: 'teams',
     label: <Link to='/teams'><TeamOutlined />&nbsp;&nbsp;Teams</Link>,
   }, {
@@ -61,7 +61,7 @@ const NAVBAR_TOP = [
   }, {
     key: 'd1',
     label: <Divider type='vertical' />
-  }
+  } */
 ]
 
 const NAVBAR_RIGHT = [

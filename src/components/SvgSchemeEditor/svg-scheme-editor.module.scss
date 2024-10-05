@@ -1,10 +1,23 @@
+
+
 .root {
   position: relative;
 }
 
 .addIcon,
 .catIcon {
-  width: 32px;
+  background-color: transparent;
+  border-color: #00000033;
+  color: #000000cc;
+
+  &:hover {
+    background-color: #00000033 !important;
+    border-color: #fff !important;
+    color: #fff !important;
+  }
+
+  width: 40px;
+  flex: 0 0 40px;
   height: 40px;
   cursor: pointer;
   font-size: .8em;
@@ -17,6 +30,12 @@
 
   div {
     margin-top: -7px;
+  }
+}
+.catItem {
+  :global(.ant-color-picker-trigger) {
+    width: 20px !important;
+    min-width: auto !important;
   }
 }
 
@@ -76,11 +95,6 @@
   }
 }
 
-.deleteCatOuter {
-  overflow: hidden;
-  width: 0;
-  transition: ease .3s width;
-}
 
 .catName {
   width: 170px;
@@ -161,11 +175,51 @@
   pointer-events: none;
 }
 
+.deleteCat {
+  color: #000;
+  opacity: 0;
+  transition: ease .3s opacity;
+  position: absolute;
+  right: 0;
+  padding: 0 15px !important;
+  transform: translateX(200%);
+  
+  :global(.anticon) {
+    font-size: 1.2em !important;
+  }
+}
+
 .catItem {
+  position: relative;
   &:hover {
     .orderArrows {
       pointer-events: all;
       opacity: 1;
     }
+    .deleteCat {
+      opacity: 1;
+
+      &:hover {
+        color: var(--ant-color-error);
+      }
+    }
   }
+}
+.capacity {
+  border: none;
+  outline: none;
+  background: none;
+  border-bottom: 1px dotted #999;
+  color: #666;
+  font-size: 16px;
+  padding: 0;
+  width: 35px;
+  text-align: right;
+  font-family: var(--ant-font-family);
+}
+.capacityVal {
+  display: inline-block;
+  width: 35px;
+  font-size: 16px;
+  text-align: right;
 }

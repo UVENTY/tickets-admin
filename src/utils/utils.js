@@ -178,3 +178,8 @@ export function debounce(func, wait, immediate) {
     if (callNow) func.apply(context, args)
   }
 }
+
+export function tryToNumber(val) {
+  const num = Number(val)
+  return isNaN(num) ? val : num
+}

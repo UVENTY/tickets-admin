@@ -12,6 +12,6 @@ export default (function Cache() {
     if (!queryClient) return
 
     const data = queryClient.getQueryData(query.queryKey) ?? (await queryClient.fetchQuery(query))
-    return resultPath ? get(data, resultPath) : data
+    return data
   }
 })()

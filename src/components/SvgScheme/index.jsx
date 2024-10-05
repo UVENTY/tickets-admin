@@ -77,7 +77,7 @@ const SvgScheme = forwardRef(({
         onClick={handleClick}
         onDoubleClick={handleDblClick}
         onMouseOver={e => handleMouseEvent(e, handleMouseOver)}
-        onMouseOut={e => handleMouseEvent(e, handleMouseOut)}
+        onMouseOut={e => handleMouseEvent(e, handleMouseOut)} 
       />
     </div>
   )

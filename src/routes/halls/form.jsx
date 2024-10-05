@@ -2,18 +2,21 @@ import { useQueryClient } from '@tanstack/react-query'
 import { axios } from 'api/axios'
 import { useNavigate, useParams } from 'react-router-dom'
 import Typography from 'antd/es/typography/Typography'
-import { Button, Col, Divider, Form, Input, Row, Select, Space, Steps, Upload } from 'antd'
+import { Button, Col, Divider, Form, Input, Row, Segmented, Select, Space, Steps, Upload } from 'antd'
 import { useAppState } from 'shared/contexts'
 import { toText } from 'utils/utils'
 import { getCategories, removeColorsAndSerialize, transformScheme } from 'utils/svg'
 import { defaultCustomProps } from 'components/SvgSchemeEditor/consts'
 import { useCallback, useState } from 'react'
 import SvgScheme from 'components/SvgScheme'
-import Categories from 'components/SvgSchemeEditor/categories'
+import Categories, { Category } from 'components/SvgSchemeEditor/categories'
+import { clearFillAndStringify } from 'components/SvgSchemeEditor/utils'
+import { SortableList } from 'components/sortable-list'
 import { NEW_ITEM_ID, NON_SEAT_ROW } from 'consts'
-import { BorderBottomOutlined, BorderTopOutlined, ControlOutlined, EnvironmentOutlined } from '@ant-design/icons'
+import { BorderBottomOutlined, BorderTopOutlined, ControlOutlined, EnvironmentOutlined, InboxOutlined, UploadOutlined } from '@ant-design/icons'
 import InputCity from 'shared/ui/input-city'
 import { useLocalStorage } from 'utils/hooks'
+import cache from 'shared/api/cache'
 import { query, updateData } from './api'
 
 const SEATS = [
@@ -26,7 +29,7 @@ const SEATS = [
     dataType: 'scheme',
     icon: <BorderTopOutlined />
   }, {
-    title: 'seats parameters',
+    title: 'seats options',
     dataType: 'seats',
     icon: <ControlOutlined />
   }
@@ -51,13 +54,6 @@ export default function HallForm() {
   const deleteCategory = useCallback((value) => {
     setScheme(prev => ({ ...prev, categories: prev.categotries.filter((cat) => cat.value !== value) }))
   }, [])
-
-  const reorderCategories = useCallback((index, targetIndex) => {
-    const items = [...scheme.categories]
-    const [removed] = items.splice(index, 1)
-    items.splice(targetIndex, 0, removed)
-    setScheme(prev => ({ ...prev, categories: items }))
-  })
 
   if (currentPageIndex < 0) {
     return (
@@ -99,12 +95,16 @@ export default function HallForm() {
         </Form.Item>
       </Typography.Title>
       
-      <Steps
+      {/* <Steps
         current={currentPageIndex}
         items={SEATS}
-      />      
+        style={{ marginBottom: 40 }}
+      /> */}  
+      <Divider orientation='left'>
+        <EnvironmentOutlined style={{ color: 'var(--ant-color-primary)'}} /> Scheme
+      </Divider>
 
-      <Row gutter={[16, 0]} style={{ marginTop: 40, display: currentPageIndex === 0 ? undefined : 'none' }}>
+      <Row gutter={[16, 0]}>
         <Col span={12}>
           <InputCity
             name={['country', 'city']}
@@ -122,50 +122,78 @@ export default function HallForm() {
           </Form.Item>
         </Col>
       </Row>
-
-      <div style={{ display: currentPageIndex === 1 ? 'block' : 'none' }}>
-        {/* <Upload
-          accept='.svg'
-          itemRender={() => null}
-          customRequest={e => toText(e.file)
-            .then(transformScheme)
-            .then(scheme => ({ categories: getCategories(scheme), scheme: clearFillAndStringify(scheme) }))
-            .then(({ categories, scheme }) => {
-              setScheme(scheme)
-              setCategories(categories)
-              setCustomProps(defaultCustomProps)
-            })}
-        >
-          <Button size='large' type='primary' htmlType='button' icon={<UploadOutlined />}>Upload from svg</Button>
-        </Upload> */}
+      
+      <Divider orientation='left'>
+        <EnvironmentOutlined style={{ color: 'var(--ant-color-primary)' }} /> Located in
+      </Divider>
+      <div>
+        {scheme.scheme ?
+          <Row gutter={16}>
+            <Col span={16}>
+              <Button type='primary' style={{ position: 'absolute', transform: 'translateX(-110%)' }} onClick={() => setScheme({ categories: [], customProps: defaultCustomProps, scheme: '' })} danger>Remove scheme</Button>
+              <SvgScheme
+                src={scheme.scheme}
+                categories={scheme.categories}
+              />
+            </Col>
+            <Col span={8}>
+              <Typography.Title level={3} style={{ color: '#222', marginTop: 0 }}>Categories</Typography.Title>
+              <SortableList
+                items={scheme.categories}
+                onChange={list => setScheme(prev => ({ ...prev, categories: list }))}
+                renderItem={(item) => (
+                  <SortableList.Item id={item.id}>
+                    <Category {...item} onChange={handleChangeCategory} onDelete={deleteCategory} />
+                    <SortableList.DragHandle />
+                  </SortableList.Item>
+                )}
+              />
+            </Col>
+          </Row> :
+          <Upload.Dragger
+            accept='.svg'
+            itemRender={() => null}
+            customRequest={e => toText(e.file)
+              .then(transformScheme)
+              .then(scheme => setScheme({
+                categories: getCategories(scheme),
+                scheme: clearFillAndStringify(scheme),
+                customProps: defaultCustomProps
+              })
+            )}
+            block
+          >
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined />
+            </p>
+            <p className="ant-upload-text">Нажмите на эту область или перетащите сюда svg-файл со схемой</p>
+          </Upload.Dragger>
+        }
       </div>
 
-      <Row gutter={16} className='hall-actions'>
-        <Col span={8}>
-          <Button block>
-            Cancel
-          </Button>
-        </Col>
-        <Col span={8}>
-          {currentPageIndex > 0 && <Button
-            onClick={() => navigate(`/halls/${id}/${SEATS[currentPageIndex - 1].dataType}`)}
-            block
-          >
-            ← Back
-          </Button>}
-        </Col>
-        <Col span={8}>
-          <Button
-            type='primary'
-            loading={isSending}
-            onClick={() => navigate(`/halls/${id}/${SEATS[currentPageIndex + 1].dataType}`)}
-            block
-            outlined
-          >
-            Next →
-          </Button>
-        </Col>
-      </Row>
+      <div style={currentPageIndex === 2 ? undefined : { display: 'none' }}>
+        {scheme.categories.length === 0 ?
+          'Separated seats on the scheme not found' :
+          scheme.categories.map(cat => (
+            <div>
+              <Typography.Title level={3}>{cat.label}</Typography.Title>
+              {cat.rows?.length > 0 &&
+                <div className='hall-rows'>
+                  {cat.rows.map(row => (
+                    <div className='hall-row'>
+                      <div className='hall-row-num'>{row}</div>
+                      <div className='hall-seats'>
+                        {cat.seats.filter(seat => seat.row === row).sort((a, b) => a.seat > b.seat ? 1 : -1).map(seat =>
+                          <button className='hall-seat'>{seat.seat}</button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>}
+            </div>
+          ))
+        }
+      </div>
     </Form>
   )
 }

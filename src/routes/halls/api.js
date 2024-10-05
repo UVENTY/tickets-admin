@@ -1,5 +1,5 @@
 import { axios } from 'api/axios'
-import { parseJson } from 'routes/utils'
+import { parseJson } from 'utils/utils'
 
 export const query = {
   queryKey: ['halls'],

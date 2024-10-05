@@ -8,12 +8,14 @@ import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { LoadingProvider, useLoading, AppStateProvider, useAppState } from 'shared/contexts'
 import store from './redux'
+import cache from 'shared/api/cache'
 import reportWebVitals from './reportWebVitals'
 import './index.css'
 import App from './App'
 
 dayjs.extend(utc)
 export const queryClient = new QueryClient()
+cache(queryClient)
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(

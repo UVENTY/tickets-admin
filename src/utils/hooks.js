@@ -221,3 +221,12 @@ export const useClickOutside = (callback) => {
 
   return ref
 }
+/* 
+export function useQueryCache() {
+  const queryClient = useQueryClient()
+  const cache = queryClient.getQueryData(query.queryKey)
+  if (!cache) {
+    
+  }
+  return  ?? (await )
+} */

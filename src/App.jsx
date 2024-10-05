@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { LoadingProvider, useLoading, AppStateProvider, useAppState } from 'shared/contexts'
 import Layout from './shared/layout'
 import Router from './routes'
+import cache from './shared/api/cache'
 import './App.scss'
 
 function App() {
