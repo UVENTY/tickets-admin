@@ -1,0 +1,20 @@
+.fieldset {
+  &-content {
+    margin-left: 15px;
+  }
+
+  &-title {
+    font-size: 1.4em;
+    letter-spacing: 1px;
+    button {
+      font-size: 1em;
+      padding: 0;
+
+      span {
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+    }
+  }
+}

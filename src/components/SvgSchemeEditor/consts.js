@@ -1,27 +1,27 @@
-export const defaultCustomProps = [
-  {
+export const defaultSeatParams = [
+  /*{
     value: 'row',
     label: 'Row'
   }, {
     value: 'seat',
     label: 'Seat'
-  }, {
+  },{
     value: 'count',
     label: 'Tickets leave',
     type: 'number',
-  }, /* {
+  },  {
     value: 'busyCount',
     label: 'Booking / Sold',
     type: 'number',
-  },  */{
+  },  {
     value: 'price',
     label: 'Price',
     type: 'number',
     groupEditable: true,
     system: true
-  }, {
+  }, */ {
     value: 'icon',
-    label: 'Place Icon',
+    label: 'Seat icon',
     type: 'file',
     accept: '.svg',
     originalColors: false,

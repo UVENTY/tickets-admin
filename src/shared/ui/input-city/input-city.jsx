@@ -5,7 +5,7 @@ import cn from 'classnames'
 import { mapToOptions } from 'utils/utils'
 import s from './input-city.module.scss'
 import { isLowerIncludes } from 'api/utils'
-import { EnterOutlined, PlusOutlined } from '@ant-design/icons'
+import { ClockCircleOutlined, EnterOutlined, PlusOutlined } from '@ant-design/icons'
 import { NEW_ITEM_ID } from 'consts'
 
 const createCityOptions = {
@@ -13,7 +13,7 @@ const createCityOptions = {
   label: <><PlusOutlined style={{ fontSize: '0.94em' }} /> Create new city</>
 }
 
-const InputCity = forwardRef((props, ref) => {
+const   InputCity = forwardRef((props, ref) => {
   const {
     defaultValue = [],
     label = [],
@@ -36,9 +36,9 @@ const InputCity = forwardRef((props, ref) => {
 
   const queryClient = useQueryClient()
   const config = queryClient.getQueryData(['config'])?.options || {}
-  const countries = useMemo(() => mapToOptions(config.countries, 'en'), [config.countries])
+  const countries = useMemo(() => mapToOptions(config.countries, 'en').sort((a, b) => a.label.localeCompare(b.label)), [config.countries])
   const cities = useMemo(() => {
-    const list = country ? mapToOptions(config.cities, 'en', ['country']).filter(item => item.country === country) : []
+    const list = country ? mapToOptions(config.cities, 'en', { pick: ['country'] }).filter(item => item.country === country) : []
     return list
   }, [config.cities, country])
   
@@ -67,6 +67,8 @@ const InputCity = forwardRef((props, ref) => {
           onChange={handleChange}
           value={country}
           filterOption={(value, option) => isLowerIncludes(value, option.label)}
+          labelRender={label => <><span class={`fi fi-${label.value}`}></span> {label.label}</>}
+          optionRender={label => <><span class={`fi fi-${label.value}`}></span> {label.label}</>}
           showSearch
         />
       </Form.Item>

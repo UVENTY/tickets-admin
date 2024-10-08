@@ -10,13 +10,14 @@ export const query = {
     }),
   select: (map) => Object.entries(map).reduce(
     (acc, [id, item]) => {
-      if (item.country && item.city && item.scheme) {
+      if (item.country && item.city) {
         item.scheme = parseJson(item.scheme)
         acc.unshift({ ...item, id })
       }
       return acc
     }, []
-  ).sort((a, b) => a.country.localeCompare(b.country))
+  ).sort((a, b) => a.country.localeCompare(b.country)),
+  staleTime: 3 * 60 * 1000
 }
 
 export const updateData = (data) => axios.post('/data', { data: JSON.stringify(data) })

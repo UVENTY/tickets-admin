@@ -7,20 +7,15 @@ const SvgScheme = forwardRef(({
   categories = [],
   seatSelector = '.svg-seat',
   src,
-  tooltip,
   renderTooltip,
-  onSeatClick,
-  onSeatDoubleClick,
-  onSeatOver,
-  onSeatOut,
-  onSeatMouseDown
+  seat: {
+    onClick,
+    onDoubleClick,
+    onMouseOver,
+    onMouseOut,
+    onMouseDown
+  } = {}
 }, ref) => {
-  // Переименовал tooltip в renderTooltip и добавил этот костыль для
-  // обратной совместимости
-  // @TODO Удалить при первой возможоности
-  if (!renderTooltip && tooltip) {
-    renderTooltip = tooltip
-  }
 
   const initial = useRef(src)
   useEffect(() => {
@@ -33,8 +28,8 @@ const SvgScheme = forwardRef(({
 
   const [tooltipSeat, setTooltipSeat] = useState()
   const [handleClick, handleDblClick] = useClickPrevention({
-    onClick: e => handleMouseEvent(e, onSeatClick),
-    onDoubleClick: e => handleMouseEvent(e, onSeatDoubleClick),
+    onClick: e => handleMouseEvent(e, onClick),
+    onDoubleClick: e => handleMouseEvent(e, onDoubleClick),
     delay: 200
   })
 
@@ -47,13 +42,13 @@ const SvgScheme = forwardRef(({
   const handleMouseOver = useCallback(e => {
     const { target: el } = e
     if (renderTooltip) setTooltipSeat(el)
-    onSeatOver && onSeatOver(e)
+    onMouseOver && onMouseOver(e)
   }, [renderTooltip])
 
   const handleMouseOut = useCallback(e => {
     const { target: el } = e
     if (renderTooltip) setTooltipSeat(null)
-    onSeatOut && onSeatOut(e)
+    onMouseOut && onMouseOut(e)
   }, [])
 
   const styles = useMemo(() => {
@@ -86,7 +81,7 @@ const SvgScheme = forwardRef(({
         onDoubleClick={handleDblClick}
         onMouseOver={e => handleMouseEvent(e, handleMouseOver)}
         onMouseOut={e => handleMouseEvent(e, handleMouseOut)} 
-        onMouseDown={e => handleMouseEvent(e, onSeatMouseDown)}
+        onMouseDown={e => handleMouseEvent(e, onMouseDown)}
       />
     </div>
   )

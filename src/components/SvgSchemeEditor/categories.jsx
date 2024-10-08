@@ -1,18 +1,20 @@
 import { Button, Space, Input, Upload, ColorPicker, Flex } from 'antd'
 import { DeleteOutlined, UploadOutlined, ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons'
-import { setCurrentColor, toText } from '../../utils/utils'
 import s from './svg-scheme-editor.module.scss'
 import { Link } from 'react-router-dom'
+import { useCallback } from 'react'
+import { setCurrentColor, toText } from '../../utils/utils'
 
 export function Category(props) {
-  const { onChange, onDelete, index, seatsCount, ...item } = props
+  const { onChange = () => {}, onDelete, seatsCount, ...item } = props
+
   return (
     <Flex gap={8} key={item.value} className={s.catItem} align='center'>
       {!item.icon ?
         <Upload
           accept='.svg'
           itemRender={() => null}
-          customRequest={e => toText(e.file).then(setCurrentColor).then(icon => onChange(index, 'icon', icon))}
+          customRequest={e => toText(e.file).then(setCurrentColor).then(icon => onChange({ icon }))}
           style={{ height: '100%' }}
         >
           <Button
@@ -30,32 +32,30 @@ export function Category(props) {
           justify='center'
           title='Clear Icon'
           style={{ color: item.color }}
-          onClick={() => onChange(index, 'icon', null)}
+          onClick={() => onChange({ icon: null })}
           dangerouslySetInnerHTML={{ __html: item.icon }}
         />
       }
       <ColorPicker
         defaultValue={item.color}
-        onChangeComplete={(color) => onChange(index, 'color', `#${color.toHex()}`)}
+        onChangeComplete={(color) => onChange({ color: color.toHexString() })}
       />
       <Input
         placeholder='Label'
         defaultValue={item.label}
         className={s.catName}
-        onBlur={e => onChange(index, 'label', e.target.value)}
+        onChange={e => onChange({ label: e.currentTarget.value })}
       />
-          <div style={{ width: 90, whiteSpace: 'nowrap', fontSize: '1.4em' }}>
-      {seatsCount ?
-        <Link to='/'>
-            <span className={s.capacityVal}>{seatsCount}</span> x💺
-          </Link> : 
-          <><input
-            className={s.capacity}
-            defaultValue={item.capacity}
-            onBlur={e => onChange(index, 'label', e.target.value)}
-          /> x🧍</>
-        }
-        </div>
+      <div style={{ width: 90, whiteSpace: 'nowrap', fontSize: '1.4em' }}>
+        {seatsCount ?
+        <><span className={s.capacityVal}>{seatsCount}</span> x💺</> : 
+        <><input
+          className={s.capacity}
+          defaultValue={item.capacity}
+          onChange={e => onChange({ capacity: e.currentTarget.value })}
+        /> x🧍</>
+      }
+      </div>
       <Button
         size="small"
         className={s.deleteCat}
@@ -83,13 +83,21 @@ export function Category(props) {
 export default function Categories(props) {
   const { items, onChange, onDelete } = props
 
+  const handleChangeItems = useCallback((index, inject) => {
+    // const newItems = [...items]
+    // newItems[index] = {
+    //   ...newItems[index],
+    //   ...inject
+    // }
+    // onChange(items)
+  }, [items])
+
   return (
     <Flex gap={16} className={s.categories} wrap>
       {items.map((item, i) => (
         <Category
           {...item}
-          index={i}
-          onChange={onChange}
+          onChange={item => handleChangeItems(i, item)}
           onDelete={onDelete}
         />
       ))}

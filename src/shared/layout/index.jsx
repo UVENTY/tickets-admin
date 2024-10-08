@@ -27,6 +27,7 @@ import { fetchConfig } from 'redux/config'
 import { authorizeByTokens } from 'redux/user'
 import { pick } from 'lodash'
 import { useAppState } from 'shared/contexts'
+import { useQuery } from '@tanstack/react-query'
 
 export const query = {
   queryKey: ['config'],
@@ -101,7 +102,7 @@ export default function Layout() {
   const location = useLocation()
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const config = useLoaderData()
+  const { data: config } = useQuery(query)
   const [, setAppState] = useAppState()
   
   const path = location.pathname.split('/').filter(Boolean)

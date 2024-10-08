@@ -1,5 +1,6 @@
 import { uniq } from 'lodash'
 import { getValidSvg, tryToNumber } from './utils'
+import { seatClassName } from 'components/SvgSchemeEditor/consts'
 
 export const transformScheme = svg => {
   const doc = getValidSvg(svg)
@@ -66,4 +67,17 @@ export const removeColorsAndSerialize = doc => {
   })
   const s = new XMLSerializer()
   return s.serializeToString(doc)
+}
+
+export const isEqualSeats = (s1, s2) => {
+  const d1 = s1 instanceof HTMLElement ? s1.dataset : s1
+  const d2 = s2 instanceof HTMLElement ? s2.dataset : s2
+  const { category, row = null, seat = null } = d1
+  const { category: cat2, row: row2 = null, seat: seat2 = null } = d2
+  return category === cat2 && row === row2 && seat === seat2
+}
+
+export const findSeatElement = (svg, data) => {
+  const attrs = ['category', 'row', 'seat'].filter(key => data[key]).map(key => `[data-${key}="${data[key]}"]`).join('')
+  return svg.querySelector(`.${seatClassName}${attrs}`)
 }

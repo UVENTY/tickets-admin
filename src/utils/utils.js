@@ -42,9 +42,9 @@ export const listToOptions = (arr, keys, sorter = (a, b) => localeCompare(a.labe
   return Object.values(arr).map(item => ({ value: item[value], label: item[label] })).sort(sorter)
 }
 
-export const mapToOptions = (obj, valueKey, leaveProps = []) => {
+export const mapToOptions = (obj, valueKey, { pick = [] } = {}) => {
   if (!obj) return
-  return Object.entries(obj).map(([value, item]) => leaveProps.reduce((acc, prop) => {
+  return Object.entries(obj).map(([value, item]) => pick.reduce((acc, prop) => {
     if (item[prop]) {
       acc[prop] = item[prop]
     }
@@ -183,3 +183,5 @@ export function tryToNumber(val) {
   const num = Number(val)
   return isNaN(num) ? val : num
 }
+
+ export const filterUnique = (item, index, arr) => arr.indexOf(item) === index

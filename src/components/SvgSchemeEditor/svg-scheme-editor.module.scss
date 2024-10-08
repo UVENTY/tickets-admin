@@ -92,12 +92,13 @@
 
   :global(.ant-input-number) {
     width: 100%;
+    flex: 1 1 auto;
   }
 }
 
 
 .catName {
-  width: 170px;
+  flex: 1 1 auto;
 }
 
 .catColor {
@@ -190,6 +191,7 @@
 }
 
 .catItem {
+  flex: 1 1 auto;
   position: relative;
   &:hover {
     .orderArrows {

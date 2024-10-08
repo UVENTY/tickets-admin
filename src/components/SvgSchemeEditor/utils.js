@@ -14,6 +14,7 @@ export const transformScheme = svg => {
       el.classList.remove(val)
     })
     el.classList.add('svg-seat')
+    el.id = `seat-${['category', 'row', 'seat'].map(key => el.getAttribute(`data-${key}`)).filter(Boolean).join('-')}`
   })
   return doc
 }

@@ -12,6 +12,7 @@ import cache from 'shared/api/cache'
 import reportWebVitals from './reportWebVitals'
 import './index.css'
 import App from './App'
+import '/node_modules/flag-icons/css/flag-icons.min.css'
 
 dayjs.extend(utc)
 export const queryClient = new QueryClient()

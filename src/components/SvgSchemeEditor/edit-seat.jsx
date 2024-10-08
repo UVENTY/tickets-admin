@@ -4,7 +4,7 @@ import { Button, Card, Checkbox, ColorPicker, Flex, Input, InputNumber, Select, 
 import { ArrowLeftOutlined, DownloadOutlined } from '@ant-design/icons'
 import { mapValues } from 'lodash'
 import cn from 'classnames'
-import InputSvg from '../InputSvg'
+import InputSvg from '../input-svg'
 import s from './svg-scheme-editor.module.scss'
 import { axios } from '../../api/axios'
 import { downloadBlob, setCurrentColor } from '../../utils/utils'
@@ -138,7 +138,8 @@ export default function SvgSchemeEditSeat({
               <div className={`svg-scheme-icon-cat-${category}`}>
                 <InputSvg
                   {...rest}
-                  beforeChange={icon => field.originalColor ? icon : setCurrentColor(icon)}
+                  beforeChange={icon => console.log(icon) ||
+                   field.originalColor ? icon : setCurrentColor(icon)}
                 />
               </div>/*  :
               <Upload accept={field.accept} itemRender={() => null} /> */

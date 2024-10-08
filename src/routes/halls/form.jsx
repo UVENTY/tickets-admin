@@ -2,22 +2,34 @@ import { useQueryClient } from '@tanstack/react-query'
 import { axios } from 'api/axios'
 import { useNavigate, useParams } from 'react-router-dom'
 import Typography from 'antd/es/typography/Typography'
-import { Button, Col, Divider, Form, Input, Row, Segmented, Select, Space, Steps, Upload } from 'antd'
+import { Button, Col, Descriptions, Divider, Flex, Form, Input, Row, Segmented, Select, Space, Steps, Upload } from 'antd'
 import { useAppState } from 'shared/contexts'
-import { toText } from 'utils/utils'
-import { getCategories, removeColorsAndSerialize, transformScheme } from 'utils/svg'
-import { defaultCustomProps } from 'components/SvgSchemeEditor/consts'
-import { useCallback, useState } from 'react'
-import SvgScheme from 'components/SvgScheme'
+import { jsonBase64, toText } from 'utils/utils'
+import { findSeatElement, getCategories, isEqualSeats, removeColorsAndSerialize, transformScheme } from 'utils/svg'
+import { activeSeatClassName, defaultSeatParams, seatClassName } from 'components/SvgSchemeEditor/consts'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import SvgScheme from 'components/svg-scheme'
 import Categories, { Category } from 'components/SvgSchemeEditor/categories'
 import { clearFillAndStringify } from 'components/SvgSchemeEditor/utils'
 import { SortableList } from 'components/sortable-list'
 import { NEW_ITEM_ID, NON_SEAT_ROW } from 'consts'
-import { BorderBottomOutlined, BorderTopOutlined, ControlOutlined, EnvironmentOutlined, InboxOutlined, UploadOutlined } from '@ant-design/icons'
+import { BarsOutlined, BorderBottomOutlined, BorderTopOutlined, CheckCircleOutlined, CheckSquareOutlined, ClearOutlined, ControlOutlined, EnvironmentOutlined, InboxOutlined, InsertRowAboveOutlined, PlusOutlined, RedoOutlined, UploadOutlined } from '@ant-design/icons'
 import InputCity from 'shared/ui/input-city'
 import { useLocalStorage } from 'utils/hooks'
 import cache from 'shared/api/cache'
 import { query, updateData } from './api'
+import Fieldset from 'shared/ui/fieldset'
+import classNames from 'classnames'
+import { pick } from 'lodash'
+import SeatEditor from 'components/seat-editor'
+
+const getEmptyCategory = (categories) => ({
+  id: `cat${categories.length + 1}`,
+  value: `cat${categories.length + 1}`,
+  label: '',
+  icon: null,
+  color: '#000'
+})
 
 const SEATS = [
   {
@@ -35,16 +47,37 @@ const SEATS = [
   }
 ]
 
-export default function HallForm() {
+function SchemeTooltip(props) {
+  const { category = {}, seat, row } = props
+
+  const items = [{
+    key: 'cat',
+    label: <span className='scheme-tooltip-category' style={{ background: category.color }} />,
+    children: <span className='scheme-tooltip-label'>{category.label}</span>
+  }]
+
+  return <div className='scheme-tooltip' style={{ borderColor: category.color }}>
+    <b>{category.label}</b>
+    {!!row && <div>
+      <small>row</small> <b>{row}</b>, <small>seat</small> <b>{seat}</b>
+    </div>}
+  </div>
+}
+
+export default function HallForm({ onValidationChange, form, beforeSubmit, afterSubmit }) {
   const [{ langCode }] = useAppState()
   const { id, dataType = 'location' } = useParams()
   const currentPageIndex = SEATS.findIndex(item => item.dataType === dataType)
   const [isSending, setIsSending] = useState(false)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const svgRef = useRef(null)
   const cache = queryClient.getQueryData(query.queryKey)
   const item = cache?.[id]
-  const [scheme, setScheme] = useState({ categories: [], customProps: defaultCustomProps, scheme: '' })
+  const [selectHover, setSelectHover] = useState(false)
+  const [scheme, setScheme] = useState({ categories: [], customProps: defaultSeatParams, scheme: '' })
+  const [selectedSeats, setSelectedSeats] = useState([])
+  const [showSeatsEdit, setShowSeatsEdit] = useState(false)
   const [newHallForm, setNewHallForm] = useLocalStorage('new_hall_form', {})
 
   const handleChangeCategory = useCallback((index, key, value) => {
@@ -52,8 +85,84 @@ export default function HallForm() {
   }, [])
 
   const deleteCategory = useCallback((value) => {
-    setScheme(prev => ({ ...prev, categories: prev.categotries.filter((cat) => cat.value !== value) }))
+    setScheme(prev => ({ ...prev, categories: prev.categories.filter((cat) => cat.value !== value) }))
   }, [])
+
+  useEffect(() => {
+    const handleMouseUp = () => setSelectHover(false)
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => window.removeEventListener('mouseup', handleMouseUp)
+  }, [])
+
+  const handleClickSeat = ({ detail, target: el, ctrlKey, metaKey }) => {
+    const isDoubleClick = detail > 1
+    if (selectedSeats.length === 0) {
+      setShowSeatsEdit(true)
+    }
+    setSelectedSeats(prev => {
+      if (isDoubleClick) {
+        const cat = el.getAttribute('data-category')
+        const group = Array.from(svgRef.current.querySelectorAll(`.${seatClassName}[data-category="${cat}"]`))
+        const isFullIncludes = group.every(el => prev.includes(el))
+        return ctrlKey || metaKey ?
+          (isFullIncludes ? prev.filter(el => !group.includes(el)) : prev.filter(el => !group.includes(el)).concat(group)) :
+          group
+      }
+      if (ctrlKey || metaKey) {
+        return prev.includes(el) ? prev.filter(item => item !== el) : [...prev, el]
+      }
+      const next = prev.length === 1 ? (prev[0] === el ? [] : [el]) : [el]
+      return prev.length === 1 ? (prev[0] === el ? [] : [el]) : [el]
+    })
+  }
+
+  const addCategory = useCallback(() => {
+    setScheme(prev => ({ ...prev, categories: [...prev.categories, getEmptyCategory(prev.categories) ] }))
+  }, [])
+
+  /* const handleMouseDown = useCallback((e) => {
+    setSelectHover(true)
+  }, [])
+
+  const handleMouseOver = useCallback((e) => {
+    if (!selectHover) return
+    const validParams = scheme.seatParams.map(param => param.value)
+    const data = pick(e.target.dataset, ['category', ...validParams])
+    setSelectedSeats(prev => prev.find(seat => isEqualSeats(seat, data) ? prev : [...prev, data]))
+  }, [scheme.seatParams, selectHover]) */
+
+  useEffect(() => {
+    if (!svgRef.current) return
+    svgRef.current.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
+    selectedSeats.forEach(el => el.classList.add(activeSeatClassName))
+    updateFromSvg()
+  }, [selectedSeats])
+
+  const seatHandlers = useMemo(() => ({
+    onClick: handleClickSeat,
+    onDoubleClick: handleClickSeat
+  }), [handleClickSeat])
+
+  const updateFromSvg = (cb) => {
+    const node = svgRef.current.cloneNode(true)
+    node.querySelectorAll(`.${seatClassName}[data-price]`).forEach(el => el.removeAttribute('data-price'))
+    node.querySelectorAll(`.${seatClassName}[data-count]`).forEach(el => el.removeAttribute('data-count'))
+    node.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
+    setScheme(node.innerHTML)
+    cb && cb(null)
+  }
+
+  const handleChangeSeat = useCallback((values) => { 
+    selectedSeats.forEach(el => {
+      Object.entries(values).forEach(([key, value]) => {
+        if (!value) {
+          el.removeAttribute(`data-${key}`)
+        } else {
+          el.setAttribute(`data-${key}`, value)
+        }
+      })
+    })
+  }, [selectedSeats])
 
   if (currentPageIndex < 0) {
     return (
@@ -67,24 +176,38 @@ export default function HallForm() {
     )
   }
   
+  const isSelected = selectedSeats.length > 0
+  
   return (
     <Form
       size='large'
       layout='vertical'
       className='hall-form'
       disabled={isSending}
-      onFinish={async (values) => {
-        const response = await updateData({ stadiums: [values]  })
+      initialValues={item}
+      form={form}
+      onFieldsChange={(changed, values) => {
+        console.log(values)
+      }}
+      onFinish={async ({ location, ...values }) => {
+        beforeSubmit && beforeSubmit()
+        if (id !== 'create') values.id = id
+        const categories = scheme.categories.map(({ seats, rows, seatsCount, ...item }) => item)
+        values.country = location?.[0]
+        values.city = location?.[1]  
+        values.scheme_blob = await jsonBase64(scheme)
+        const response = await updateData({ stadiums: [values] })
         queryClient.setQueryData(query.queryKey, prev => {
           const map = { ...prev }
           map[response.data.data.created_id] = values
           return map
         })
+        afterSubmit && afterSubmit()
       }}
     >
       {id !== NEW_ITEM_ID && <Form.Item name='id' style={{ display: 'none' }}><input type='hidden' value={id} /></Form.Item>}
       <Typography.Title level={2} className='hall-title'>
-        <Form.Item name='name' style={{ marginBottom: 0 }}>
+        <Form.Item name={langCode} style={{ marginBottom: 0, flex: '1 1 auto' }}>
           <Input
             className='hall-name'
             placeholder='with the name'
@@ -95,105 +218,131 @@ export default function HallForm() {
         </Form.Item>
       </Typography.Title>
       
-      {/* <Steps
-        current={currentPageIndex}
-        items={SEATS}
-        style={{ marginBottom: 40 }}
-      /> */}  
-      <Divider orientation='left'>
-        <EnvironmentOutlined style={{ color: 'var(--ant-color-primary)'}} /> Scheme
-      </Divider>
-
-      <Row gutter={[16, 0]}>
-        <Col span={12}>
-          <InputCity
-            name={['country', 'city']}
-            label={['Country', 'City']}
-            required
-          />
-        </Col>
-        <Col span={12}>
-          <Form.Item
-            name={`address_${langCode}`}
-            label='Address'
-            required
-          >
-            <Input />
-          </Form.Item>
-        </Col>
-      </Row>
-      
-      <Divider orientation='left'>
-        <EnvironmentOutlined style={{ color: 'var(--ant-color-primary)' }} /> Located in
-      </Divider>
-      <div>
-        {scheme.scheme ?
-          <Row gutter={16}>
-            <Col span={16}>
-              <Button type='primary' style={{ position: 'absolute', transform: 'translateX(-110%)' }} onClick={() => setScheme({ categories: [], customProps: defaultCustomProps, scheme: '' })} danger>Remove scheme</Button>
-              <SvgScheme
-                src={scheme.scheme}
-                categories={scheme.categories}
+      <Fieldset title='located in' icon={<EnvironmentOutlined className='fs-icon' />}>
+        <Row gutter={[16, 0]}>
+          <Col span={12}>
+            <Form.Item name='location'>
+              <InputCity
+                name={['country', 'city']}
+                label={['Country', 'City']}
+                required
               />
-            </Col>
-            <Col span={8}>
-              <Typography.Title level={3} style={{ color: '#222', marginTop: 0 }}>Categories</Typography.Title>
-              <SortableList
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name={`address_${langCode}`}
+              label='Address'
+              required
+            >
+              <Input />
+            </Form.Item>
+          </Col>
+        </Row>
+      </Fieldset>
+      
+      <Flex gap={20} className='scheme-fieldset'>
+        <Fieldset
+          title={<>scheme  {!!scheme.scheme && <Button type='link' size='small' icon={<ClearOutlined />} onClick={() => setScheme({ categories: [], customProps: defaultSeatParams, scheme: '' })} danger />}</>}
+          style={{ flex: '0 0 65%' }}
+          icon={<InsertRowAboveOutlined className='fs-icon' />}
+        >
+          {scheme.scheme ?
+            <SvgScheme
+              ref={svgRef}
+              src={scheme.scheme}
+              categories={scheme.categories}
+              renderTooltip={SchemeTooltip}
+              seat={seatHandlers}
+              /* onSeatMuseDown={handleMouseDown}
+              onSeatOver={handleMouseOver} */
+            /> :
+            <Upload.Dragger
+              accept='.svg'
+              itemRender={() => null}
+              customRequest={e => toText(e.file)
+                .then(transformScheme)
+                .then(scheme => setScheme({
+                  categories: getCategories(scheme),
+                  scheme: clearFillAndStringify(scheme),
+                  customProps: defaultSeatParams
+                })
+              )}
+              block
+            >
+              <p className="ant-upload-drag-icon">
+                <InboxOutlined />
+              </p>
+              <p className="ant-upload-text">Click or drag file to this area to upload</p>
+              <p className="ant-upload-hint">
+                Support for a single or bulk upload. Strictly prohibited from uploading company data or other
+                banned files.
+              </p>
+            </Upload.Dragger>
+          }
+        </Fieldset>
+
+        <Fieldset
+          title={<>
+            <span
+              className={classNames({
+                'scheme-tooltip-label_selected': !showSeatsEdit,
+                'scheme-tooltip-label_active': showSeatsEdit && isSelected
+              })}
+              onClick={() => setShowSeatsEdit(false)}
+            >
+              <BarsOutlined className='fs-icon' /> <span>categories</span>
+            </span>
+            {!!scheme.scheme && false && <Button type='link' size='small' icon={<ClearOutlined />} danger />}
+            <Divider type='vertical' />
+            <span
+              className={classNames({
+                'scheme-tooltip-label_selected': showSeatsEdit && isSelected,
+                'scheme-tooltip-label_active': !showSeatsEdit && isSelected,
+                'scheme-tooltip-label_disabled': !isSelected
+              })}
+              onClick={isSelected ? () => setShowSeatsEdit(true) : undefined}
+            >
+              <CheckCircleOutlined className='fs-icon' /> <span>selected seats</span>
+            </span>
+          </>}
+          style={{ flex: '1 1 auto' }}
+        >
+          {showSeatsEdit && isSelected ?
+            <SeatEditor
+              categories={scheme.categories}
+              params={scheme.customProps}
+              seats={selectedSeats}
+              onChange={handleChangeSeat}
+            /> :
+            <>
+              {scheme.categories?.length > 0 && <SortableList
                 items={scheme.categories}
                 onChange={list => setScheme(prev => ({ ...prev, categories: list }))}
-                renderItem={(item) => (
+                renderItem={(item, i) => (
                   <SortableList.Item id={item.id}>
-                    <Category {...item} onChange={handleChangeCategory} onDelete={deleteCategory} />
+                    <Category
+                      {...item}
+                      onChange={inject => console.log(inject) ||
+                       setScheme(prev => {
+                        const categories = [...prev.categories]
+                        categories[i] = { ...categories[i], ...inject }
+                        return {
+                          ...prev,
+                          categories
+                        }
+                      })}
+                      onDelete={deleteCategory}
+                    />
                     <SortableList.DragHandle />
                   </SortableList.Item>
                 )}
-              />
-            </Col>
-          </Row> :
-          <Upload.Dragger
-            accept='.svg'
-            itemRender={() => null}
-            customRequest={e => toText(e.file)
-              .then(transformScheme)
-              .then(scheme => setScheme({
-                categories: getCategories(scheme),
-                scheme: clearFillAndStringify(scheme),
-                customProps: defaultCustomProps
-              })
-            )}
-            block
-          >
-            <p className="ant-upload-drag-icon">
-              <InboxOutlined />
-            </p>
-            <p className="ant-upload-text">Нажмите на эту область или перетащите сюда svg-файл со схемой</p>
-          </Upload.Dragger>
-        }
-      </div>
-
-      <div style={currentPageIndex === 2 ? undefined : { display: 'none' }}>
-        {scheme.categories.length === 0 ?
-          'Separated seats on the scheme not found' :
-          scheme.categories.map(cat => (
-            <div>
-              <Typography.Title level={3}>{cat.label}</Typography.Title>
-              {cat.rows?.length > 0 &&
-                <div className='hall-rows'>
-                  {cat.rows.map(row => (
-                    <div className='hall-row'>
-                      <div className='hall-row-num'>{row}</div>
-                      <div className='hall-seats'>
-                        {cat.seats.filter(seat => seat.row === row).sort((a, b) => a.seat > b.seat ? 1 : -1).map(seat =>
-                          <button className='hall-seat'>{seat.seat}</button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-              </div>}
-            </div>
-          ))
-        }
-      </div>
+              />}
+              <Button type='dashed' size='large' icon={<PlusOutlined />} onClick={addCategory} block>Add category</Button>
+            </>
+          }
+        </Fieldset>
+      </Flex>
     </Form>
   )
 }
