@@ -21,6 +21,7 @@ import SeatEditor from 'components/seat-editor'
 import SeatProperty from 'components/seat-property'
 import { axios } from 'api/axios'
 import { query, updateData } from './api'
+import { useQuery } from '@tanstack/react-query'
 
 const getEmptyCategory = (categories) => ({
   id: `cat${categories.length + 1}`,
@@ -48,7 +49,7 @@ function SchemeTooltip(props) {
   </div>
 }
 
-export default function HallForm({ onValidationChange, form, beforeSubmit, afterSubmit }) {
+export default function HallForm({ form, schemeFile }) {
   const svgRef = useRef(null)
   const { hall_id } = useParams()
   const [{ langCode }] = useAppState()
@@ -58,6 +59,21 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
   const [showSeatsEdit, setShowSeatsEdit] = useState(false)
   const [editSeatParams, setEditSeatParams] = useState(null)
   const [editSeatIndex, setEditSeatIndex] = useState(null)
+
+  const schemeJson = useQuery({
+    queryKey: ['scheme', hall_id],
+    queryFn: () => axios.get(schemeFile).then(res => res.data),
+    enabled: !!schemeFile && hall_id !== 'create'
+  })
+
+  useEffect(() => {
+    if (!schemeJson.data) return
+    setScheme({
+      ...schemeJson.data,
+      categories: schemeJson.data.categories?.map((item, i) => ({ id: i + 1, ...item})),
+      seatParams: schemeJson.data.customProps
+    })
+  }, [schemeJson.data])
   
   const handleChangeCategory = useCallback((index, key, value) => {
     setScheme(prev => ({ ...prev, categories: prev.categories.map((item, i) => i === index ? { ...item, [key]: value } : item) }))
@@ -190,12 +206,10 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
         console.log(values)
       }}
       onFinish={async ({ location, ...values }) => {
-        beforeSubmit && beforeSubmit()
-        if (hall_id !== 'create') values.id = hall_id
+        if (hall_id !== NEW_ITEM_ID) values.id = hall_id
         const categories = scheme.categories.map(({ seats, rows, seatsCount, ...item }) => item)
         values.scheme_blob = await jsonBase64({ ...scheme, categories })
         const response = await updateData({ stadiums: [values] })
-        afterSubmit && afterSubmit()
       }}
     >
       {hall_id !== NEW_ITEM_ID && <Form.Item name='id' style={{ display: 'none' }}><input type='hidden' value={hall_id} /></Form.Item>}
@@ -218,6 +232,7 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
               name={['country', 'city']}
               label={['Country', 'City']}
               form={form}
+              onAddCity={console.log}
               required
             />
           </Col>

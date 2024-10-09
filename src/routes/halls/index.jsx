@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { omit, pick } from 'lodash'
 import { Button, Card, Col, Descriptions, Dropdown, Form, List, Row, Typography } from 'antd'
 import { Link, Outlet, redirect, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CloseOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons'
@@ -10,8 +11,6 @@ import { parseJson } from 'utils/utils'
 import { EMPTY_HALL, NEW_ITEM_ID } from 'consts'
 import { query } from './api'
 import './halls.scss'
-import { omit, pick } from 'lodash'
-import { axios } from 'api/axios'
 
 export default function Halls() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -36,10 +35,7 @@ export default function Halls() {
       if (hall_id) navigate('/halls', { replace: true })
       return
     }
-    if (activeHall.scheme_blob) {
-      axios.get(activeHall.scheme_blob).then(res => console.log(res))
-    }
-    form.setFieldsValue(activeHall)
+    form.setFieldsValue({ ...activeHall, scheme: activeHall.scheme_blob })
   }, [activeHall])
   
   return (<>
@@ -69,7 +65,7 @@ export default function Halls() {
           </Col>
         ))}
       </Row> :
-      <HallForm form={form} />
+      <HallForm form={form} schemeFile={activeHall.scheme_blob} />
     }  
     </div>
     <Sidebar buttons sticky>

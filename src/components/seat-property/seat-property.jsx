@@ -70,8 +70,7 @@ export default function SeatProperty(props) {
   return (
     <table className={cn()}>
       <tr>
-        <th>{title}</th>
-        <th></th>
+        <th colSpan={2} className='modal-title'>{title}</th>
       </tr>
       <tr>
         <td className={cn('label')}>Data type</td>

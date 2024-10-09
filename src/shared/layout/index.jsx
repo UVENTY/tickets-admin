@@ -19,15 +19,14 @@ import {
 } from 'antd'
 import { Outlet, Link, useNavigate, useLocation, useLoaderData } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import StadiumIcon from './stadiumIcon'
-import s from './layout.module.scss'
+import { pick } from 'lodash'
+import { useQuery } from '@tanstack/react-query'
 import Logo from '../../instance/components/logo'
 import { axios } from 'api/axios'
 import { fetchConfig } from 'redux/config'
 import { authorizeByTokens } from 'redux/user'
-import { pick } from 'lodash'
 import { useAppState } from 'shared/contexts'
-import { useQuery } from '@tanstack/react-query'
+import s from './layout.module.scss'
 
 export const query = {
   queryKey: ['config'],

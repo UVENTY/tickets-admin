@@ -12,7 +12,6 @@ export const EMPTY_HALL = {
   scheme_blob: null
 }
 
-
 export const USER_ROLES_COLOR = {
   '1': '#2db7f5',
   '2': '#87d068',

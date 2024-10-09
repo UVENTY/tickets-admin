@@ -66,3 +66,5 @@ export const isLowerIncludes = (searchStr, targetStr) =>
   String(targetStr).toLowerCase().includes(
     String(searchStr).toLowerCase()
   )
+
+export const getCreatedId = response => Object.entries(response?.data?.created_id)?.[0]?.[1]
