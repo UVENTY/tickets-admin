@@ -47,6 +47,7 @@ const renderField = (field, { values, onChange }) => {
 export default function SeatEditor(props) {
   const { categories, params, seats, onChange } = props
   const initialValues = useMemo(() => [{ value: 'category' }, { value: 'row' }, { value: 'seat' }, ...params].reduce((acc, { value: param }) => {
+    if (!param) return acc
     const diff = seats.find(el => el.getAttribute(`data-${param}`) !== seats[0].getAttribute(`data-${param}`))
     acc[param.value || param] = diff ? null : seats[0].getAttribute(`data-${param}`)
     return acc
