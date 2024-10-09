@@ -7,78 +7,115 @@ import { DATA_TYPES } from 'consts'
 const cn = bem('seat-property')
 
 const getCommonOptions = type => ([
-  { name: 'placeholder', type: 'string' },
-  { name: 'defaltValue', type }
+  {
+    label: 'Placeholder',
+    name: 'placeholder',
+    type: 'string'
+  },
+  {
+    label: 'Default value',
+    name: 'defaltValue',
+    type
+  }
 ])
 
 const optionsByType = {
   string: [...getCommonOptions('string'), {
+    label: 'Min length',
     name: 'minlength',
     type: 'number'
   }, {
+    label: 'Max length',
     name: 'maxlength',
     type: 'number'
   }],
   number: [...getCommonOptions('number'), {
+    label: 'Min value',
     name: 'min',
     type: 'number'
   }, {
+    label: 'Max value',
     name: 'max',
     type: 'number'
   }],
   select: [...getCommonOptions('select'), {
+    label: 'Options',
     name: 'options',
-    type: [{ label: 'string', value: 'string' }]
+    type: ['string']
   }, {
+    label: 'Searchable',
     name: 'searchable',
     type: 'checkbox'
   }],
   file: [getCommonOptions('file')[0], {
+    label: 'File types',
     name: 'accept',
     type: 'string'
   }, {
+    label: 'Multiple file',
     name: 'multiple',
     type: 'checkbox'
-  }
-
-  ],
+  }/* , {
+    label: 'Color',
+    name: 'color',
+    type: 'color'
+  } */],
   checkbox: []
 }
 
 export default function SeatProperty(props) {
-  const { edit, name, label, type = 'string', options, onChange = () => {} } = props
+  const { title, name, label, type = 'string', options, onChange = () => {} } = props
   const optionsParams = optionsByType[type] || []
-  console.log(optionsParams, type);
   
   return (
-    <div className={cn()}>
-      {edit ? <>
-        <Input
-          value={label}
-          onChange={e => onChange('label', e.currentTarget.value)}
-          className={cn('label')}
-        />
-        <Input
-          value={name}
-          onChange={e => onChange('name', e.currentTarget.value)}
-          className={cn('name')}
-        />
-        <Select
-          options={DATA_TYPES}
-          value={type}
-          onChange={value => onChange('type', value)}
-          className={cn('type')}
-        />
-      </> : <>
-        <div className={cn('label')}>{label}</div>
-        <div className={cn('name')}>{name}</div>
-        <div className={cn('label')}>{DATA_TYPES[type]?.label}</div>
-      </>}
-      <div className={cn('options')}>
-        {optionsParams.map(option => {
-          return <FormField {...option} />
-        })}
-      </div>
-    </div>
+    <table className={cn()}>
+      <tr>
+        <th>{title}</th>
+        <th></th>
+      </tr>
+      <tr>
+        <td className={cn('label')}>Data type</td>
+        <td className={cn('field')}>
+          <Select
+            options={DATA_TYPES}
+            value={type}
+            onChange={value => onChange({ ...props, type: value })}
+            className={cn('value', { type: true })}
+          />
+        </td>
+      </tr>
+      <tr>
+        <td className={cn('label')}>Label</td>
+        <td className={cn('field')}>
+          <Input
+            value={label}
+            onChange={e => onChange({ ...props, label: e.currentTarget.value })}
+            className={cn('value', { label: true })}
+          />
+        </td>
+      </tr>
+      <tr>
+        <td className={cn('label')}>System name</td>
+        <td>
+          <Input
+            value={name}
+            onChange={e => onChange({ ...props, name: e.currentTarget.value })}
+            className={cn('value', { name })}
+          />
+        </td>
+      </tr>
+      {optionsParams.map((option, i) =>
+        <tr key={i}>
+          <td className={cn('label')}>{option.type !== 'checkbox' && option.label}</td>
+          <td>
+            <FormField
+              {...option}
+              className={cn('value', { [option.name]: true })}
+              onChange={value => onChange({ ...props, [option.name]: value })}
+            />
+          </td>
+        </tr>
+      )}
+    </table>
   )
 }

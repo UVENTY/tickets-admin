@@ -1,17 +1,21 @@
 .seat-property {
-  display: flex;
-  gap: 10px;
-  margin: 0 0 10px;
-
-  &-type,
-  &-label,
-  &-name {
-    flex: 0 0 220px;
+  margin-top: -10px;
+  &-label {
+    text-align: right;
+    padding-right: 15px;
+  }
+  th {
+    padding-right: 15px;
+    padding-bottom: 10px;
+    font-size: 1.2em;
+  }
+  td {
+    min-height: 42px;
+    vertical-align: middle;
+    padding-bottom: 5px;
   }
 
-  &-options {
-    display: flex;
-    gap: 10px;
-    flex: 1 1 auto;
+  &-value {
+    width: 100%;
   }
 }

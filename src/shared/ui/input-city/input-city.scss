@@ -1,0 +1,18 @@
+.input-city {
+  display: flex;
+  width: 100%;
+ 
+  &-select {
+    flex: 0 0 50%;
+
+    &_full {
+      flex-basis: 100%;
+    }
+
+    & + & {
+      .ant-select-selector {
+        border-left: none;
+      }
+    }
+  }
+}

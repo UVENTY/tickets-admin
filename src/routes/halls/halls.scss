@@ -19,7 +19,7 @@
     .ant-table {
       background-color: transparent !important;
 
-      .ant-table-container, td {
+      .ant-table-container, td, th {
         border-color: #e3e3e3 !important;
       }
       .ant-table-container {
@@ -38,6 +38,10 @@
 
     &-seat-props {
       margin-bottom: 20px;
+
+      td {
+        cursor: pointer;
+      }
     }
   }
 

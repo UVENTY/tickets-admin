@@ -1,12 +1,15 @@
 import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react'
 import { Button, Form, Select, Space } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
-import cn from 'classnames'
+import classNames from 'classnames'
+import { cn as bem } from '@bem-react/classname'
 import { mapToOptions } from 'utils/utils'
-import s from './input-city.module.scss'
 import { isLowerIncludes } from 'api/utils'
 import { ClockCircleOutlined, EnterOutlined, PlusOutlined } from '@ant-design/icons'
 import { NEW_ITEM_ID } from 'consts'
+import './input-city.scss'
+
+const cn = bem('input-city')
 
 const createCityOptions = {
   value: NEW_ITEM_ID,
@@ -50,11 +53,11 @@ const InputCity = forwardRef((props, ref) => {
   }, [country, city, onChange])
   
   return (
-    <Space.Compact className={s.inputCity}>
+    <Space.Compact className={cn()}>
       <Form.Item
         name={name[0]}
         label={label[0]}
-        className={cn(s.select, { [s.select_full]: !hasCountry })}
+        className={classNames(cn('select', { full: !hasCountry }))}
         rules={rules}
         required={required}
       >
@@ -71,7 +74,7 @@ const InputCity = forwardRef((props, ref) => {
         <Form.Item
           name={name[1]}
           label={label[1]}
-          className={s.select}
+          className={cn('select')}
           rules={rules}
           required={required}
         >
@@ -80,6 +83,7 @@ const InputCity = forwardRef((props, ref) => {
             // onChange={handleChange}
             onSearch={setCitySearch}
             filterOption={(value, option) => isLowerIncludes(value, option.label)}
+            className=''
             showSearch
           />
         </Form.Item>

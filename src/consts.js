@@ -40,7 +40,7 @@ export const DATA_TYPES = [
     label: 'Number'
   }, {
     value: 'select',
-    label: 'Select from list'
+    label: 'Select'
   }, {
     value: 'checkbox',
     label: 'Checkbox'

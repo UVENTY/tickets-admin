@@ -1,27 +1,26 @@
-import { axios } from 'api/axios'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import Typography from 'antd/es/typography/Typography'
-import { Button, Col, Descriptions, Divider, Flex, Form, Input, Row, Segmented, Select, Space, Steps, Table, Upload } from 'antd'
+import classNames from 'classnames'
+import { pick } from 'lodash'
+import { BarsOutlined, BorderBottomOutlined, BorderTopOutlined, CheckCircleOutlined, CheckSquareOutlined, ClearOutlined, ClockCircleFilled, ControlOutlined, EnvironmentOutlined, InboxOutlined, InsertRowAboveOutlined, PlusOutlined, RedoOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons'
+import { Typography, Button, Col, Descriptions, Divider, Flex, Form, Input, Modal, Row, Segmented, Select, Space, Steps, Table, Upload } from 'antd'
 import { useAppState } from 'shared/contexts'
 import { jsonBase64, toBase64, toText } from 'utils/utils'
 import { defaultSeatParams, findSeatElement, getCategories, isEqualSeats, removeColorsAndSerialize, transformScheme } from 'utils/svg'
 import { activeSeatClassName, seatClassName } from 'components/SvgSchemeEditor/consts'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import SvgScheme from 'components/svg-scheme'
 import Categories, { Category } from 'components/SvgSchemeEditor/categories'
 import { clearFillAndStringify } from 'components/SvgSchemeEditor/utils'
 import { SortableList } from 'components/sortable-list'
 import { DATA_TYPES, NEW_ITEM_ID, NON_SEAT_ROW } from 'consts'
-import { BarsOutlined, BorderBottomOutlined, BorderTopOutlined, CheckCircleOutlined, CheckSquareOutlined, ClearOutlined, ClockCircleFilled, ControlOutlined, EnvironmentOutlined, InboxOutlined, InsertRowAboveOutlined, PlusOutlined, RedoOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons'
 import InputCity from 'shared/ui/input-city'
 import { useLocalStorage } from 'utils/hooks'
 import cache from 'shared/api/cache'
-import { query, updateData } from './api'
 import Fieldset from 'shared/ui/fieldset'
-import classNames from 'classnames'
-import { pick } from 'lodash'
 import SeatEditor from 'components/seat-editor'
 import SeatProperty from 'components/seat-property'
+import { axios } from 'api/axios'
+import { query, updateData } from './api'
 
 const getEmptyCategory = (categories) => ({
   id: `cat${categories.length + 1}`,
@@ -57,6 +56,8 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
   const [scheme, setScheme] = useState({ categories: [], seatParams: defaultSeatParams, scheme: '' })
   const [selectedSeats, setSelectedSeats] = useState([])
   const [showSeatsEdit, setShowSeatsEdit] = useState(false)
+  const [editSeatParams, setEditSeatParams] = useState(null)
+  const [editSeatIndex, setEditSeatIndex] = useState(null)
   
   const handleChangeCategory = useCallback((index, key, value) => {
     setScheme(prev => ({ ...prev, categories: prev.categories.map((item, i) => i === index ? { ...item, [key]: value } : item) }))
@@ -121,6 +122,40 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
     onDoubleClick: handleClickSeat
   }), [handleClickSeat])
 
+  const showEditSeat = useCallback((index = null) => {
+    if (index === null) {
+      setEditSeatIndex(true)
+      setEditSeatParams({ name: '', label: '', type: 'string' })
+      return
+    }
+    if (scheme.seatParams[index]) {
+      setEditSeatIndex(index)
+      setEditSeatParams({ ...scheme.seatParams[index]  })
+    }
+  }, [scheme.seatParams])
+
+  const hideEditSeat = useCallback(() => {
+    setEditSeatIndex(null)
+    setEditSeatParams(null)
+  }, [])
+
+  const saveSeatProp = useCallback(() => {
+    const newParams = [ ...scheme.seatParams ]
+    if (editSeatIndex === true) {
+      newParams.push(editSeatParams)
+    } else if (newParams[editSeatIndex]) {
+      newParams[editSeatIndex] = { ...newParams[editSeatIndex], ...editSeatParams }
+    }
+    setScheme(prev => ({ ...prev, seatParams: newParams }))
+    hideEditSeat()
+  }, [editSeatParams, editSeatIndex, hideEditSeat])
+
+  const handleDelete = useCallback(() => {
+    const seatParams = scheme.seatParams.filter((item, i) => i !== editSeatIndex)
+    setScheme(prev => ({ ...prev, seatParams }))
+    hideEditSeat()
+  }, [editSeatIndex])
+
   // const updateFromSvg = (cb) => {
   //   const node = svgRef.current.cloneNode(true)
   //   node.querySelectorAll(`.${seatClassName}[data-price]`).forEach(el => el.removeAttribute('data-price'))
@@ -143,7 +178,8 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
   }, [selectedSeats])
 
   const isSelected = selectedSeats.length > 0
-  
+  const isEditSeat = editSeatIndex === true || typeof editSeatIndex === 'number'
+
   return (
     <Form
       size='large'
@@ -197,10 +233,19 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
         </Row>
       </Fieldset>
 
-      <Fieldset title='seat properties' icon={<SettingOutlined className='fs-icon' />}>
+      <Fieldset
+        title={<>
+          seat properties 
+          <Button size='small' type='link' icon={<PlusOutlined />} onClick={() => showEditSeat(null)} />
+        </>}
+        icon={<SettingOutlined className='fs-icon' />}
+      >
         <Table
           className='hall-form-seat-props'
           size='small'
+          onRow={(record, index) => ({
+            onClick: () => showEditSeat(index)
+          })}
           columns={[
             {
               dataIndex: 'label',
@@ -209,7 +254,7 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
             }, {
               dataIndex: 'type',
               title: 'Type',
-              render: type => DATA_TYPES.find(t => t.value === type)?.label,
+              render: type => DATA_TYPES.find(t => t.value === type)?.label || 'String',
               width: 200
             }, {
               dataIndex: 'name',
@@ -220,8 +265,17 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
               title: 'Options',
               render: (_, item) => {
                 const output = [
+                  !!item.defaultValue && `Default value: ${item.defaultValue}`,
+                  !!item.placeholder && `Placeholder: ${item.placeholder}`,
+                  (!!item.minlength && !item.maxlength) && `Length not less than ${item.minlength}`,
+                  (!item.minlength && !!item.maxlength) && `Length not more than ${item.maxlength}`,
+                  (!!item.minlength && !!item.maxlength) && `Length from ${item.minlength} to ${item.maxlength}`,
+                  (!!item.min && !item.max) && `Value not less than ${item.minlength}`,
+                  (!item.min && !!item.max) && `Value not more than ${item.maxlength}`,
+                  (!!item.min && !!item.max) && `Value from range ${item.minlength} to ${item.maxlength}`,
+                  item.searchable && 'Searchable',
                   item.type === 'file' && (item.multiple ? 'Multiple file' : 'Single file'),
-                  !!item.accept && `File formats: ${item.accept}`
+                  item.type === 'file' && `File formats: ${item.accept || 'any'}`
                 ].filter(Boolean)
                 return output.join('; ')
               }
@@ -230,7 +284,34 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
           dataSource={scheme.seatParams}
           pagination={false}
           bordered
-        />        
+        />
+        {isEditSeat && <Modal
+          width={450}
+          open={isEditSeat}
+          onCancel={hideEditSeat}
+          footer={[
+            editSeatIndex !== true && <Button key='delete' onClick={handleDelete} danger>
+              Delete
+            </Button>,
+            <Button key='cancel' onClick={hideEditSeat}>
+              Cancel
+            </Button>,
+            <Button
+              key='Save'
+              type="primary"
+              // loading={loading}
+              onClick={saveSeatProp}
+            >
+              Save
+            </Button>,
+          ].filter(Boolean)}
+        >
+          <SeatProperty
+            title={`${editSeatIndex === true ? 'New' : 'Edit'} seat property`}
+            {...editSeatParams}
+            onChange={setEditSeatParams}
+          />
+        </Modal>}
       </Fieldset>
       
       <Flex gap={20} className='scheme-fieldset'>
