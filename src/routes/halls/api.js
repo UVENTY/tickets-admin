@@ -10,7 +10,7 @@ export const query = {
     }),
   select: (map) => Object.entries(map).reduce(
     (acc, [id, item]) => {
-      if (item.country && item.city) {
+      if (item.country) {
         item.scheme = parseJson(item.scheme)
         acc.unshift({ ...item, id })
       }

@@ -1,6 +1,26 @@
 import { uniq } from 'lodash'
 import { getValidSvg, tryToNumber } from './utils'
-import { seatClassName } from 'components/SvgSchemeEditor/consts'
+
+export const defaultSeatParams = [
+  {
+    name: 'icon',
+    label: 'Seat icon',
+    type: 'file',
+    accept: '.svg',
+    originalColors: false,
+  }, {
+    name: 'text',
+    label: 'Text',
+  }, {
+    name: 'disabled',
+    label: 'Disabled',
+    type: 'checkbox',
+  }
+]
+
+export const seatClassName = 'svg-seat'
+export const activeSeatClassName = 'active'
+export const labelClass = 'ant-col ant-form-item-label'
 
 export const transformScheme = svg => {
   const doc = getValidSvg(svg)

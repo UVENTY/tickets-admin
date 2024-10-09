@@ -13,10 +13,10 @@ export const getFileExt = (fileName, withDot = false) => {
   return withDot ? `.${ext}` : ext
 }
 
-export const toBase64 = file => new Promise((resolve, reject) => {
+export const toBase64 = (file, { contentType = 'application/json', ext = 'json' } = {}) => new Promise((resolve, reject) => {
   const filename = (file.name || '').split('.').slice(0, -1).join('.')
-  const fakeJson = new File([file], `${filename}.json`, {
-    type: 'application/json',
+  const fakeJson = new File([file], `${filename}.${ext}`, {
+    type: contentType,
     lastModified: new Date(),
   })
   const reader = new FileReader()

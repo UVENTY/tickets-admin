@@ -8,7 +8,7 @@ import { EMPTY_ARRAY, EMPTY_FUNC, NON_SEAT_ROW } from '../../consts'
 import SvgScheme, { SeatPreview as SvgSchemeSeatPreview  } from '../SvgScheme'
 import SvgSchemeEditSeat from './edit-seat'
 import FieldForm from './field-form'
-import { activeSeatClassName, defaultSeatParams, labelClass, seatClassName } from './consts'
+import { activeSeatClassName, defaultCustomProps, labelClass, seatClassName } from './consts'
 import { isMacintosh, renderHiddenHTML, setCurrentColor, toText } from '../../utils/utils'
 import s from './svg-scheme-editor.module.scss'
 import Categories from './categories'
@@ -25,7 +25,7 @@ const isMac = isMacintosh()
 export default function SvgSchemeEditor(props) {
   const { initialValue, value, onChange, tickets = [], onTicketsChange = EMPTY_FUNC } = props
   const [ categories, setCategories ] = useState(value?.categories || EMPTY_ARRAY)
-  const [customProps, setCustomProps] = useState(value?.customProps || defaultSeatParams)
+  const [customProps, setCustomProps] = useState(value?.customProps || defaultCustomProps)
   const [ scheme, setScheme ] = useState(value?.scheme || '')
   const [ selectedSeats, setSelectedSeats ] = useState([])
   const [ editProp, setEditProp ] = useState('categories')
@@ -205,7 +205,7 @@ export default function SvgSchemeEditor(props) {
             .then(({ categories, scheme }) => {
               setScheme(scheme)
               setCategories(categories)
-              setCustomProps(defaultSeatParams)
+              setCustomProps(defaultCustomProps)
             })}
         >
           <Button size='large' type='primary' htmlType='button' icon={<UploadOutlined />}>Upload from svg</Button>

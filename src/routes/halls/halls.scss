@@ -16,7 +16,29 @@
   }
   
   .hall-form {
-    // margin-left: 230px;
+    .ant-table {
+      background-color: transparent !important;
+
+      .ant-table-container, td {
+        border-color: #e3e3e3 !important;
+      }
+      .ant-table-container {
+        border-bottom-left-radius: 8px;
+      }
+      
+      tr:last-child {
+        td:first-child {
+          border-bottom-left-radius: 8px;
+        }
+        td:last-child {
+          border-bottom-right-radius: 8px;
+        }
+      }
+    }
+
+    &-seat-props {
+      margin-bottom: 20px;
+    }
   }
 
   .hall-title {

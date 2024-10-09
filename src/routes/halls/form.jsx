@@ -1,19 +1,18 @@
-import { useQueryClient } from '@tanstack/react-query'
 import { axios } from 'api/axios'
 import { useNavigate, useParams } from 'react-router-dom'
 import Typography from 'antd/es/typography/Typography'
-import { Button, Col, Descriptions, Divider, Flex, Form, Input, Row, Segmented, Select, Space, Steps, Upload } from 'antd'
+import { Button, Col, Descriptions, Divider, Flex, Form, Input, Row, Segmented, Select, Space, Steps, Table, Upload } from 'antd'
 import { useAppState } from 'shared/contexts'
-import { jsonBase64, toText } from 'utils/utils'
-import { findSeatElement, getCategories, isEqualSeats, removeColorsAndSerialize, transformScheme } from 'utils/svg'
-import { activeSeatClassName, defaultSeatParams, seatClassName } from 'components/SvgSchemeEditor/consts'
+import { jsonBase64, toBase64, toText } from 'utils/utils'
+import { defaultSeatParams, findSeatElement, getCategories, isEqualSeats, removeColorsAndSerialize, transformScheme } from 'utils/svg'
+import { activeSeatClassName, seatClassName } from 'components/SvgSchemeEditor/consts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import SvgScheme from 'components/svg-scheme'
 import Categories, { Category } from 'components/SvgSchemeEditor/categories'
 import { clearFillAndStringify } from 'components/SvgSchemeEditor/utils'
 import { SortableList } from 'components/sortable-list'
-import { NEW_ITEM_ID, NON_SEAT_ROW } from 'consts'
-import { BarsOutlined, BorderBottomOutlined, BorderTopOutlined, CheckCircleOutlined, CheckSquareOutlined, ClearOutlined, ControlOutlined, EnvironmentOutlined, InboxOutlined, InsertRowAboveOutlined, PlusOutlined, RedoOutlined, UploadOutlined } from '@ant-design/icons'
+import { DATA_TYPES, NEW_ITEM_ID, NON_SEAT_ROW } from 'consts'
+import { BarsOutlined, BorderBottomOutlined, BorderTopOutlined, CheckCircleOutlined, CheckSquareOutlined, ClearOutlined, ClockCircleFilled, ControlOutlined, EnvironmentOutlined, InboxOutlined, InsertRowAboveOutlined, PlusOutlined, RedoOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons'
 import InputCity from 'shared/ui/input-city'
 import { useLocalStorage } from 'utils/hooks'
 import cache from 'shared/api/cache'
@@ -22,6 +21,7 @@ import Fieldset from 'shared/ui/fieldset'
 import classNames from 'classnames'
 import { pick } from 'lodash'
 import SeatEditor from 'components/seat-editor'
+import SeatProperty from 'components/seat-property'
 
 const getEmptyCategory = (categories) => ({
   id: `cat${categories.length + 1}`,
@@ -31,21 +31,6 @@ const getEmptyCategory = (categories) => ({
   color: '#000'
 })
 
-const SEATS = [
-  {
-    title: 'located in',
-    dataType: 'location',
-    icon: <EnvironmentOutlined />,
-  }, {
-    title: 'scheme',
-    dataType: 'scheme',
-    icon: <BorderTopOutlined />
-  }, {
-    title: 'seats options',
-    dataType: 'seats',
-    icon: <ControlOutlined />
-  }
-]
 
 function SchemeTooltip(props) {
   const { category = {}, seat, row } = props
@@ -65,21 +50,14 @@ function SchemeTooltip(props) {
 }
 
 export default function HallForm({ onValidationChange, form, beforeSubmit, afterSubmit }) {
-  const [{ langCode }] = useAppState()
-  const { id, dataType = 'location' } = useParams()
-  const currentPageIndex = SEATS.findIndex(item => item.dataType === dataType)
-  const [isSending, setIsSending] = useState(false)
-  const queryClient = useQueryClient()
-  const navigate = useNavigate()
   const svgRef = useRef(null)
-  const cache = queryClient.getQueryData(query.queryKey)
-  const item = cache?.[id]
-  const [selectHover, setSelectHover] = useState(false)
-  const [scheme, setScheme] = useState({ categories: [], customProps: defaultSeatParams, scheme: '' })
+  const { hall_id } = useParams()
+  const [{ langCode }] = useAppState()
+  // const [selectHover, setSelectHover] = useState(false)
+  const [scheme, setScheme] = useState({ categories: [], seatParams: defaultSeatParams, scheme: '' })
   const [selectedSeats, setSelectedSeats] = useState([])
   const [showSeatsEdit, setShowSeatsEdit] = useState(false)
-  const [newHallForm, setNewHallForm] = useLocalStorage('new_hall_form', {})
-
+  
   const handleChangeCategory = useCallback((index, key, value) => {
     setScheme(prev => ({ ...prev, categories: prev.categories.map((item, i) => i === index ? { ...item, [key]: value } : item) }))
   }, [])
@@ -88,11 +66,15 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
     setScheme(prev => ({ ...prev, categories: prev.categories.filter((cat) => cat.value !== value) }))
   }, [])
 
-  useEffect(() => {
+  const addCategory = useCallback(() => {
+    setScheme(prev => ({ ...prev, categories: [...prev.categories, getEmptyCategory(prev.categories)] }))
+  }, [])
+
+  /* useEffect(() => {
     const handleMouseUp = () => setSelectHover(false)
     window.addEventListener('mouseup', handleMouseUp)
     return () => window.removeEventListener('mouseup', handleMouseUp)
-  }, [])
+  }, []) */
 
   const handleClickSeat = ({ detail, target: el, ctrlKey, metaKey }) => {
     const isDoubleClick = detail > 1
@@ -116,10 +98,6 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
     })
   }
 
-  const addCategory = useCallback(() => {
-    setScheme(prev => ({ ...prev, categories: [...prev.categories, getEmptyCategory(prev.categories) ] }))
-  }, [])
-
   /* const handleMouseDown = useCallback((e) => {
     setSelectHover(true)
   }, [])
@@ -135,7 +113,7 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
     if (!svgRef.current) return
     svgRef.current.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
     selectedSeats.forEach(el => el.classList.add(activeSeatClassName))
-    updateFromSvg()
+    // updateFromSvg()
   }, [selectedSeats])
 
   const seatHandlers = useMemo(() => ({
@@ -143,14 +121,14 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
     onDoubleClick: handleClickSeat
   }), [handleClickSeat])
 
-  const updateFromSvg = (cb) => {
-    const node = svgRef.current.cloneNode(true)
-    node.querySelectorAll(`.${seatClassName}[data-price]`).forEach(el => el.removeAttribute('data-price'))
-    node.querySelectorAll(`.${seatClassName}[data-count]`).forEach(el => el.removeAttribute('data-count'))
-    node.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
-    setScheme(node.innerHTML)
-    cb && cb(null)
-  }
+  // const updateFromSvg = (cb) => {
+  //   const node = svgRef.current.cloneNode(true)
+  //   node.querySelectorAll(`.${seatClassName}[data-price]`).forEach(el => el.removeAttribute('data-price'))
+  //   node.querySelectorAll(`.${seatClassName}[data-count]`).forEach(el => el.removeAttribute('data-count'))
+  //   node.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
+  //   setScheme(node.innerHTML)
+  //   cb && cb(null)
+  // }
 
   const handleChangeSeat = useCallback((values) => { 
     selectedSeats.forEach(el => {
@@ -164,18 +142,6 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
     })
   }, [selectedSeats])
 
-  if (currentPageIndex < 0) {
-    return (
-      <Typography.Title level={2}>Page not found</Typography.Title>
-    )
-  }
-
-  if (id !== NEW_ITEM_ID && !item) {
-    return (
-      <Typography.Title level={2}>Hall not found</Typography.Title>
-    )
-  }
-  
   const isSelected = selectedSeats.length > 0
   
   return (
@@ -183,29 +149,20 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
       size='large'
       layout='vertical'
       className='hall-form'
-      disabled={isSending}
-      initialValues={item}
       form={form}
       onFieldsChange={(changed, values) => {
         console.log(values)
       }}
       onFinish={async ({ location, ...values }) => {
         beforeSubmit && beforeSubmit()
-        if (id !== 'create') values.id = id
+        if (hall_id !== 'create') values.id = hall_id
         const categories = scheme.categories.map(({ seats, rows, seatsCount, ...item }) => item)
-        values.country = location?.[0]
-        values.city = location?.[1]  
-        values.scheme_blob = await jsonBase64(scheme)
+        values.scheme_blob = await jsonBase64({ ...scheme, categories })
         const response = await updateData({ stadiums: [values] })
-        queryClient.setQueryData(query.queryKey, prev => {
-          const map = { ...prev }
-          map[response.data.data.created_id] = values
-          return map
-        })
         afterSubmit && afterSubmit()
       }}
     >
-      {id !== NEW_ITEM_ID && <Form.Item name='id' style={{ display: 'none' }}><input type='hidden' value={id} /></Form.Item>}
+      {hall_id !== NEW_ITEM_ID && <Form.Item name='id' style={{ display: 'none' }}><input type='hidden' value={hall_id} /></Form.Item>}
       <Typography.Title level={2} className='hall-title'>
         <Form.Item name={langCode} style={{ marginBottom: 0, flex: '1 1 auto' }}>
           <Input
@@ -221,13 +178,12 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
       <Fieldset title='located in' icon={<EnvironmentOutlined className='fs-icon' />}>
         <Row gutter={[16, 0]}>
           <Col span={12}>
-            <Form.Item name='location'>
-              <InputCity
-                name={['country', 'city']}
-                label={['Country', 'City']}
-                required
-              />
-            </Form.Item>
+            <InputCity
+              name={['country', 'city']}
+              label={['Country', 'City']}
+              form={form}
+              required
+            />
           </Col>
           <Col span={12}>
             <Form.Item
@@ -240,10 +196,46 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
           </Col>
         </Row>
       </Fieldset>
+
+      <Fieldset title='seat properties' icon={<SettingOutlined className='fs-icon' />}>
+        <Table
+          className='hall-form-seat-props'
+          size='small'
+          columns={[
+            {
+              dataIndex: 'label',
+              title: 'Label',
+              width: 200
+            }, {
+              dataIndex: 'type',
+              title: 'Type',
+              render: type => DATA_TYPES.find(t => t.value === type)?.label,
+              width: 200
+            }, {
+              dataIndex: 'name',
+              title: 'System name',
+              width: 200
+            }, {
+              key: 'options',
+              title: 'Options',
+              render: (_, item) => {
+                const output = [
+                  item.type === 'file' && (item.multiple ? 'Multiple file' : 'Single file'),
+                  !!item.accept && `File formats: ${item.accept}`
+                ].filter(Boolean)
+                return output.join('; ')
+              }
+            }
+          ]}
+          dataSource={scheme.seatParams}
+          pagination={false}
+          bordered
+        />        
+      </Fieldset>
       
       <Flex gap={20} className='scheme-fieldset'>
         <Fieldset
-          title={<>scheme  {!!scheme.scheme && <Button type='link' size='small' icon={<ClearOutlined />} onClick={() => setScheme({ categories: [], customProps: defaultSeatParams, scheme: '' })} danger />}</>}
+          title={<>scheme  {!!scheme.scheme && <Button type='link' size='small' icon={<ClearOutlined />} onClick={() => setScheme({ categories: [], seatParams: defaultSeatParams, scheme: '' })} danger />}</>}
           style={{ flex: '0 0 65%' }}
           icon={<InsertRowAboveOutlined className='fs-icon' />}
         >
@@ -265,7 +257,7 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
                 .then(scheme => setScheme({
                   categories: getCategories(scheme),
                   scheme: clearFillAndStringify(scheme),
-                  customProps: defaultSeatParams
+                  seatParams: defaultSeatParams
                 })
               )}
               block
@@ -275,8 +267,7 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
               </p>
               <p className="ant-upload-text">Click or drag file to this area to upload</p>
               <p className="ant-upload-hint">
-                Support for a single or bulk upload. Strictly prohibited from uploading company data or other
-                banned files.
+                Support for a single svg-file
               </p>
             </Upload.Dragger>
           }
@@ -311,7 +302,7 @@ export default function HallForm({ onValidationChange, form, beforeSubmit, after
           {showSeatsEdit && isSelected ?
             <SeatEditor
               categories={scheme.categories}
-              params={scheme.customProps}
+              params={scheme.seatParams}
               seats={selectedSeats}
               onChange={handleChangeSeat}
             /> :

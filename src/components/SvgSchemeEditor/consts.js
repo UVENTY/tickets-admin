@@ -1,4 +1,4 @@
-export const defaultSeatParams = [
+export const defaultCustomProps = [
   /*{
     value: 'row',
     label: 'Row'
@@ -25,16 +25,13 @@ export const defaultSeatParams = [
     type: 'file',
     accept: '.svg',
     originalColors: false,
-    groupEditable: true
   }, {
     value: 'text',
     label: 'Text',
-    groupEditable: true
   }, {
     value: 'disabled',
     label: 'Disabled',
     type: 'checkbox',
-    groupEditable: true
   }
 ]
 

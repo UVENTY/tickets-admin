@@ -4,7 +4,14 @@ const SCHEME_PREFIX = 'svg-scheme-'
 
 export const NEW_ITEM_ID = 'create'
 
-export const HALL_DATA_BLOCKS = ['location', 'scheme', 'seats']
+export const EMPTY_HALL = {
+  en: '',
+  address_en: '',
+  country: null,
+  city: null,
+  scheme_blob: null
+}
+
 
 export const USER_ROLES_COLOR = {
   '1': '#2db7f5',
@@ -23,3 +30,25 @@ export const EMPTY_OBJECT = {}
 export const EMPTY_FUNC = () => {}
 
 export const NON_SEAT_ROW = '-1'
+
+export const DATA_TYPES = [
+  {
+    value: 'string',
+    label: 'String'
+  }, {
+    value: 'number',
+    label: 'Number'
+  }, {
+    value: 'select',
+    label: 'Select from list'
+  }, {
+    value: 'checkbox',
+    label: 'Checkbox'
+  }, {
+    value: 'color',
+    label: 'Color'
+  }, {
+    value: 'file',
+    label: 'File'
+  }
+]

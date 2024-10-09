@@ -7,67 +7,73 @@ import Sidebar from 'shared/layout/sidebar'
 import { useAppState } from 'shared/contexts'
 import HallForm from './form'
 import { parseJson } from 'utils/utils'
-import { NEW_ITEM_ID } from 'consts'
+import { EMPTY_HALL, NEW_ITEM_ID } from 'consts'
 import { query } from './api'
 import './halls.scss'
+import { omit, pick } from 'lodash'
+import { axios } from 'api/axios'
 
 export default function Halls() {
-  const [appState] = useAppState()
-  const langCode = appState?.langCode
   const [searchParams, setSearchParams] = useSearchParams()
-  const { id, dataType = 'location' } = useParams()
+  const { hall_id } = useParams()
   const halls = useQuery(query)
   const navigate = useNavigate()
+  const [{ langCode }] = useAppState()
   const [form] = Form.useForm()
   const [isSending, setIsSending] = useState(false)
-  const [isValid, setIsValid] = useState(id !== 'create')
+  const [isValid, setIsValid] = useState(hall_id !== 'create')
   const title = 'concert hall'
+
+  const activeHall = useMemo(() => {
+    if (!hall_id) return null
+    return hall_id === NEW_ITEM_ID ?
+      EMPTY_HALL :
+      halls.data.find(item => String(item.id) === hall_id)
+  }, [hall_id])
+
+  useEffect(() => {
+    if (!activeHall) {
+      if (hall_id) navigate('/halls', { replace: true })
+      return
+    }
+    if (activeHall.scheme_blob) {
+      axios.get(activeHall.scheme_blob).then(res => console.log(res))
+    }
+    form.setFieldsValue(activeHall)
+  }, [activeHall])
   
   return (<>
     <Sidebar />
     <div className='halls'>
       <Typography.Title className='halls-header' level={1}>
-        {!!id && <div className='halls-action'>
-          {id === 'create' ? 'create' : 'edit'}
+        {!!hall_id && <div className='halls-action'>
+          {hall_id === 'create' ? 'create' : 'edit'}
         </div>}
-        {id ? <Link className='crumbs-link crumb-root' to='/halls'>{title}</Link> : `${title}s`}
-        {!id && <Button
+        {hall_id ? <Link className='crumbs-link crumb-root' to='/halls'>{title}</Link> : `${title}s`}
+        {!hall_id && <Button
           type='primary'
           icon={<PlusOutlined />}
           size='middle'
           style={{ verticalAlign: 'middle', marginLeft: 10 }}
-          onClick={() => navigate(`./${NEW_ITEM_ID}`)}
+          onClick={() => navigate(`/halls/${NEW_ITEM_ID}`)}
         />}
       </Typography.Title>
-      {!id ? <>
-        <Typography.Paragraph>
-          Базовые данные залов (включая схему), не привязанные к мероприятию.
-          <br />
-          При выборе зала для мероприятия создается копия шаблона,
-          и все изменения происходят уже в ней, не влияя на основу.
-        </Typography.Paragraph>
-        <Row gutter={[16, 16]}>
-          {halls.data?.map(item => (
-            <Col span={6} style={{ cursor: 'pointer' }} onClick={() => navigate(`/halls/${item.id}`)}>
-              <Card title={item.en}>
-                Country <b>{item.country}</b><br />
-                City <b>{item.city}</b><br />
-                Address <b>{item.address_en}</b>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </> :
-      <HallForm
-        form={form}
-        onValidationChange={setIsValid}
-        beforeSubmit={() => setIsSending(true)}
-        afterSubmit={() => setIsSending(false)}
-      />}
-      
+      {!activeHall ? <Row gutter={[16, 16]}>
+        {halls.data?.map(item => (
+          <Col span={6} style={{ cursor: 'pointer' }} onClick={() => navigate(`/halls/${item.id}`)}>
+            <Card title={item.en}>
+              Country <b>{item.country}</b><br />
+              City <b>{item.city}</b><br />
+              Address <b>{item.address_en}</b>
+            </Card>
+          </Col>
+        ))}
+      </Row> :
+      <HallForm form={form} />
+    }  
     </div>
     <Sidebar buttons sticky>
-      <Button
+      {!!activeHall && <Button
         icon={<SaveOutlined />}
         type='primary'
         style={{ marginTop: 20 }}
@@ -77,7 +83,7 @@ export default function Halls() {
         block
       >
         Save
-      </Button>
+      </Button>}
     </Sidebar>
   </>
   )

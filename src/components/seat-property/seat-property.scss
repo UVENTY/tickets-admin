@@ -1,0 +1,17 @@
+.seat-property {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 10px;
+
+  &-type,
+  &-label,
+  &-name {
+    flex: 0 0 220px;
+  }
+
+  &-options {
+    display: flex;
+    gap: 10px;
+    flex: 1 1 auto;
+  }
+}

@@ -26,7 +26,7 @@ const getRouter = queryClient => createBrowserRouter([
         element: <Tours />,
         loader: getLoader(queryClient, toursQuery),
       }, {
-        path: '/halls/:id?/:dataType?',
+        path: '/halls/:hall_id?',
         element: <Halls />,
         loader: getLoader(queryClient, hallsQuery),
       }, {

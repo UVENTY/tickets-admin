@@ -13,26 +13,24 @@ const createCityOptions = {
   label: <><PlusOutlined style={{ fontSize: '0.94em' }} /> Create new city</>
 }
 
-const   InputCity = forwardRef((props, ref) => {
+const InputCity = forwardRef((props, ref) => {
   const {
     defaultValue = [],
     label = [],
-    name = [],
+    form,
     required,
     rules,
+    name = ['country', 'city'],
     value = [],
     onChange = () => {},
   } = props
-
-  const [countryState, setCountry] = useState(value[0] || defaultValue[0])
-  const [cityState, setCity] = useState(value[1] || defaultValue[1])
   const [citySearch, setCitySearch] = useState('')
 
-  const country = value[0] ?? countryState
-  const city = value[1] ?? cityState
+  const country = Form.useWatch(name[0], form)
+  const city = Form.useWatch(name[1], form)
 
-  const hasCountry = !!countryState
-  const hasCity = !!cityState
+  const hasCountry = !!country
+  const hasCity = !!city
 
   const queryClient = useQueryClient()
   const config = queryClient.getQueryData(['config'])?.options || {}
@@ -44,19 +42,17 @@ const   InputCity = forwardRef((props, ref) => {
   
   const handleChange = useCallback((value, option) => {
     const isCity = !isNaN(Number(value))
-    const set = isCity ? setCity : setCountry
-    set(value)
     if (!isCity) {
-      setCity(null)
       setCitySearch('')
     }
-  })
-
-  useEffect(() => onChange([countryState, cityState]), [countryState, cityState])
+    const result = isCity ? [country, value] : [value, city]
+    onChange && onChange(result)
+  }, [country, city, onChange])
   
   return (
     <Space.Compact className={s.inputCity}>
       <Form.Item
+        name={name[0]}
         label={label[0]}
         className={cn(s.select, { [s.select_full]: !hasCountry })}
         rules={rules}
@@ -64,8 +60,7 @@ const   InputCity = forwardRef((props, ref) => {
       >
         <Select
           options={countries}
-          onChange={handleChange}
-          value={country}
+          // onChange={handleChange}
           filterOption={(value, option) => isLowerIncludes(value, option.label)}
           labelRender={label => <><span class={`fi fi-${label.value}`}></span> {label.label}</>}
           optionRender={label => <><span class={`fi fi-${label.value}`}></span> {label.label}</>}
@@ -74,6 +69,7 @@ const   InputCity = forwardRef((props, ref) => {
       </Form.Item>
       {hasCountry &&
         <Form.Item
+          name={name[1]}
           label={label[1]}
           className={s.select}
           rules={rules}
@@ -81,9 +77,8 @@ const   InputCity = forwardRef((props, ref) => {
         >
           <Select
             options={cities}
-            onChange={handleChange}
+            // onChange={handleChange}
             onSearch={setCitySearch}
-            value={city}
             filterOption={(value, option) => isLowerIncludes(value, option.label)}
             showSearch
           />
