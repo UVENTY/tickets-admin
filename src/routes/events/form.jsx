@@ -1,622 +1,432 @@
-import { get } from 'lodash'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { useParams, useNavigate } from 'react-router-dom'
-import { keyBy } from 'lodash'
-import dayjs from 'dayjs'
-import { Table, Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse, InputNumber, Switch, List } from 'antd'
-import { ArrowLeftOutlined, SaveOutlined, DownloadOutlined, FilePdfOutlined } from '@ant-design/icons'
-import TicketsApi from '../../api/tickets'
-import { useData, useUpdateData } from '../../api/data'
-import { axios } from '../../api/axios'
-import SvgSchemeEditor from '../../components/SvgSchemeEditor'
-import Sidebar from '../../shared/layout/sidebar'
-import { getCitiesOptions, getCountriesOptions, getLangValue } from '../../redux/config'
-import { downloadBlob, jsonBase64, qrBase64, toBase64 } from '../../utils/utils'
-import './event.scss'
-import { EMPTY_ARRAY, NON_SEAT_ROW } from '../../consts'
-import Wysiwyg from '../../components/Wysiwyg'
-import { fetchTicketsPaymentData, getTicketPdf } from '../../api/tickets/request'
-import { getColumnSearch } from '../../utils/components'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import classNames from 'classnames'
+import { pick } from 'lodash'
+import { cn as bem } from '@bem-react/classname'
+import { BarsOutlined, BorderBottomOutlined, BorderTopOutlined, CheckCircleOutlined, CheckSquareOutlined, ClearOutlined, ClockCircleFilled, ControlOutlined, EnvironmentOutlined, InboxOutlined, InsertRowAboveOutlined, PlusOutlined, RedoOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons'
+import { Typography, Button, Col, Descriptions, Divider, Flex, Form, Input, Modal, Row, Segmented, Select, Space, Steps, Table, Upload } from 'antd'
+import { useAppState } from 'shared/contexts'
+import { jsonBase64, toBase64, toText } from 'utils/utils'
+import { defaultSeatParams, findSeatElement, getCategories, isEqualSeats, removeColorsAndSerialize, transformScheme } from 'utils/svg'
+import { activeSeatClassName, seatClassName } from 'components/SvgSchemeEditor/consts'
+import SvgScheme from 'components/svg-scheme'
+import Categories, { Category } from 'components/SvgSchemeEditor/categories'
+import { clearFillAndStringify } from 'components/SvgSchemeEditor/utils'
+import { SortableList } from 'components/sortable-list'
+import { DATA_TYPES, NEW_ITEM_ID, NON_SEAT_ROW } from 'consts'
+import InputCity from 'shared/ui/input-city'
+import { useLocalStorage } from 'utils/hooks'
+import cache from 'shared/api/cache'
+import Fieldset from 'shared/ui/fieldset'
+import SeatEditor from 'components/seat-editor'
+import SeatProperty from 'components/seat-property'
+import { axios } from 'api/axios'
+import { query, updateData } from './api'
+import { useQuery } from '@tanstack/react-query'
 
-const getOptions = obj => Object.values(obj)
-  .map(item => ({ label: item.en, value: item.id }))
-  .sort((item1, item2) => item1.label > item2.label ? 1 : -1)
+const cn = bem('halls')
 
-const updateLang = (lang_vls) => axios.post('/data', {
-  data: JSON.stringify({ lang_vls })
+const getEmptyCategory = (categories) => ({
+  id: `cat${categories.length + 1}`,
+  value: `cat${categories.length + 1}`,
+  label: '',
+  icon: null,
+  color: '#000'
 })
 
-const expandNonSeats = (changed, tickets = []) => {
-  const { nonSeats, seats } = Object.entries(changed).reduce((acc, [key, value]) => {
-    if (!key.includes(';')) acc.nonSeats = [...acc.nonSeats, [key, value]]
-    else acc.seats[key] = value
-    return acc
-  }, { nonSeats: [], seats: {} })
-  return nonSeats.reduce((acc, [key, data]) => {
-    const { price, count } = data
-    if (!price && !count && count !== 0) return []
-    const freeTickets = tickets.filter(ticket => ticket.section === key && !ticket.is_sold && !ticket.is_reserved)
-    let lastSeat = Math.max(...tickets.map(ticket => ticket.seat))
-    lastSeat = isFinite(lastSeat) ? lastSeat : 0
-    if (price) {
-      acc = freeTickets.reduce((acc, ticket) => ({
-        ...acc,
-        [`${key};${NON_SEAT_ROW};${ticket.seat}`]: price,
-      }), acc)
-    }
-    if (count) {
-      const diff = count - freeTickets.length
-      if (diff < 0) {
-        acc = freeTickets.slice(0, diff * -1).reduce((acc, ticket) => ({
-          ...acc,
-          [`${key};${NON_SEAT_ROW};${ticket.seat}`]: -1,
-        }), acc)
-      } else if (diff > 0) {
-        acc = Array.from({ length: diff }, (_, i) => i + lastSeat + 1).reduce((acc, i) => ({
-          ...acc,
-          [`${key};${NON_SEAT_ROW};${i}`]: price || freeTickets[0]?.price,
-        }), acc)
-      }
-    }
-    return acc
-  }, seats)
+
+function SchemeTooltip(props) {
+  const { category = {}, seat, row } = props
+
+  const items = [{
+    key: 'cat',
+    label: <span className='scheme-tooltip-category' style={{ background: category.color }} />,
+    children: <span className='scheme-tooltip-label'>{category.label}</span>
+  }]
+
+  return <div className='scheme-tooltip' style={{ borderColor: category.color }}>
+    <b>{category.label}</b>
+    {!!row && <div>
+      <small>row</small> <b>{row}</b>, <small>seat</small> <b>{seat}</b>
+    </div>}
+  </div>
 }
 
-const exportTickets = ( tickets, eventId ) => {
-  const stringify = ( data ) => {
-    const re = /^\s|\s$|[",\n\r]/;
-    let ret = String( data || '' )
-    if (re.test( ret )) ret = `"${ret.replaceAll( '"', '""' )}"`;
-    return ret;
-  }
-  const headerRow = '\uFEFF' + [ 'Event', 'Category', 'Row', 'Seat', 'Price', 'Currency', 'Code', 'Status' ].join( ',' ) + '\r\n'
-  const rows = tickets.
-    sort( ( a, b ) =>
-      a.section < b.section ? -1 : a.section > b.section ? 1 : 
-      a.row < b.row ? -1 : a.row > b.row ? 1 : 
-      Number( a.seat ) < Number( b.seat ) ? -1 : Number( a.seat ) > Number( b.seat ) ? 1 : 0
-    ).
-    map( ticket => [
-      ticket.event_id,
-      ticket.section,
-      ticket.row == NON_SEAT_ROW ? '' : ticket.row,
-      ticket.seat,
-      ticket.price,
-      ticket.currency,
-      ticket.code,
-      ticket.is_sold ? 'sold' : ticket.is_reserved ? 'ordered' : ticket.disabled ? 'block' : ''
-    ].
-    map( stringify ).
-    join( ',' ) +
-    '\r\n'
-  )
-  rows.unshift(headerRow)
-  const blob = new Blob( rows, { type : 'text/csv; charset=utf-8' } )
-  const url = URL.createObjectURL( blob )
-  const a = document.createElement( 'a' )
-  a.href = url
-  a.download = `tickets_${eventId}_${(new Date).toISOString().substring(0,10)}.csv`
-  a.click()
-  URL.revokeObjectURL( url )
-}
+export default function HallForm({ form, schemeFile, onSubmit }) {
+  const svgRef = useRef(null)
+  const { event_id } = useParams()
+  const [{ langCode }] = useAppState()
+  // const [selectHover, setSelectHover] = useState(false)
+  const [scheme, setScheme] = useState({ categories: [], seatParams: defaultSeatParams, scheme: '' })
+  const [selectedSeats, setSelectedSeats] = useState([])
+  const [showSeatsEdit, setShowSeatsEdit] = useState(false)
+  const [editSeatParams, setEditSeatParams] = useState(null)
+  const [editSeatIndex, setEditSeatIndex] = useState(null)
 
-export default function EventForm() {
-  const [ messageApi, contextHolder ] = message.useMessage()
-  const navigate = useNavigate()
-  const { id } = useParams()
-  const [ form ] = Form.useForm()
-  const [ isSending, setIsSending ] = useState(false)
-  const [ changedPrice, setChangedPrice ] = useState({})
-  const [statusMap, setStatusMap] = useState({})
-  const dispatch = useDispatch()
-  const queryClient = useQueryClient()
-
-  const config = queryClient.getQueryData(['config'])?.options
-  console.log(config);
-  
-  const cities = [] // useSelector(getCitiesOptions)
-  const countries = [] // useSelector(getCountriesOptions)
-
-  const schemeData = Form.useWatch(['stadium', 'scheme_blob'], form)
-
-  const { isLoading: isLoadingUsers, data: usersMap } = useQuery({
-    queryKey: ['usersMap'],
-    queryFn: async () => {
-      const response = await axios.post('/query/select', {
-        sql: `SELECT id_user,id_role,phone,email,name,family,middle,id_verification_status FROM users WHERE active=1 AND deleted!=1`
-      })
-      return (response.data?.data || []).reduce((acc, item) => ({ ...acc, [item.id_user]: item }), {})
-    }
+  const schemeJson = useQuery({
+    queryKey: ['scheme', event_id],
+    queryFn: () => axios.get(schemeFile).then(res => res.data),
+    enabled: !!schemeFile && event_id !== 'create'
   })
 
-  const isNew = id === 'create'
-  const updateData = useUpdateData()
-  const mutateTickets = useMutation({ mutationFn: TicketsApi.updateTickets })
-  const { data, error, isLoading } = useData(null, {
-    select: ({ data, default_lang }) => {
-      const { schedule, stadiums, teams, tournaments } = data
-      const event = { ...schedule[id] }
-      event.date = dayjs(event.datetime)
-      event.time = event.date?.utc()
-      event.stadium = event.stadium ? { id: event.stadium, ...stadiums?.[event.stadium] } : null
-      
-      const options = {
-        s: getOptions(Object.keys(stadiums || {}).map(id => ({ id, ...stadiums?.[id] })), 'en'),
-        t: getOptions(Object.keys(tournaments || {}).map(id => ({ id, ...tournaments?.[id] })), 'en'),
-        teams: getOptions(Object.keys(teams || {}).map(id => ({ id, ...teams?.[id] })), 'en'),
-      }
-      return {
-        event,
-        options,
-        defaultLang: default_lang
-      }
-    }
-  })
-
-
-  const baseTickets = TicketsApi.useTickets({ event_id: id }, { order: 'section' }, {
-    enabled: !isNew
-  })
-
-  const tickets = useQuery({
-    queryKey: ['purchases', id],
-    queryFn: () => fetchTicketsPaymentData(baseTickets?.data),
-    select: data => {
-      const { booking } = data?.data || {}
-      return baseTickets.data?.map(({ sold_info, ...ticket }) => {
-        const date = booking[sold_info?.buy_id]?.b_payment_datetime
-        const day = dayjs(date).isValid() ? dayjs(date) : null
-        const sold = sold_info ? {
-          ...sold_info,
-          date: day
-        } : null
-        return {
-          ...ticket,
-          sold_info: sold
-        }
-      }).sort((a, b) => {
-        return a.fullSeat.localeCompare(b.fullSeat)
-      })
-    },
-    enabled: !!baseTickets?.data  
-  })
-
-  const [changingTicket, setChangingTicket] = useState(false)
-  
-  const ticketsColumns = useMemo(() => [
-    {
-      dataIndex: 'section',
-      title: 'Section',
-      sorter: (a, b) => a.section?.localeCompare(b.section),
-      ...getColumnSearch('section', { options: schemeData?.categories })
-    }, {
-      dataIndex: 'row',
-      title: 'Row',
-      sorter: (a, b) => parseInt(a.row, 10) < parseInt(b.row, 10) ? -1 : 1,
-      ...getColumnSearch('row')
-    }, {
-      dataIndex: 'seat',
-      title: 'Seat',
-      sorter: (a, b) => parseInt(a.seat, 10) < parseInt(b.seat, 10) ? -1 : 1,
-      ...getColumnSearch('seat')
-    }, {
-      dataIndex: 'price',
-      title: 'Price',
-      sorter: (a, b) => parseInt(a.price, 10) < parseInt(b.price, 10) ? -1 : 1,
-    }, {
-      key: 'email',
-      dataIndex: 'sold_info',
-      title: 'Buyer e-mail',
-      ...getColumnSearch('sold_info', { getData: item => usersMap[item.sold_info?.user_id]?.email }),
-      render: info => {
-        const user = usersMap[info?.user_id]
-        if (!user) return info?.user_id
-        return user.email
-      }
-    }, {
-      key: 'phone',
-      dataIndex: 'sold_info',
-      title: 'Buyer phone',
-      ...getColumnSearch('phone', { getData: item => usersMap[item.sold_info?.user_id]?.phone }),
-      render: info => {
-        const user = usersMap[info?.user_id]
-        return user?.phone
-      }
-    }, {
-      key: 'date',
-      dataIndex: 'sold_info',
-      title: 'Date',
-      ...getColumnSearch('date', { getData: item => item.sold_info?.date, type: 'date' }),
-      render: (_, item) => {
-        return item.sold_info?.date?.format('DD.MM.YYYY')
-      },
-      sorter: (a, b) => {
-        const d1 = a.sold_info?.date
-        const d2 = b.sold_info?.date
-        if (!d1?.isValid() && d2?.isValid()) return -1
-        if (!d2?.isValid()) return 1
-        return d1?.isBefore(d2) ? -1 : 1
-      }
-    }, {
-      key: 'actions',
-      title: 'Download',
-      render: (_, item) => {
-        return (
-          <Button
-            icon={<FilePdfOutlined />}
-            onClick={async () => {
-              const pdf = await getTicketPdf({ seat: item.fullSeat, t_id: item.fuckingTrip })
-              downloadBlob(pdf, 'ticket.pdf')
-            }}
-          />
-        )
-      }
-    }, {
-      key: 'actions',
-      title: 'Actions',
-      render: (_, item) => {
-        const { fullSeat, status, is_sold } = item
-        const onSale = status === 1 && !is_sold
-        return (
-          <div>
-            <Button
-              disabled={changingTicket}
-              loading={changingTicket === fullSeat}
-              danger={!onSale}
-              onClick={e => {
-                setChangingTicket(fullSeat)
-                let promise = Promise.resolve()
-                // Реально купленный билет
-                if (item.sold_info && item.sold_info?.buy_id !== -1) {
-                  promise = axios.post(`/drive/get/${item.sold_info?.buy_id}`, { action: 'set_cancel_state' })
-                } else {
-                  promise = axios.post(`/trip/get/${item.fuckingTrip}/ticket/edit`, { data: JSON.stringify([{ seat: fullSeat, status: onSale ? 2 : 1 }]) })
-                }
-                promise.then(() => baseTickets.refetch()).finally(() => {
-                  setChangingTicket(false)
-                })
-              }}
-            >
-              {onSale ? 'Remove from sail' : (
-                status === 1 ? 'Remove order and return to sale' : 'Return to sale'
-              )}
-            </Button>
-          </div>
-        )
-      }
-    }
-  ], [usersMap, changingTicket, schemeData?.categories])
+  useEffect(() => {
+    if (!schemeJson.data) return
+    const { seatParams, customProps, categories, ...scheme } = schemeJson.data
     
-  const emailSubject = '' //useSelector(state => getLangValue(state, `email_ticket_paid_subject_${id}`))
-  const emailContent = '' //useSelector(state => getLangValue(state, `email_ticket_paid_body_${id}`))
-  const pdfContent = '' //useSelector(state => getLangValue(state, `html_pdf_ticket_paid_body_${id}`))
-  
-  if ((!isNew && (isLoading || tickets.isLoading)) || !data) return null
+    setScheme({
+      ...scheme,
+      categories: categories?.map((item, i) => ({ id: i + 1, ...item })),
+      seatParams: seatParams || customProps
+    })
+  }, [schemeJson.data])
 
-  const panelStyle = {
-    background: '#fff',
-    borderRadius: 8,
-    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03),0 1px 6px -1px rgba(0, 0, 0, 0.02),0 2px 4px 0 rgba(0, 0, 0, 0.02)',
-    marginBottom: 20,
+  const handleChangeCategory = useCallback((index, key, value) => {
+    setScheme(prev => ({ ...prev, categories: prev.categories.map((item, i) => i === index ? { ...item, [key]: value } : item) }))
+  }, [])
+
+  const deleteCategory = useCallback((value) => {
+    setScheme(prev => ({ ...prev, categories: prev.categories.filter((cat) => cat.value !== value) }))
+  }, [])
+
+  const addCategory = useCallback(() => {
+    setScheme(prev => ({ ...prev, categories: [...prev.categories, getEmptyCategory(prev.categories)] }))
+  }, [])
+
+  /* useEffect(() => {
+    const handleMouseUp = () => setSelectHover(false)
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => window.removeEventListener('mouseup', handleMouseUp)
+  }, []) */
+
+  const handleClickSeat = ({ detail, target: el, ctrlKey, metaKey }) => {
+    const isDoubleClick = detail > 1
+    if (selectedSeats.length === 0) {
+      setShowSeatsEdit(true)
+    }
+    setSelectedSeats(prev => {
+      if (isDoubleClick) {
+        const cat = el.getAttribute('data-category')
+        const group = Array.from(svgRef.current.querySelectorAll(`.${seatClassName}[data-category="${cat}"]`))
+        const isFullIncludes = group.every(el => prev.includes(el))
+        return ctrlKey || metaKey ?
+          (isFullIncludes ? prev.filter(el => !group.includes(el)) : prev.filter(el => !group.includes(el)).concat(group)) :
+          group
+      }
+      if (ctrlKey || metaKey) {
+        return prev.includes(el) ? prev.filter(item => item !== el) : [...prev, el]
+      }
+      const next = prev.length === 1 ? (prev[0] === el ? [] : [el]) : [el]
+      return prev.length === 1 ? (prev[0] === el ? [] : [el]) : [el]
+    })
   }
 
+  /* const handleMouseDown = useCallback((e) => {
+    setSelectHover(true)
+  }, [])
 
-  const t = tickets?.data || EMPTY_ARRAY
-  const sumTotal = t.length
-  const sumSold = t.filter(ticket => ticket.is_sold).length
-  const sumReserved = t.filter(ticket => ticket.is_reserved).length
-  const sumDisabled = t.filter(ticket => ticket.disabled).length - sumSold - sumReserved
-  const sumRemains = sumTotal - (sumSold + sumReserved + sumDisabled)
-  
-  const initialValues = isNew ? {} : data.event
+  const handleMouseOver = useCallback((e) => {
+    if (!selectHover) return
+    const validParams = scheme.seatParams.map(param => param.value)
+    const data = pick(e.target.dataset, ['category', ...validParams])
+    setSelectedSeats(prev => prev.find(seat => isEqualSeats(seat, data) ? prev : [...prev, data]))
+  }, [scheme.seatParams, selectHover]) */
+
+  useEffect(() => {
+    if (!svgRef.current) return
+    svgRef.current.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
+    selectedSeats.forEach(el => el.classList.add(activeSeatClassName))
+    // updateFromSvg()
+  }, [selectedSeats])
+
+  const seatHandlers = useMemo(() => ({
+    onClick: handleClickSeat,
+    onDoubleClick: handleClickSeat
+  }), [handleClickSeat])
+
+  const showEditSeat = useCallback((index = null) => {
+    if (index === null) {
+      setEditSeatIndex(true)
+      setEditSeatParams({ name: '', label: '', type: 'string' })
+      return
+    }
+    if (scheme.seatParams[index]) {
+      setEditSeatIndex(index)
+      setEditSeatParams({ ...scheme.seatParams[index] })
+    }
+  }, [scheme.seatParams])
+
+  const hideEditSeat = useCallback(() => {
+    setEditSeatIndex(null)
+    setEditSeatParams(null)
+  }, [])
+
+  const saveSeatProp = useCallback(() => {
+    const newParams = [...scheme.seatParams]
+    if (editSeatIndex === true) {
+      newParams.push(editSeatParams)
+    } else if (newParams[editSeatIndex]) {
+      newParams[editSeatIndex] = { ...newParams[editSeatIndex], ...editSeatParams }
+    }
+    setScheme(prev => ({ ...prev, seatParams: newParams }))
+    hideEditSeat()
+  }, [editSeatParams, editSeatIndex, hideEditSeat])
+
+  const handleDelete = useCallback(() => {
+    const seatParams = scheme.seatParams.filter((item, i) => i !== editSeatIndex)
+    setScheme(prev => ({ ...prev, seatParams }))
+    hideEditSeat()
+  }, [editSeatIndex])
+
+  // const updateFromSvg = (cb) => {
+  //   const node = svgRef.current.cloneNode(true)
+  //   node.querySelectorAll(`.${seatClassName}[data-price]`).forEach(el => el.removeAttribute('data-price'))
+  //   node.querySelectorAll(`.${seatClassName}[data-count]`).forEach(el => el.removeAttribute('data-count'))
+  //   node.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
+  //   setScheme(node.innerHTML)
+  //   cb && cb(null)
+  // }
+
+  const handleChangeSeat = useCallback((values) => {
+    selectedSeats.forEach(el => {
+      Object.entries(values).forEach(([key, value]) => {
+        if (!value) {
+          el.removeAttribute(`data-${key}`)
+        } else {
+          el.setAttribute(`data-${key}`, value)
+        }
+      })
+    })
+  }, [selectedSeats])
+
+  const isSelected = selectedSeats.length > 0
+  const isEditSeat = editSeatIndex === true || typeof editSeatIndex === 'number'
+
   return (
-    <>
-      <Sidebar buttons sticky>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/events')} block>Events</Button>
-        <Button icon={<SaveOutlined />} type='primary' onClick={() => form.submit()} loading={isSending} block>Save</Button>
-      </Sidebar>
-      <Form
-        style={{ flex: '1 1 0'}}
-        layout='vertical'
-        onFinish={async (dataValues) => {
-          setIsSending(true)
-          const { template_subject, template_body, pdf_body, ...values } = dataValues
-          try {
-            let { stadium: { scheme_blob, ...stadium }, date, time, ...event } = values
-            stadium.scheme_blob = await jsonBase64(scheme_blob)
-            event.datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
-            
-            await updateLang({
-              [`email_ticket_paid_subject_${id}`]: { [data.defaultLang]: template_subject },
-              [`email_ticket_paid_body_${id}`]: { [data.defaultLang]: template_body },
-              [`html_pdf_ticket_paid_body_${id}`]: { [data.defaultLang]: pdf_body }
-            })
+    <Form
+      size='large'
+      layout='vertical'
+      className='event-form'
+      form={form}
+      onFinish={values => onSubmit && onSubmit(values, scheme)}
+    >
+      {event_id !== NEW_ITEM_ID && <Form.Item name='id' style={{ display: 'none' }}><input type='hidden' value={event_id} /></Form.Item>}
+      <Typography.Title className={cn('header')} level={1} style={{ display: 'flex', margin: '0 0 30px' }}>
+        concert hall
+        <Form.Item name={langCode} style={{ marginBottom: 0, flex: '1 1 auto', position: 'relative', top: -7, left: 10 }}>
+          <Input
+            className={cn('name-field')}
+            placeholder='name'
+            rules={[{ required: true }]}
+            variant='borderless'
+            autoFocus
+          />
+        </Form.Item>
+      </Typography.Title>
 
-            if (!isNew) {
-              stadium.id = data.event?.stadium?.id
-              await mutateTickets.mutateAsync({
-                event_id: id,
-                hall_id: stadium?.id,
-                tickets: expandNonSeats(changedPrice, tickets.data)
-              }).then(res => updateData({
-                schedule: [{ id, ...event }],
-                stadiums: [stadium],
-              }))
-              messageApi.success(`Event successfully ${isNew ? 'created' : 'updated'}`)
-              return
-            }
-            const eventData = { ...event }
-            const createdStadium = await updateData({ stadiums: [stadium] })
-            const stadiumId = get(createdStadium, 'data.created_id.stadiums.0')
-            if (!stadiumId) {
-              messageApi.error(`Error on creating stadium: ${JSON.stringify(data)}`)
-              return
-            }
-            eventData.stadium = stadiumId
-            const createdEvent = await updateData({
-              schedule: [eventData],
-            })
-            const eventId = get(createdEvent, 'data.created_id.schedule.0')
-            await mutateTickets.mutateAsync({
-              event_id: eventId,
-              hall_id: stadiumId,
-              tickets: expandNonSeats(changedPrice, tickets.data)
-            })
-            await updateLang({
-              [`email_ticket_paid_subject_${eventId}`]: { [data.defaultLang]: template_subject },
-              [`email_ticket_paid_body_${eventId}`]: { [data.defaultLang]: template_body },
-              [`html_pdf_ticket_paid_body_${eventId}`]: { [data.defaultLang]: pdf_body }
-            })
-            navigate(`/event/${eventId}`, { replace: true })
-          } catch (e) {
-            console.log(e)
-            messageApi.error(e.message)
-          } finally {
-            setIsSending(false)
-          }
+      <Fieldset title='located in' icon={<EnvironmentOutlined className='fs-icon' />}>
+        <Row gutter={[16, 0]}>
+          <Col span={12}>
+            <InputCity
+              name={['country', 'city']}
+              label={['Country', 'City']}
+              form={form}
+              required
+            />
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name={`address_${langCode}`}
+              label='Address'
+              required
+            >
+              <Input />
+            </Form.Item>
+          </Col>
+        </Row>
+      </Fieldset>
 
-          /* const datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
-          const match = { team1, team2, stadium, tournament, datetime, top: top ? '1' : '0' }
-          if (!isNew) match.id = id
-          dispatch(postData({ schedule: [match] }))
-            .then(resp => {
-              if (resp.status === 'error') {
-                messageApi.error(resp.message)
-              } else {
-                navigate('/matches')
-              }
-            }) */
-        }}
-        initialValues={initialValues}
-        form={form}
-        className='eventForm'
-        size='large'
+      <Fieldset
+        title={<>
+          seat properties
+          <Button size='small' type='link' icon={<PlusOutlined />} onClick={() => showEditSeat(null)} />
+        </>}
+        icon={<SettingOutlined className='fs-icon' />}
       >
-        <Collapse
-          bordered={false}
-          size='middle'
-          defaultActiveKey={['1', '2', '3']}
-          className='eventCollapse'
-          items={[
+        <Table
+          className='hall-form-seat-props'
+          size='small'
+          onRow={(record, index) => ({
+            onClick: () => showEditSeat(index)
+          })}
+          columns={[
             {
-              key: '1',
-              label: <b>Event data</b>,
-              style: panelStyle,
-              children: <Row gutter={20}>
-                <Col span={6}>
-                  <Form.Item
-                    label='Artist'
-                    name='team1'
-                    rules={[{ required: true, message: 'Please input artist' }]}
-                  >
-                    <Select
-                      placeholder='Artist'
-                      filterOption={(input, option) =>
-                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                      }
-                      options={data?.options?.teams || []}
-                      style={{ width: '100%' }}
-                      showSearch
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={6}>
-                  <Form.Item
-                    label='Date'
-                    name='date'
-                    rules={[{ required: true, message: 'Please input date' }]}
-                  >
-                    <DatePicker
-                      style={{ width: '100%' }}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={6}>
-                  <Form.Item
-                    label='Start time'
-                    name='time'
-                    rules={[{ required: true, message: 'Please input start time' }]}
-                  >
-                    <TimePicker
-                      style={{ width: '100%' }}
-                      format='HH:mm'
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={6}>
-                  <Form.Item
-                    label='Tournament'
-                    name='tournament'
-                    // rules={[{ required: true, message: 'Please input tournament' }]}
-                  >
-                    <Select
-                      placeholder='Tournament'
-                      filterOption={(input, option) =>
-                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                      }
-                      options={data?.options?.t || []}
-                      style={{ width: '100%' }}
-                      showSearch
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={6} style={{ marginTop: 20 }}>
-                  <Form.Item
-                    label='Fee'
-                    name='fee'
-                  >
-                    <InputNumber style={{ width: '100%' }} addonAfter='%' />
-                  </Form.Item>
-                </Col>
-              </Row>
-            },
-            {
-              key: '2',
-              label: <b>Location</b>,
-              style: panelStyle,
-              children: <>
-                <Row gutter={20}>
-                  <Col span={6}>
-                    <Form.Item label='Name' name={['stadium', 'en']}>
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label='Country' name={['stadium', 'country']}>
-                      <Select
-                        placeholder='Country'
-                        filterOption={(input, option) =>
-                          (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                        }
-                        options={countries}
-                        style={{ width: '100%' }}
-                        showSearch
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label='City' name={['stadium', 'city']}>
-                      <Select
-                        placeholder='City'
-                        filterOption={(input, option) =>
-                          (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                        }
-                        options={cities}
-                        style={{ width: '100%' }}
-                        showSearch
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col span={6}>
-                    <Form.Item label='Address' name={['stadium', 'address_en']}>
-                      <Input />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Form.Item className='scheme_blob' name={['stadium', 'scheme_blob']}>
-                  {!!tickets.data && <SvgSchemeEditor
-                    tickets={tickets.data}
-                    onTicketsChange={val => setChangedPrice(prev => ({ ...prev, ...val }))}
-                  />}
-                </Form.Item>
-              </>
-            },
-            {
-              key: '3',
-              label: <b>Remainings</b>,
-              style: panelStyle,
-              children:
-                <div style={{ display: 'flex', flexDirection: 'row-reverse' }}>
-                  <List
-                    grid={{ gutter: 16, column: 4 }}
-                    dataSource={schemeData?.categories || EMPTY_ARRAY}
-                    renderItem={(item, index) => {
-                      const t = tickets?.data || EMPTY_ARRAY
-                      const totalCount = t.filter(ticket => ticket.section === item.value).length
-                      const soldCount = t.filter(ticket => ticket.section === item.value && ticket.is_sold).length
-                      const reservedCount = t.filter(ticket => ticket.section === item.value && ticket.is_reserved).length
-                      const disabledCount = t.filter(ticket => ticket.section === item.value && ticket.disabled).length - soldCount - reservedCount
-                      const remainsCount = totalCount - (soldCount + reservedCount + disabledCount)
-                      return (
-                        <List.Item  style={{ marginBottom: 40, width: 300, textAlign: 'right' }}>
-                          <List.Item.Meta
-                            title={<span style={{ color: item.color }}><span style={{ verticalAlign: 'middle', marginRight: 6 }} dangerouslySetInnerHTML={{ __html: item.icon }} />{item.label}</span>}
-                            description={<>Total <b>{totalCount}</b> tickets</>}
-                          />
-                          Sold <b>{soldCount}</b><br />
-                          Reserved <b>{reservedCount}</b><br />
-                          Disabled <b>{disabledCount}</b><br />
-                          Remains <b>{remainsCount}</b>
-                        </List.Item>
-                      )
-                    }}
-                  />
-                  <div style={{ width: 300, marginTop: -30 }}>
-                    <List.Item.Meta
-                      title={<span style={{ color: '#000' }}>Summary</span>}
-                      description={<>Total <b>{sumTotal}</b> tickets</>}
-                    />
-                    Sold <b>{sumSold}</b><br />
-                    Reserved <b>{sumReserved}</b><br />
-                    Disabled <b>{sumDisabled}</b><br />
-                    Remains <b>{sumRemains}</b>
-                  </div>
-                </div>
-            },
-            {
-              key: '4',
-              label: <b>E-mail template</b>,
-              style: panelStyle,
-              children:
-                <div>
-                  <Form.Item initialValue={emailSubject[data.defaultLang]} label='Subject' name='template_subject'>
-                    <Input />
-                  </Form.Item>
-                  <Form.Item initialValue={emailContent[data.defaultLang]} label='Body' name='template_body'>
-                    <Input.TextArea />
-                  </Form.Item>
-                </div>
-            },
-            {
-              key: '5',
-              label: <b>PDF ticket</b>,
-              style: panelStyle,
-              children:
-                <div>
-                  <Form.Item initialValue={pdfContent[data.defaultLang]} name='pdf_body'>
-                    <Input.TextArea />
-                  </Form.Item>
-                </div>
-            },
-            {
-              key: '6',
-              label: <b>Tickets</b>,
-              style: panelStyle,
-              children:
-                <>
-                  <Button
-                    size='large'
-                    type='default'
-                    htmlType='button'
-                    icon={<DownloadOutlined />}
-                    onClick={() => exportTickets(tickets.data, id)}
-                  >
-                    Download CSV
-                  </Button>
-                  <Table
-                    dataIndex='code'
-                    columns={ticketsColumns}
-                    dataSource={tickets.data}
-                  />
-                </>
+              dataIndex: 'label',
+              title: 'Label',
+              width: 200
+            }, {
+              dataIndex: 'type',
+              title: 'Type',
+              render: type => DATA_TYPES.find(t => t.value === type)?.label || 'String',
+              width: 200
+            }, {
+              dataIndex: 'name',
+              title: 'System name',
+              width: 200
+            }, {
+              key: 'options',
+              title: 'Options',
+              render: (_, item) => {
+                const output = [
+                  !!item.defaultValue && `Default value: ${item.defaultValue}`,
+                  !!item.placeholder && `Placeholder: ${item.placeholder}`,
+                  (!!item.minlength && !item.maxlength) && `Length not less than ${item.minlength}`,
+                  (!item.minlength && !!item.maxlength) && `Length not more than ${item.maxlength}`,
+                  (!!item.minlength && !!item.maxlength) && `Length from ${item.minlength} to ${item.maxlength}`,
+                  (!!item.min && !item.max) && `Value not less than ${item.minlength}`,
+                  (!item.min && !!item.max) && `Value not more than ${item.maxlength}`,
+                  (!!item.min && !!item.max) && `Value from range ${item.minlength} to ${item.maxlength}`,
+                  item.searchable && 'Searchable',
+                  item.type === 'file' && (item.multiple ? 'Multiple file' : 'Single file'),
+                  item.type === 'file' && `File formats: ${item.accept || 'any'}`
+                ].filter(Boolean)
+                return output.join('; ')
+              }
             }
           ]}
+          dataSource={scheme.seatParams}
+          pagination={false}
+          bordered
         />
-        {contextHolder}
-      </Form>
-      <Sidebar />
-    </>
+        {isEditSeat && <Modal
+          width={450}
+          open={isEditSeat}
+          onCancel={hideEditSeat}
+          footer={[
+            editSeatIndex !== true && <Button key='delete' onClick={handleDelete} danger>
+              Delete
+            </Button>,
+            <Button key='cancel' onClick={hideEditSeat}>
+              Cancel
+            </Button>,
+            <Button
+              key='Save'
+              type="primary"
+              // loading={loading}
+              onClick={saveSeatProp}
+            >
+              Save
+            </Button>,
+          ].filter(Boolean)}
+        >
+          <SeatProperty
+            title={`${editSeatIndex === true ? 'New' : 'Edit'} seat property`}
+            {...editSeatParams}
+            onChange={setEditSeatParams}
+          />
+        </Modal>}
+      </Fieldset>
+
+      <Flex gap={20} className='scheme-fieldset'>
+        <Fieldset
+          title={<>scheme  {!!scheme.scheme && <Button type='link' size='small' icon={<ClearOutlined />} onClick={() => setScheme({ categories: [], seatParams: defaultSeatParams, scheme: '' })} danger />}</>}
+          style={{ flex: '0 0 65%' }}
+          icon={<InsertRowAboveOutlined className='fs-icon' />}
+        >
+          {scheme.scheme ?
+            <SvgScheme
+              ref={svgRef}
+              src={scheme.scheme}
+              categories={scheme.categories}
+              renderTooltip={SchemeTooltip}
+              seat={seatHandlers}
+            /* onSeatMuseDown={handleMouseDown}
+            onSeatOver={handleMouseOver} */
+            /> :
+            <Upload.Dragger
+              accept='.svg'
+              itemRender={() => null}
+              customRequest={e => toText(e.file)
+                .then(transformScheme)
+                .then(scheme => setScheme({
+                  categories: getCategories(scheme),
+                  scheme: clearFillAndStringify(scheme),
+                  seatParams: defaultSeatParams
+                })
+                )}
+              block
+            >
+              <p className="ant-upload-drag-icon">
+                <InboxOutlined />
+              </p>
+              <p className="ant-upload-text">Click or drag file to this area to upload</p>
+              <p className="ant-upload-hint">
+                Support for a single svg-file
+              </p>
+            </Upload.Dragger>
+          }
+        </Fieldset>
+
+        <Fieldset
+          title={<>
+            <span
+              className={classNames({
+                'scheme-tooltip-label_selected': !showSeatsEdit,
+                'scheme-tooltip-label_active': showSeatsEdit && isSelected
+              })}
+              onClick={() => setShowSeatsEdit(false)}
+            >
+              <BarsOutlined className='fs-icon' /> <span>categories</span>
+            </span>
+            {!!scheme.scheme && false && <Button type='link' size='small' icon={<ClearOutlined />} danger />}
+            <Divider type='vertical' />
+            <span
+              className={classNames({
+                'scheme-tooltip-label_selected': showSeatsEdit && isSelected,
+                'scheme-tooltip-label_active': !showSeatsEdit && isSelected,
+                'scheme-tooltip-label_disabled': !isSelected
+              })}
+              onClick={isSelected ? () => setShowSeatsEdit(true) : undefined}
+            >
+              <CheckCircleOutlined className='fs-icon' /> <span>selected seats</span>
+            </span>
+          </>}
+          style={{ flex: '1 1 auto' }}
+        >
+          {showSeatsEdit && isSelected ?
+            <SeatEditor
+              categories={scheme.categories}
+              params={scheme.seatParams}
+              seats={selectedSeats}
+              onChange={handleChangeSeat}
+            /> :
+            <>
+              {scheme.categories?.length > 0 && <SortableList
+                items={scheme.categories}
+                onChange={list => setScheme(prev => ({ ...prev, categories: list }))}
+                renderItem={(item, i) => (
+                  <SortableList.Item id={item.id}>
+                    <Category
+                      {...item}
+                      onChange={inject => console.log(inject) ||
+                        setScheme(prev => {
+                          const categories = [...prev.categories]
+                          categories[i] = { ...categories[i], ...inject }
+                          return {
+                            ...prev,
+                            categories
+                          }
+                        })}
+                      onDelete={deleteCategory}
+                    />
+                    <SortableList.DragHandle />
+                  </SortableList.Item>
+                )}
+              />}
+              <Button type='dashed' size='large' icon={<PlusOutlined />} onClick={addCategory} block>Add category</Button>
+            </>
+          }
+        </Fieldset>
+      </Flex>
+    </Form>
   )
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import classNames from 'classnames'
 import { pick } from 'lodash'
+import { cn as bem } from '@bem-react/classname'
 import { BarsOutlined, BorderBottomOutlined, BorderTopOutlined, CheckCircleOutlined, CheckSquareOutlined, ClearOutlined, ClockCircleFilled, ControlOutlined, EnvironmentOutlined, InboxOutlined, InsertRowAboveOutlined, PlusOutlined, RedoOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons'
 import { Typography, Button, Col, Descriptions, Divider, Flex, Form, Input, Modal, Row, Segmented, Select, Space, Steps, Table, Upload } from 'antd'
 import { useAppState } from 'shared/contexts'
@@ -22,6 +23,8 @@ import SeatProperty from 'components/seat-property'
 import { axios } from 'api/axios'
 import { query, updateData } from './api'
 import { useQuery } from '@tanstack/react-query'
+
+const cn = bem('halls')
 
 const getEmptyCategory = (categories) => ({
   id: `cat${categories.length + 1}`,
@@ -49,7 +52,7 @@ function SchemeTooltip(props) {
   </div>
 }
 
-export default function HallForm({ form, schemeFile }) {
+export default function HallForm({ form, schemeFile, onSubmit }) {
   const svgRef = useRef(null)
   const { hall_id } = useParams()
   const [{ langCode }] = useAppState()
@@ -68,13 +71,14 @@ export default function HallForm({ form, schemeFile }) {
 
   useEffect(() => {
     if (!schemeJson.data) return
+    const { seatParams, customProps, categories, ...scheme } = schemeJson.data
     setScheme({
-      ...schemeJson.data,
-      categories: schemeJson.data.categories?.map((item, i) => ({ id: i + 1, ...item})),
-      seatParams: schemeJson.data.customProps
+      ...scheme,
+      categories: categories?.map((item, i) => ({ id: i + 1, ...item })),
+      seatParams: seatParams || customProps
     })
   }, [schemeJson.data])
-  
+
   const handleChangeCategory = useCallback((index, key, value) => {
     setScheme(prev => ({ ...prev, categories: prev.categories.map((item, i) => i === index ? { ...item, [key]: value } : item) }))
   }, [])
@@ -202,22 +206,15 @@ export default function HallForm({ form, schemeFile }) {
       layout='vertical'
       className='hall-form'
       form={form}
-      onFieldsChange={(changed, values) => {
-        console.log(values)
-      }}
-      onFinish={async ({ location, ...values }) => {
-        if (hall_id !== NEW_ITEM_ID) values.id = hall_id
-        const categories = scheme.categories.map(({ seats, rows, seatsCount, ...item }) => item)
-        values.scheme_blob = await jsonBase64({ ...scheme, categories })
-        const response = await updateData({ stadiums: [values] })
-      }}
+      onFinish={values => onSubmit && onSubmit(values, scheme)}
     >
       {hall_id !== NEW_ITEM_ID && <Form.Item name='id' style={{ display: 'none' }}><input type='hidden' value={hall_id} /></Form.Item>}
-      <Typography.Title level={2} className='hall-title'>
-        <Form.Item name={langCode} style={{ marginBottom: 0, flex: '1 1 auto' }}>
+      <Typography.Title className={cn('header')} level={1} style={{ display: 'flex', margin: '0 0 30px' }}>
+        concert hall
+        <Form.Item name={langCode} style={{ marginBottom: 0, flex: '1 1 auto', position: 'relative', top: -7, left: 10 }}>
           <Input
-            className='hall-name'
-            placeholder='with the name'
+            className={cn('name-field')}
+            placeholder='name'
             rules={[{ required: true }]}
             variant='borderless'
             autoFocus
@@ -232,7 +229,6 @@ export default function HallForm({ form, schemeFile }) {
               name={['country', 'city']}
               label={['Country', 'City']}
               form={form}
-              onAddCity={console.log}
               required
             />
           </Col>

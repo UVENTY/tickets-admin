@@ -1,9 +1,32 @@
-.halls {
+.events {
   flex: 1 1 0;
   margin: 0;
 
-  &-header {
+  &-title {
     position: relative;
+    display: flex;
+    // justify-content: spce-between;
+    align-items: center;
+
+    button {
+      font-size: 1em;
+      font-weight: 500;
+    }
+  }
+
+  &-header {
+    display: flex;
+    gap: 20px;
+  }
+
+  &-controls {
+    text-align: right;
+    margin-top: 14px;
+    font-size: 14px;
+
+    & > div {
+      margin-bottom: 6px;
+    }
   }
 
   &-action {
@@ -14,51 +37,21 @@
     font-size: .6em;
     color: #0476D0;
   }
-  
-  .hall-form {
-    .ant-table {
-      background-color: transparent !important;
-
-      .ant-table-container, td, th {
-        border-color: #e3e3e3 !important;
-      }
-      .ant-table-container {
-        border-bottom-left-radius: 8px;
-      }
-      
-      tr:last-child {
-        td:first-child {
-          border-bottom-left-radius: 8px;
-        }
-        td:last-child {
-          border-bottom-right-radius: 8px;
-        }
-      }
-    }
-
-    &-seat-props {
-      margin-bottom: 20px;
-
-      td {
-        cursor: pointer;
-      }
-    }
-  }
 
   .hall-title {
-    margin-bottom: 50px;  
+    margin-top: -73px;
+    margin-bottom: 50px;
     font-size: 1.4rem;
     display: flex;
     align-items: center;
     flex: 1 1 auto;
+    margin-left: 210px;
   }
-  
-  &-name-field {
+
+  .hall-name {
     border-bottom: 1px solid #00000033;
     border-left: none;
     border-radius: 0;
-    padding-left: 5px;
-    padding-right: 5px;
     height: 60px;
     font-size: 1.4em;
     color: var(--ant-color-text-heading);
@@ -69,16 +62,17 @@
     &:hover {
       border-bottom-color: #00000066;
     }
+
     &:focus {
       border-bottom-color: #000000cc;
     }
   }
-  
+
   .hall-search input {
     font-size: 1.8rem;
   }
-  
-/*   .ant-upload-select {
+
+  /*   .ant-upload-select {
     display: block !important;
   } */
 
@@ -100,7 +94,8 @@
     &-label {
       display: block;
       margin-bottom: 10px;
-      font-size: 1rem;;
+      font-size: 1rem;
+      ;
     }
 
   }
@@ -120,13 +115,15 @@
     width: 40px;
     text-align: center;
   }
-  
+
   .hall-row {
     position: relative;
     padding: 5px;
 
     &:hover {
-      &, & .hall-row-num {
+
+      &,
+      & .hall-row-num {
         background-color: #e9e9e9;
       }
     }
@@ -151,6 +148,7 @@
     display: inline-block;
     vertical-align: middle;
   }
+
   &-category {
     display: inline-block;
     width: 4px;
@@ -172,7 +170,7 @@
       .anticon {
         color: #666;
       }
-      
+
       span {
         text-decoration: underline;
         text-decoration-thickness: 1px;

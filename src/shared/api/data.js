@@ -2,7 +2,7 @@ import { axios } from 'api/axios';
 
 export async function updateInstance(name, data) {
   const response = await axios.post('/data', {
-    data: JSON.stringify({ [name]: data })
+    data: JSON.stringify({ [name]: [].concat(data) })
   })
   return response.data
 }
@@ -13,7 +13,7 @@ export async function updateCity(data) {
 }
 
 export async function updateStadium(data) {
-  return updateInstance('countries', data)
+  return updateInstance('stadiums', data)
 }
 
 export async function updateTour(data) {

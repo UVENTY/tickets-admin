@@ -30,11 +30,8 @@ const getRouter = queryClient => createBrowserRouter([
         element: <Halls />,
         loader: getLoader(queryClient, hallsQuery),
       }, {
-        path: '/events',
+        path: '/events/:event_id?',
         element: <Events />
-      }, {
-        path: '/event/:id?',
-        element: <EventForm />
       }
     ]
   }, {

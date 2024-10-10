@@ -4,6 +4,8 @@ const SCHEME_PREFIX = 'svg-scheme-'
 
 export const NEW_ITEM_ID = 'create'
 
+export const EMPTY_EVENT = {}
+
 export const EMPTY_HALL = {
   en: '',
   address_en: '',

@@ -33,3 +33,11 @@ code {
   text-align: center;
   margin-top: -5px;
 }
+
+.dashed {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-style: dashed;
+  text-underline-offset: 5px;
+  cursor: pointer;
+}
