@@ -15,6 +15,7 @@ import { query } from './api'
 import './events.scss'
 import dayjs from 'dayjs'
 import { hallsQuery } from 'routes/halls'
+import { query as toursQuery } from 'routes/tours'
 import EventForm from './form'
 
 export { query as eventsQuery } from './api'
@@ -44,11 +45,6 @@ const groupOptions = [{
   label: 'country'
 }]
 
-const ownHallsQuery = {
-  ...hallsQuery,
-  select: data => mapToOptions(data, item => `${item.country}`)
-}
-
 export default function Events() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { event_id } = useParams()
@@ -65,6 +61,10 @@ export default function Events() {
         { pick: ['en', 'base', 'scheme_blob']}
       )
       .filter(item => item.scheme_blob && item.base)
+  })
+  const tours = useQuery({
+    ...toursQuery,
+    select: data => mapToOptions(data, 'en')
   })
 
   const items = useMemo(() => {
@@ -144,6 +144,7 @@ export default function Events() {
         <EventForm
           form={form}
           hallOptions={halls.data || []}
+          tourOptions={tours.data || []}
         />
       }
     </div>

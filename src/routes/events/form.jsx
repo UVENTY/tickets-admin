@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { pick } from 'lodash'
 import { cn as bem } from '@bem-react/classname'
 import { BarcodeOutlined, BarsOutlined, BorderBottomOutlined, BorderTopOutlined, CheckCircleOutlined, CheckSquareOutlined, ClearOutlined, ClockCircleFilled, ClockCircleOutlined, ControlOutlined, DashboardOutlined, DollarOutlined, EnvironmentOutlined, FilePdfOutlined, InboxOutlined, InsertRowAboveOutlined, MailOutlined, MoneyCollectOutlined, PlusOutlined, RedoOutlined, SettingOutlined, SnippetsOutlined, UploadOutlined } from '@ant-design/icons'
-import { Typography, Button, Col, Descriptions, Divider, Flex, Form, Input, Modal, Row, Select, Space, Steps, Table, Upload, Checkbox, DatePicker, InputNumber, Tabs, Result, Skeleton } from 'antd'
+import { Typography, Button, Col, Descriptions, Divider, Flex, Form, Input, Modal, Row, Select, Space, Steps, Table, Upload, Checkbox, DatePicker, InputNumber, Tabs, Result, Skeleton, AutoComplete } from 'antd'
 import { useAppState } from 'shared/contexts'
 import { jsonBase64, mapToOptions, toBase64, toText } from 'utils/utils'
 import { defaultSeatParams, findSeatElement, getCategories, isEqualSeats, removeColorsAndSerialize, transformScheme } from 'utils/svg'
@@ -27,7 +27,7 @@ import { SchemeFieldset, SeatParamsFieldset } from 'components/halls'
 import { fetchScheme } from 'shared/api/scheme'
 import { FormTemplate } from 'components/events'
 
-const cn = bem('halls')
+const cn = bem('events')
 
 const getEmptyCategory = (categories) => ({
   id: `cat${categories.length + 1}`,
@@ -57,7 +57,7 @@ function SchemeTooltip(props) {
 
 const eventFormTabs = ['Scheme', 'Tickets', 'Templates']
 
-export default function EventForm({ form, schemeFile, hallOptions, onSubmit }) {
+export default function EventForm({ form, schemeFile, hallOptions = [], tourOptions = [], onSubmit }) {
   const formHallId = Form.useWatch('stadium', form)
   const svgRef = useRef(null)
   const { event_id } = useParams()
@@ -70,6 +70,7 @@ export default function EventForm({ form, schemeFile, hallOptions, onSubmit }) {
   const [activeTabIndex, setActiveTabIndex] = useState(1)
   
   const queryClient = useQueryClient()
+  console.log(tourOptions)
   
   const [isTour, setIsTour] = useState(false)
   
@@ -178,11 +179,13 @@ export default function EventForm({ form, schemeFile, hallOptions, onSubmit }) {
       <Typography.Title className={cn('header')} level={1} style={{ display: 'flex', margin: '0' }}>
         event
         <Form.Item name={langCode} style={{ marginBottom: 0, flex: '1 1 auto', position: 'relative', top: -7, left: 10 }}>
-          <Input
+          <AutoComplete
+            options={tourOptions}
             className='input_huge'
             placeholder='name or tour'
             rules={[{ required: true }]}
             variant='borderless'
+
             autoFocus
           />
         </Form.Item>
@@ -211,7 +214,7 @@ export default function EventForm({ form, schemeFile, hallOptions, onSubmit }) {
             <Form.Item
               name='date'
             >
-              <DatePicker showTime />
+              <DatePicker placeholder='' showTime />
             </Form.Item>
           </Fieldset>
         </Col>
