@@ -42,18 +42,16 @@ export const listToOptions = (arr, keys, sorter = (a, b) => localeCompare(a.labe
   return Object.values(arr).map(item => ({ value: item[value], label: item[label] })).sort(sorter)
 }
 
-export const mapToOptions = (obj, valueKey, { pick = [] } = {}) => {
-  if (!obj) return
-  return Object.entries(obj).map(([value, item]) => pick.reduce((acc, prop) => {
+export const mapToOptions = (obj, getValue = item => item, { pick = [] } = {}) =>
+  !obj ? [] : Object.entries(obj).map(([value, item]) => pick.reduce((acc, prop) => {
     if (item[prop]) {
       acc[prop] = item[prop]
     }
     return acc
   }, {
     value,
-    label: valueKey ? item[valueKey] : item,
+    label: typeof getValue === 'function' ? getValue(item, value) : item[getValue]
   }))
-}
 
 export const getValidSvg = (src, type = 'image/svg+xml') => {
   const parser = new DOMParser()
@@ -184,4 +182,8 @@ export function tryToNumber(val) {
   return isNaN(num) ? val : num
 }
 
- export const filterUnique = (item, index, arr) => arr.indexOf(item) === index
+export const filterUnique = (item, index, arr) => arr.indexOf(item) === index
+
+export const random = (min, max) => Math.random() * (max - min) + min
+
+export const countOccurrences = (text, search) => (text.match(new RegExp(search, 'g')) || []).length

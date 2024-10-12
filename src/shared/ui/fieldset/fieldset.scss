@@ -18,3 +18,49 @@
     }
   }
 }
+
+.fst {
+  cursor: pointer;
+  color: #666;
+  opacity: .8;
+  
+  &:hover {
+    opacity: 1;
+  }
+
+  &-icon {
+    color: #666;
+  }
+
+  span {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 6px;
+  }
+
+  &_active {
+    opacity: 1;
+    cursor: auto;
+    pointer-events: none;
+    
+    .fst-icon {
+      color: var(--ant-color-primary);
+    }
+
+    span {
+      text-decoration: none;
+    }
+  }
+
+  &_disabled {
+    color: #ccc;
+
+    .fst-icon {
+      color: #ccc;
+    }
+
+    span {
+      text-decoration: none;
+    }
+  }
+}

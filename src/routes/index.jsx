@@ -4,34 +4,35 @@ import Layout, { query as layoutQuery } from 'shared/layout'
 import Tours, { query as toursQuery } from './tours'
 import PageLogin from 'pages/Login'
 import { useMemo } from 'react'
-import { getAction, getLoader } from './utils'
-import Events from './events'
-import EventForm from './events/form'
-import Halls from './halls'
-import { query as hallsQuery } from './halls/api'
-import HallForm from './halls/form'
+import { getAction, getDeferred, getLoader, getLoaders } from './utils'
+import Events, { EventForm, eventsQuery } from './events'
+import Halls, { HallForm, hallsQuery } from './halls'
 
 const getRouter = queryClient => createBrowserRouter([
   {
     path: '/',
     element: <Layout />,
-    loader: getLoader(queryClient, layoutQuery),
+    loader: getDeferred(queryClient, { layout: layoutQuery }),
     exact: true,
     children: [
       {
         path: '/',
         element: <>Test</>
       }, {
-        path: '/tours',
+        path: '/tours/:tour_id?',
         element: <Tours />,
-        loader: getLoader(queryClient, toursQuery),
+        loader: getDeferred(queryClient, { halls: toursQuery }),
       }, {
         path: '/halls/:hall_id?',
         element: <Halls />,
-        loader: getLoader(queryClient, hallsQuery),
+        loader: getDeferred(queryClient, { halls: hallsQuery }),
       }, {
         path: '/events/:event_id?',
-        element: <Events />
+        element: <Events />,
+        loader: getDeferred(queryClient, {
+          halls: hallsQuery,
+          events: eventsQuery
+        }),
       }
     ]
   }, {

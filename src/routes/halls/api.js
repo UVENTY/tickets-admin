@@ -1,22 +1,41 @@
 import { axios } from 'api/axios'
 import { parseJson } from 'utils/utils'
 
+const defaultSorter = (a, b) => 0
+const defaultFilter = () => true
+
+export const selector = {
+  list: ({ sorter = defaultSorter, filter = defaultFilter } = {}) => map =>
+    Object.entries(map)
+      .reduce((acc, [id, item]) => ([ ...acc, { ...item, id }]), [])
+      .filter(filter)
+      .sort(sorter),
+
+  item: idOrFunc => map => typeof idOrFunc === 'function' ?
+    Object.entries(map).find(([ key, item ]) => idOrFunc(item, key, map)) :
+    map[idOrFunc]
+}
+
 export const query = {
   queryKey: ['halls'],
   queryFn: () => axios.get('/data', { params: { fields: 1 } })
     .then(response => {
       const map = response.data?.data?.data?.stadiums || {}
+      Object.values(map).forEach(hall => {
+        const options = parseJson(hall.scheme)
+        if (!options) return
+        hall.base = options?.base
+        if (options.parent && map[options.parent]) {
+          const parent = map[options.parent]
+          hall.parent = parent
+          hall.city = parent.city
+          hall.country = parent.country
+          hall.en = parent.en
+          hall.address_en = parent.address_en
+        }
+      })
       return map
     }),
-  select: (map) => Object.entries(map).reduce(
-    (acc, [id, item]) => {
-      if (item.country) {
-        item.scheme = parseJson(item.scheme)
-        acc.unshift({ ...item, id })
-      }
-      return acc
-    }, []
-  ).sort((a, b) => a.country.localeCompare(b.country)),
   staleTime: 3 * 60 * 1000
 }
 

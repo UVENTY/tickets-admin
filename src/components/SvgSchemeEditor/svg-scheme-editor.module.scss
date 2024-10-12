@@ -4,41 +4,6 @@
   position: relative;
 }
 
-.addIcon,
-.catIcon {
-  background-color: transparent;
-  border-color: #00000033;
-  color: #000000cc;
-
-  &:hover {
-    background-color: #00000033 !important;
-    border-color: #fff !important;
-    color: #fff !important;
-  }
-
-  width: 40px;
-  flex: 0 0 40px;
-  height: 40px;
-  cursor: pointer;
-  font-size: .8em;
-  text-align: center;
-
-  :global(.ant-btn-icon) {
-    margin-right: 0 !important;
-    position: relative;
-  }
-
-  div {
-    margin-top: -7px;
-  }
-}
-.catItem {
-  :global(.ant-color-picker-trigger) {
-    width: 20px !important;
-    min-width: auto !important;
-  }
-}
-
 .edit {
   label {
     font-weight: bold;
@@ -56,21 +21,6 @@
 
 .checkbox {
   margin-top: 10px;
-}
-
-.addIcon {
-  padding: 3px 0 !important; 
-}
-  
-.catIcon {
-  svg {
-    max-width: 32px;
-    max-height: 32px;
-    min-width: 24px;
-    min-height: 24px;
-    width: auto;
-    height: auto;
-  }
 }
 
 .scheme {
@@ -93,28 +43,6 @@
   :global(.ant-input-number) {
     width: 100%;
     flex: 1 1 auto;
-  }
-}
-
-
-.catName {
-  flex: 1 1 auto;
-}
-
-.catColor {
-  border-top-right-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-  overflow: hidden;
-  width: 20px;
-  min-width: auto !important;
-  padding: 0 !important;
-
-  :global(.ant-color-picker-color-block) {
-    height: 100% !important;
-  }
-
-  :global(.ant-color-picker-color-block-inner) {
-    border-radius: 0 !important;
   }
 }
 
@@ -174,54 +102,4 @@
   opacity: 0;
   transition: ease-in-out .2s opacity;
   pointer-events: none;
-}
-
-.deleteCat {
-  color: #000;
-  opacity: 0;
-  transition: ease .3s opacity;
-  position: absolute;
-  right: 0;
-  padding: 0 15px !important;
-  transform: translateX(200%);
-  
-  :global(.anticon) {
-    font-size: 1.2em !important;
-  }
-}
-
-.catItem {
-  flex: 1 1 auto;
-  position: relative;
-  &:hover {
-    .orderArrows {
-      pointer-events: all;
-      opacity: 1;
-    }
-    .deleteCat {
-      opacity: 1;
-
-      &:hover {
-        color: var(--ant-color-error);
-      }
-    }
-  }
-}
-.capacity {
-  border: none;
-  outline: none;
-  background: none;
-  border-bottom: 1px dotted #999;
-  color: #666;
-  font-size: 16px;
-  padding: 0;
-  width: 35px;
-  text-align: right;
-  font-family: var(--ant-font-family);
-}
-.capacityVal {
-  display: inline-block;
-  width: 35px;
-  font-size: 16px;
-  text-align: right;
 }

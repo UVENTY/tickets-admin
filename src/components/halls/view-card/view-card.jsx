@@ -1,10 +1,10 @@
 import { cn as bem } from '@bem-react/classname'
-import './hall-card.scss'
 import { Card } from 'antd'
+import './view-card.scss'
 
-const cn = bem('hall-card')
+const cn = bem('view-card')
 
-export default function HallCard(props) {
+export default function ViewCard(props) {
   return (
     <Card title={props.title} size='small'>
       <span className={`fi fi-${props.countryCode}`} /> 

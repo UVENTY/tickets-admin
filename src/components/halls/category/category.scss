@@ -1,0 +1,124 @@
+.scheme-category {
+  flex: 1 1 auto;
+  position: relative;
+
+  &:hover {
+    .orderArrows {
+      pointer-events: all;
+      opacity: 1;
+    }
+
+    .deleteCat {
+      opacity: 1;
+
+      &:hover {
+        color: var(--ant-color-error);
+      }
+    }
+  }
+
+  &-icon {
+    background-color: transparent;
+    border-color: #00000033;
+    color: #000000cc;
+    width: 40px;
+    flex: 0 0 40px;
+    height: 40px;
+    cursor: pointer;
+    font-size: .8em;
+    text-align: center;
+
+    &:hover {
+      background-color: #00000033 !important;
+      border-color: #fff !important;
+      color: #fff !important;
+    }
+
+    :global(.ant-btn-icon) {
+      margin-right: 0 !important;
+      position: relative;
+    }
+
+    div {
+      margin-top: -7px;
+    }
+
+    &_clear {
+      svg {
+        max-width: 32px;
+        max-height: 32px;
+        min-width: 24px;
+        min-height: 24px;
+        width: auto;
+        height: auto;
+      }
+
+      :global(.ant-color-picker-trigger) {
+        width: 20px !important;
+        min-width: auto !important;
+      }
+    }
+
+    &_add {
+      padding: 3px 0 !important;
+
+      .ant-btn-icon {
+        margin-right: 0 !important;
+      }
+    }
+  }
+
+  &-capacity {
+    width: 90px;
+    white-space: nowrap;
+    font-size: 1.4em;
+  }
+
+  &-capacity-val {
+    display: inline-block;
+    width: 35px;
+    font-size: 16px;
+    text-align: right;
+  }
+
+  &-capacity-field {
+    border: none;
+    outline: none;
+    background: none;
+    border-bottom: 1px dotted #999;
+    color: #666;
+    font-size: 16px;
+    padding: 0;
+    width: 35px;
+    text-align: right;
+    font-family: var(--ant-font-family);
+  }
+
+  &-deleteCat {
+    color: #000;
+    opacity: 0;
+    transition: ease .3s opacity;
+    position: absolute;
+    right: 0;
+    padding: 0 15px !important;
+    transform: translateX(200%);
+    
+    :global(.anticon) {
+      font-size: 1.2em !important;
+    }
+  }
+
+  &-color {
+    overflow: hidden;
+    width: 30px;
+    min-width: auto !important;
+
+    :global(.ant-color-picker-color-block) {
+      height: 100% !important;
+    }
+
+    :global(.ant-color-picker-color-block-inner) {
+      border-radius: 0 !important;
+    }
+  }
+}

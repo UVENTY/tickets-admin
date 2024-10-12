@@ -7,13 +7,18 @@ import { ArrowLeftOutlined, CloseOutlined, DeleteOutlined, EditOutlined, MoreOut
 import { cn as bem } from '@bem-react/classname'
 import Sidebar from 'shared/layout/sidebar'
 import { useAppState } from 'shared/contexts'
-import { parseJson } from 'utils/utils'
+import { listToOptions, mapToOptions, parseJson } from 'utils/utils'
 import { EMPTY_EVENT, EMPTY_HALL, NEW_ITEM_ID } from 'consts'
 import HallCard from 'components/hall-card'
 import HallForm from './form'
 import { query } from './api'
 import './events.scss'
 import dayjs from 'dayjs'
+import { hallsQuery } from 'routes/halls'
+import EventForm from './form'
+
+export { query as eventsQuery } from './api'
+export { default as EventForm } from './form'
 
 const cn = bem('events')
 
@@ -39,6 +44,11 @@ const groupOptions = [{
   label: 'country'
 }]
 
+const ownHallsQuery = {
+  ...hallsQuery,
+  select: data => mapToOptions(data, item => `${item.country}`)
+}
+
 export default function Events() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { event_id } = useParams()
@@ -47,11 +57,23 @@ export default function Events() {
   const [order, setOrder] = useState({ by: 'date', dir: 'desc' })
   const [group, setGroup] = useState({ checked: false, value: null})
   const events = useQuery(query)
+  const halls = useQuery({
+    ...hallsQuery,
+    select: data => mapToOptions(
+        data,
+        item => <><span className={`fi fi-${item.country}`} /> {item.en}</>,
+        { pick: ['en', 'base', 'scheme_blob']}
+      )
+      .filter(item => item.scheme_blob && item.base)
+  })
+
   const items = useMemo(() => {
     if (!events.data) return
-    if (filter.date === 'all') return events.data
-    if (filter.date === 'past') 
-      return events.data.filter(item => item.date.getTime() <= Date.now())
+    if (['all', 'past'].includes(filter.date)) {
+      const res = events.data
+      return filter.data === 'all' ? res :
+        res.data.filter(item => item.date.getTime() <= Date.now())
+    }
     return events.data.filter(item => item.date.getTime() >= Date.now())
   }, [filter, order, events.data])
 
@@ -119,21 +141,13 @@ export default function Events() {
             </Col>
           ))}
         </Row> :
-        <HallForm form={form} />
+        <EventForm
+          form={form}
+          hallOptions={halls.data || []}
+        />
       }
     </div>
-    <Sidebar buttons sticky>
-      {!!activeEvent && <Button
-        icon={<SaveOutlined />}
-        type='primary'
-        title={isValid ? 'Save' : 'Required fields: name, country, city, address, scheme'}
-        onClick={() => form.submit()}
-        loading={isSending}
-        block
-      >
-        Save
-      </Button>}
-    </Sidebar>
+    <Sidebar />
   </>
   )
 }

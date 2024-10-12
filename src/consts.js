@@ -6,6 +6,12 @@ export const NEW_ITEM_ID = 'create'
 
 export const EMPTY_EVENT = {}
 
+export const EMPTY_CATEGORY = {
+  label: '',
+  icon: null,
+  color: '#000'
+}
+
 export const EMPTY_HALL = {
   en: '',
   address_en: '',

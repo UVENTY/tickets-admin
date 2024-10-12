@@ -53,27 +53,6 @@
     flex: 1 1 auto;
   }
   
-  &-name-field {
-    border-bottom: 1px solid #00000033;
-    border-left: none;
-    border-radius: 0;
-    padding-left: 5px;
-    padding-right: 5px;
-    height: 60px;
-    font-size: 1.4em;
-    color: var(--ant-color-text-heading);
-    font-weight: var(--ant-font-weight-strong);
-    font-size: var(--ant-font-size-heading-1);
-    line-height: var(--ant-line-height-heading-1);
-
-    &:hover {
-      border-bottom-color: #00000066;
-    }
-    &:focus {
-      border-bottom-color: #000000cc;
-    }
-  }
-  
   .hall-search input {
     font-size: 1.8rem;
   }
@@ -140,55 +119,7 @@
   }
 }
 
-.scheme-tooltip {
-  border-left: 3px solid;
-  padding: 5px;
-  color: #fff;
-  outline: 3px solid #333;
 
-  &-label {
-    color: #fff;
-    display: inline-block;
-    vertical-align: middle;
-  }
-  &-category {
-    display: inline-block;
-    width: 4px;
-    height: 100%;
-    border-radius: 3px;
-    vertical-align: middle;
-  }
-
-  &-label {
-    &_active {
-      cursor: pointer;
-      color: #666;
-      opacity: .8;
-
-      &:hover {
-        opacity: 1;
-      }
-
-      .anticon {
-        color: #666;
-      }
-      
-      span {
-        text-decoration: underline;
-        text-decoration-thickness: 1px;
-        text-underline-offset: 6px;
-      }
-    }
-
-    &_disabled {
-      color: #ccc;
-
-      .anticon {
-        color: #ccc;
-      }
-    }
-  }
-}
 
 .fs-icon {
   color: var(--ant-color-primary);

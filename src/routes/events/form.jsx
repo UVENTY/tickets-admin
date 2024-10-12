@@ -3,10 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 import classNames from 'classnames'
 import { pick } from 'lodash'
 import { cn as bem } from '@bem-react/classname'
-import { BarsOutlined, BorderBottomOutlined, BorderTopOutlined, CheckCircleOutlined, CheckSquareOutlined, ClearOutlined, ClockCircleFilled, ControlOutlined, EnvironmentOutlined, InboxOutlined, InsertRowAboveOutlined, PlusOutlined, RedoOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons'
-import { Typography, Button, Col, Descriptions, Divider, Flex, Form, Input, Modal, Row, Segmented, Select, Space, Steps, Table, Upload } from 'antd'
+import { BarcodeOutlined, BarsOutlined, BorderBottomOutlined, BorderTopOutlined, CheckCircleOutlined, CheckSquareOutlined, ClearOutlined, ClockCircleFilled, ClockCircleOutlined, ControlOutlined, DashboardOutlined, DollarOutlined, EnvironmentOutlined, FilePdfOutlined, InboxOutlined, InsertRowAboveOutlined, MailOutlined, MoneyCollectOutlined, PlusOutlined, RedoOutlined, SettingOutlined, SnippetsOutlined, UploadOutlined } from '@ant-design/icons'
+import { Typography, Button, Col, Descriptions, Divider, Flex, Form, Input, Modal, Row, Select, Space, Steps, Table, Upload, Checkbox, DatePicker, InputNumber, Tabs, Result, Skeleton } from 'antd'
 import { useAppState } from 'shared/contexts'
-import { jsonBase64, toBase64, toText } from 'utils/utils'
+import { jsonBase64, mapToOptions, toBase64, toText } from 'utils/utils'
 import { defaultSeatParams, findSeatElement, getCategories, isEqualSeats, removeColorsAndSerialize, transformScheme } from 'utils/svg'
 import { activeSeatClassName, seatClassName } from 'components/SvgSchemeEditor/consts'
 import SvgScheme from 'components/svg-scheme'
@@ -17,12 +17,15 @@ import { DATA_TYPES, NEW_ITEM_ID, NON_SEAT_ROW } from 'consts'
 import InputCity from 'shared/ui/input-city'
 import { useLocalStorage } from 'utils/hooks'
 import cache from 'shared/api/cache'
-import Fieldset from 'shared/ui/fieldset'
+import Fieldset, { FieldsetTitle } from 'shared/ui/fieldset'
 import SeatEditor from 'components/seat-editor'
 import SeatProperty from 'components/seat-property'
 import { axios } from 'api/axios'
 import { query, updateData } from './api'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { SchemeFieldset, SeatParamsFieldset } from 'components/halls'
+import { fetchScheme } from 'shared/api/scheme'
+import { FormTemplate } from 'components/events'
 
 const cn = bem('halls')
 
@@ -52,33 +55,41 @@ function SchemeTooltip(props) {
   </div>
 }
 
-export default function HallForm({ form, schemeFile, onSubmit }) {
+const eventFormTabs = ['Scheme', 'Tickets', 'Templates']
+
+export default function EventForm({ form, schemeFile, hallOptions, onSubmit }) {
+  const formHallId = Form.useWatch('stadium', form)
   const svgRef = useRef(null)
   const { event_id } = useParams()
   const [{ langCode }] = useAppState()
   // const [selectHover, setSelectHover] = useState(false)
-  const [scheme, setScheme] = useState({ categories: [], seatParams: defaultSeatParams, scheme: '' })
+  const [scheme, setScheme] = useState({ categories: [], seatParams: [], scheme: '' })
   const [selectedSeats, setSelectedSeats] = useState([])
+  const [schemeStatus, setSchemeStatus] = useState('idle')
   const [showSeatsEdit, setShowSeatsEdit] = useState(false)
-  const [editSeatParams, setEditSeatParams] = useState(null)
-  const [editSeatIndex, setEditSeatIndex] = useState(null)
+  const [activeTabIndex, setActiveTabIndex] = useState(1)
+  
+  const queryClient = useQueryClient()
+  
+  const [isTour, setIsTour] = useState(false)
+  
+  const config = queryClient.getQueryData(['config'])?.options || {}
 
-  const schemeJson = useQuery({
-    queryKey: ['scheme', event_id],
-    queryFn: () => axios.get(schemeFile).then(res => res.data),
-    enabled: !!schemeFile && event_id !== 'create'
-  })
-
-  useEffect(() => {
-    if (!schemeJson.data) return
-    const { seatParams, customProps, categories, ...scheme } = schemeJson.data
-    
-    setScheme({
-      ...scheme,
-      categories: categories?.map((item, i) => ({ id: i + 1, ...item })),
-      seatParams: seatParams || customProps
-    })
-  }, [schemeJson.data])
+  const currencies = useMemo(() => {
+    return mapToOptions(config.currencies, item => item[langCode] || item.ru)
+  }, [config.currencies])
+  const schemeJson = queryClient.getQueryData(['scheme', formHallId])
+  
+  // useEffect(() => {
+  //   if (!schemeJson) return
+  //   const { seatParams, customProps, categories, ...scheme } = schemeJson
+   
+  //   setScheme({
+  //     ...scheme,
+  //     categories: categories?.map((item, i) => ({ id: i + 1, ...item })),
+  //     seatParams: seatParams || customProps
+  //   })
+  // }, [schemeJson])
 
   const handleChangeCategory = useCallback((index, key, value) => {
     setScheme(prev => ({ ...prev, categories: prev.categories.map((item, i) => i === index ? { ...item, [key]: value } : item) }))
@@ -91,12 +102,6 @@ export default function HallForm({ form, schemeFile, onSubmit }) {
   const addCategory = useCallback(() => {
     setScheme(prev => ({ ...prev, categories: [...prev.categories, getEmptyCategory(prev.categories)] }))
   }, [])
-
-  /* useEffect(() => {
-    const handleMouseUp = () => setSelectHover(false)
-    window.addEventListener('mouseup', handleMouseUp)
-    return () => window.removeEventListener('mouseup', handleMouseUp)
-  }, []) */
 
   const handleClickSeat = ({ detail, target: el, ctrlKey, metaKey }) => {
     const isDoubleClick = detail > 1
@@ -120,17 +125,6 @@ export default function HallForm({ form, schemeFile, onSubmit }) {
     })
   }
 
-  /* const handleMouseDown = useCallback((e) => {
-    setSelectHover(true)
-  }, [])
-
-  const handleMouseOver = useCallback((e) => {
-    if (!selectHover) return
-    const validParams = scheme.seatParams.map(param => param.value)
-    const data = pick(e.target.dataset, ['category', ...validParams])
-    setSelectedSeats(prev => prev.find(seat => isEqualSeats(seat, data) ? prev : [...prev, data]))
-  }, [scheme.seatParams, selectHover]) */
-
   useEffect(() => {
     if (!svgRef.current) return
     svgRef.current.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
@@ -138,53 +132,18 @@ export default function HallForm({ form, schemeFile, onSubmit }) {
     // updateFromSvg()
   }, [selectedSeats])
 
+  const fetchStadiumScheme = useCallback(async (option) => {
+    setSchemeStatus('loading')
+    setScheme({ scheme: '', categories: [], seatParams: [] })
+    const scheme = await fetchScheme(option.scheme_blob)
+    setScheme(scheme)
+    setSchemeStatus('loaded')
+  }, [])
+
   const seatHandlers = useMemo(() => ({
     onClick: handleClickSeat,
     onDoubleClick: handleClickSeat
   }), [handleClickSeat])
-
-  const showEditSeat = useCallback((index = null) => {
-    if (index === null) {
-      setEditSeatIndex(true)
-      setEditSeatParams({ name: '', label: '', type: 'string' })
-      return
-    }
-    if (scheme.seatParams[index]) {
-      setEditSeatIndex(index)
-      setEditSeatParams({ ...scheme.seatParams[index] })
-    }
-  }, [scheme.seatParams])
-
-  const hideEditSeat = useCallback(() => {
-    setEditSeatIndex(null)
-    setEditSeatParams(null)
-  }, [])
-
-  const saveSeatProp = useCallback(() => {
-    const newParams = [...scheme.seatParams]
-    if (editSeatIndex === true) {
-      newParams.push(editSeatParams)
-    } else if (newParams[editSeatIndex]) {
-      newParams[editSeatIndex] = { ...newParams[editSeatIndex], ...editSeatParams }
-    }
-    setScheme(prev => ({ ...prev, seatParams: newParams }))
-    hideEditSeat()
-  }, [editSeatParams, editSeatIndex, hideEditSeat])
-
-  const handleDelete = useCallback(() => {
-    const seatParams = scheme.seatParams.filter((item, i) => i !== editSeatIndex)
-    setScheme(prev => ({ ...prev, seatParams }))
-    hideEditSeat()
-  }, [editSeatIndex])
-
-  // const updateFromSvg = (cb) => {
-  //   const node = svgRef.current.cloneNode(true)
-  //   node.querySelectorAll(`.${seatClassName}[data-price]`).forEach(el => el.removeAttribute('data-price'))
-  //   node.querySelectorAll(`.${seatClassName}[data-count]`).forEach(el => el.removeAttribute('data-count'))
-  //   node.querySelectorAll(`.${seatClassName}.${activeSeatClassName}`).forEach(el => el.classList.remove(activeSeatClassName))
-  //   setScheme(node.innerHTML)
-  //   cb && cb(null)
-  // }
 
   const handleChangeSeat = useCallback((values) => {
     selectedSeats.forEach(el => {
@@ -198,235 +157,179 @@ export default function HallForm({ form, schemeFile, onSubmit }) {
     })
   }, [selectedSeats])
 
-  const isSelected = selectedSeats.length > 0
-  const isEditSeat = editSeatIndex === true || typeof editSeatIndex === 'number'
+  const isDashboard = activeTabIndex === 0
+  const isScheme = activeTabIndex === 1
+  const isTickets = activeTabIndex === 2
+  const isEmail = activeTabIndex === 3
+  const isPdf = activeTabIndex === 4
+  const schemeSelected = !!formHallId
+  const isLoadingScheme = schemeStatus === 'loading'
+  const isLoadedScheme = schemeStatus === 'loaded'
 
   return (
     <Form
       size='large'
       layout='vertical'
-      className='event-form'
+      className='events-form'
       form={form}
       onFinish={values => onSubmit && onSubmit(values, scheme)}
     >
       {event_id !== NEW_ITEM_ID && <Form.Item name='id' style={{ display: 'none' }}><input type='hidden' value={event_id} /></Form.Item>}
-      <Typography.Title className={cn('header')} level={1} style={{ display: 'flex', margin: '0 0 30px' }}>
-        concert hall
+      <Typography.Title className={cn('header')} level={1} style={{ display: 'flex', margin: '0' }}>
+        event
         <Form.Item name={langCode} style={{ marginBottom: 0, flex: '1 1 auto', position: 'relative', top: -7, left: 10 }}>
           <Input
-            className={cn('name-field')}
-            placeholder='name'
+            className='input_huge'
+            placeholder='name or tour'
             rules={[{ required: true }]}
             variant='borderless'
             autoFocus
           />
         </Form.Item>
       </Typography.Title>
-
-      <Fieldset title='located in' icon={<EnvironmentOutlined className='fs-icon' />}>
-        <Row gutter={[16, 0]}>
-          <Col span={12}>
-            <InputCity
-              name={['country', 'city']}
-              label={['Country', 'City']}
-              form={form}
-              required
-            />
-          </Col>
-          <Col span={12}>
+      <Row gutter={[16, 0]}>
+        <Col span={12}>
+          <Fieldset title='in the hall' icon={<EnvironmentOutlined className='fs-icon' />}>
+            <Row>
+              <Col span={24}>
+                <Form.Item
+                  name='stadium'
+                >
+                  <Select
+                    rules={[{ required: true }]}
+                    options={hallOptions}
+                    onChange={(_, option) => fetchStadiumScheme(option)}
+                    showSearch
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Fieldset>
+        </Col>
+        <Col span={4}>
+          <Fieldset title='will take place on' icon={<ClockCircleOutlined className='fs-icon' />}>
             <Form.Item
-              name={`address_${langCode}`}
-              label='Address'
-              required
+              name='date'
             >
-              <Input />
+              <DatePicker showTime />
             </Form.Item>
-          </Col>
-        </Row>
-      </Fieldset>
+          </Fieldset>
+        </Col>
+        <Col span={4}>
+          <Fieldset title='with fee' icon={<DollarOutlined className='fs-icon' />}>
+            <Form.Item
+              name='fee'
+            >
+              <InputNumber
+                style={{ width: '100%' }}
+                addonAfter='%'
+              />
+            </Form.Item>
+          </Fieldset>
+        </Col>
+        <Col span={4}>
+          <Fieldset title='in currency' icon={<MoneyCollectOutlined className='fs-icon' />}>
+            <Form.Item
+              name='currency'
+            >
+              <Select
+                options={currencies}
+              />
+            </Form.Item>
+          </Fieldset>
+        </Col>
+      </Row>
 
-      <Fieldset
-        title={<>
-          seat properties
-          <Button size='small' type='link' icon={<PlusOutlined />} onClick={() => showEditSeat(null)} />
-        </>}
-        icon={<SettingOutlined className='fs-icon' />}
-      >
-        <Table
-          className='hall-form-seat-props'
-          size='small'
-          onRow={(record, index) => ({
-            onClick: () => showEditSeat(index)
-          })}
-          columns={[
-            {
-              dataIndex: 'label',
-              title: 'Label',
-              width: 200
-            }, {
-              dataIndex: 'type',
-              title: 'Type',
-              render: type => DATA_TYPES.find(t => t.value === type)?.label || 'String',
-              width: 200
-            }, {
-              dataIndex: 'name',
-              title: 'System name',
-              width: 200
-            }, {
-              key: 'options',
-              title: 'Options',
-              render: (_, item) => {
-                const output = [
-                  !!item.defaultValue && `Default value: ${item.defaultValue}`,
-                  !!item.placeholder && `Placeholder: ${item.placeholder}`,
-                  (!!item.minlength && !item.maxlength) && `Length not less than ${item.minlength}`,
-                  (!item.minlength && !!item.maxlength) && `Length not more than ${item.maxlength}`,
-                  (!!item.minlength && !!item.maxlength) && `Length from ${item.minlength} to ${item.maxlength}`,
-                  (!!item.min && !item.max) && `Value not less than ${item.minlength}`,
-                  (!item.min && !!item.max) && `Value not more than ${item.maxlength}`,
-                  (!!item.min && !!item.max) && `Value from range ${item.minlength} to ${item.maxlength}`,
-                  item.searchable && 'Searchable',
-                  item.type === 'file' && (item.multiple ? 'Multiple file' : 'Single file'),
-                  item.type === 'file' && `File formats: ${item.accept || 'any'}`
-                ].filter(Boolean)
-                return output.join('; ')
-              }
-            }
-          ]}
-          dataSource={scheme.seatParams}
-          pagination={false}
-          bordered
+      <div style={{ width: isScheme ? '65%' : 'auto' }}>
+        <Divider orientation='left' orientationMargin='0' className='fieldset-title'>
+          <FieldsetTitle
+            active={isDashboard}
+            disabled={event_id === 'create'}
+            onClick={() => setActiveTabIndex(0)}
+            title='Available after first save'
+            icon={<DashboardOutlined />}
+          >
+            dashboard
+          </FieldsetTitle>
+          <Divider type='vertical' />
+          <FieldsetTitle
+            active={isScheme}
+            onClick={() => setActiveTabIndex(1)}
+            icon={<InsertRowAboveOutlined />}
+          >
+            scheme
+          </FieldsetTitle>
+          <Divider type='vertical' />
+          <FieldsetTitle
+            active={isTickets}
+            onClick={() => setActiveTabIndex(2)}
+            icon={<BarcodeOutlined />}
+          >
+            tickets
+          </FieldsetTitle>
+          <Divider type='vertical' />
+          <FieldsetTitle
+            active={isEmail}
+            onClick={() => setActiveTabIndex(3)}
+            icon={<MailOutlined />}
+          >
+            e-mail template
+          </FieldsetTitle>
+          <Divider type='vertical' />
+          <FieldsetTitle
+            active={isPdf}
+            onClick={() => setActiveTabIndex(4)}
+            icon={<FilePdfOutlined />}
+          >
+            pdf template
+          </FieldsetTitle>
+        </Divider>
+      </div>
+
+      {(isTickets || isScheme) && <>
+        {!schemeSelected && <Result
+          icon={<EnvironmentOutlined />}
+          title={`To work with the ${isScheme ? 'schema' : 'tickets'}, select a hall`}
+        />}
+        {isLoadingScheme && <Skeleton.Button style={{ height: 500 }} active block />}
+      </>}
+      {isScheme && schemeSelected && !isLoadingScheme && <>
+        <SchemeFieldset
+          {...scheme}
+          onChange={setScheme}
+          title={null}
         />
-        {isEditSeat && <Modal
-          width={450}
-          open={isEditSeat}
-          onCancel={hideEditSeat}
-          footer={[
-            editSeatIndex !== true && <Button key='delete' onClick={handleDelete} danger>
-              Delete
-            </Button>,
-            <Button key='cancel' onClick={hideEditSeat}>
-              Cancel
-            </Button>,
-            <Button
-              key='Save'
-              type="primary"
-              // loading={loading}
-              onClick={saveSeatProp}
-            >
-              Save
-            </Button>,
-          ].filter(Boolean)}
+        <SeatParamsFieldset
+          items={scheme.seatParams}
+          onChange={seatParams => setScheme(prev => ({ ...prev, seatParams }))}
+        />
+      </>}
+      {isEmail && <div style={{ maxWidth: '65%', minWidth: 600 }}>
+        <Form.Item
+          label='Subject'
+          name='template_subject'
         >
-          <SeatProperty
-            title={`${editSeatIndex === true ? 'New' : 'Edit'} seat property`}
-            {...editSeatParams}
-            onChange={setEditSeatParams}
-          />
-        </Modal>}
-      </Fieldset>
-
-      <Flex gap={20} className='scheme-fieldset'>
-        <Fieldset
-          title={<>scheme  {!!scheme.scheme && <Button type='link' size='small' icon={<ClearOutlined />} onClick={() => setScheme({ categories: [], seatParams: defaultSeatParams, scheme: '' })} danger />}</>}
-          style={{ flex: '0 0 65%' }}
-          icon={<InsertRowAboveOutlined className='fs-icon' />}
+          <Input />
+        </Form.Item>
+        <Form.Item
+          label='Body'
+          name='template_body'
         >
-          {scheme.scheme ?
-            <SvgScheme
-              ref={svgRef}
-              src={scheme.scheme}
-              categories={scheme.categories}
-              renderTooltip={SchemeTooltip}
-              seat={seatHandlers}
-            /* onSeatMuseDown={handleMouseDown}
-            onSeatOver={handleMouseOver} */
-            /> :
-            <Upload.Dragger
-              accept='.svg'
-              itemRender={() => null}
-              customRequest={e => toText(e.file)
-                .then(transformScheme)
-                .then(scheme => setScheme({
-                  categories: getCategories(scheme),
-                  scheme: clearFillAndStringify(scheme),
-                  seatParams: defaultSeatParams
-                })
-                )}
-              block
-            >
-              <p className="ant-upload-drag-icon">
-                <InboxOutlined />
-              </p>
-              <p className="ant-upload-text">Click or drag file to this area to upload</p>
-              <p className="ant-upload-hint">
-                Support for a single svg-file
-              </p>
-            </Upload.Dragger>
-          }
-        </Fieldset>
-
-        <Fieldset
-          title={<>
-            <span
-              className={classNames({
-                'scheme-tooltip-label_selected': !showSeatsEdit,
-                'scheme-tooltip-label_active': showSeatsEdit && isSelected
-              })}
-              onClick={() => setShowSeatsEdit(false)}
-            >
-              <BarsOutlined className='fs-icon' /> <span>categories</span>
-            </span>
-            {!!scheme.scheme && false && <Button type='link' size='small' icon={<ClearOutlined />} danger />}
-            <Divider type='vertical' />
-            <span
-              className={classNames({
-                'scheme-tooltip-label_selected': showSeatsEdit && isSelected,
-                'scheme-tooltip-label_active': !showSeatsEdit && isSelected,
-                'scheme-tooltip-label_disabled': !isSelected
-              })}
-              onClick={isSelected ? () => setShowSeatsEdit(true) : undefined}
-            >
-              <CheckCircleOutlined className='fs-icon' /> <span>selected seats</span>
-            </span>
-          </>}
-          style={{ flex: '1 1 auto' }}
+          <Input.TextArea rows={10} />
+        </Form.Item>
+      </div>}
+      {isPdf && <div style={{ maxWidth: '65%', minWidth: 600 }}>
+        <Form.Item
+          name='pdf_body'
         >
-          {showSeatsEdit && isSelected ?
-            <SeatEditor
-              categories={scheme.categories}
-              params={scheme.seatParams}
-              seats={selectedSeats}
-              onChange={handleChangeSeat}
-            /> :
-            <>
-              {scheme.categories?.length > 0 && <SortableList
-                items={scheme.categories}
-                onChange={list => setScheme(prev => ({ ...prev, categories: list }))}
-                renderItem={(item, i) => (
-                  <SortableList.Item id={item.id}>
-                    <Category
-                      {...item}
-                      onChange={inject => console.log(inject) ||
-                        setScheme(prev => {
-                          const categories = [...prev.categories]
-                          categories[i] = { ...categories[i], ...inject }
-                          return {
-                            ...prev,
-                            categories
-                          }
-                        })}
-                      onDelete={deleteCategory}
-                    />
-                    <SortableList.DragHandle />
-                  </SortableList.Item>
-                )}
-              />}
-              <Button type='dashed' size='large' icon={<PlusOutlined />} onClick={addCategory} block>Add category</Button>
-            </>
-          }
-        </Fieldset>
-      </Flex>
+          <Input.TextArea rows={10} />
+        </Form.Item>
+      </div>}
     </Form>
   )
 }
+
+EventForm.Dashboard = () => (<div>Dashboard</div>)
+EventForm.General = () => (<div>General</div>)
+EventForm.Tickets = () => (<div>Tickets</div>)
+EventForm.Templates = () => (<div>Templates</div>)

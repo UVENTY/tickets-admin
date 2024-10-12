@@ -10,7 +10,7 @@ import { LoadingProvider, useLoading, AppStateProvider, useAppState } from 'shar
 import store from './redux'
 import cache from 'shared/api/cache'
 import reportWebVitals from './reportWebVitals'
-import './index.css'
+import './index.scss'
 import App from './App'
 import '/node_modules/flag-icons/css/flag-icons.min.css'
 

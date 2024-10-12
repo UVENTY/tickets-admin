@@ -1,0 +1,67 @@
+@font-face {
+  font-family: 'Oswald';
+  src: url('./assets/Oswald-Medium.woff2') format('woff2'),
+      url('./assets/Oswald-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+html {
+  --ant-box-shadow-secondary: 0 3px 6px -4px rgba(0, 0, 0, 0.15);
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+input.input_huge {
+  padding: 0 !important;
+}
+
+.input_huge {
+  &, & input[type="search"], & .ant-select-selection-placeholder, & .ant-select-selection-item {
+    border-bottom: 1px solid #00000033;
+    border-left: none;
+    border-radius: 0;
+    height: 60px !important;
+    font-size: 1.4em;
+    color: var(--ant-color-text-heading);
+    font-weight: var(--ant-font-weight-strong);
+    font-size: var(--ant-font-size-heading-1);line-height: var(--ant-line-height-heading-1);
+  
+    &:hover {
+      border-bottom-color: #00000066;
+    }
+  
+    &:focus {
+      border-bottom-color: #000000cc;
+    }
+  }
+  .ant-select-selection-search {
+    inset-inline-start: 0 !important;
+    inset-inline-end: 0 !important;
+  }
+
+  .ant-select-selection-placeholder,
+  .ant-select-selection-item {
+    line-height: 60px !important;
+    border: none;
+  }
+  
+  .ant-select-selection-placeholder {
+    color: #B8B8B8;
+    position: relative;
+    left: 0;
+  }
+}

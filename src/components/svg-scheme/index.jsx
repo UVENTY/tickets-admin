@@ -8,6 +8,7 @@ const SvgScheme = forwardRef(({
   seatSelector = '.svg-seat',
   src,
   renderTooltip,
+  afterRender,
   seat: {
     onClick,
     onDoubleClick,
@@ -25,6 +26,10 @@ const SvgScheme = forwardRef(({
       initial.current = null
     }
   }, [src])
+
+  useEffect(() => {
+    return afterRender && afterRender(ref.current)
+  }, [])
 
   const [tooltipSeat, setTooltipSeat] = useState()
   const [handleClick, handleDblClick] = useClickPrevention({

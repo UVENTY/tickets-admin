@@ -21,7 +21,7 @@ import { Outlet, Link, useNavigate, useLocation, useLoaderData } from 'react-rou
 import { useSelector, useDispatch } from 'react-redux'
 import { pick } from 'lodash'
 import { useQuery } from '@tanstack/react-query'
-import Logo from '../../instance/components/logo'
+import Logo from '../ui/logo'
 import { axios } from 'api/axios'
 import { fetchConfig } from 'redux/config'
 import { authorizeByTokens } from 'redux/user'
@@ -35,7 +35,7 @@ export const query = {
       ...acc,
       [key]: res.data?.data[`default_${key}`]
     }), {}),
-    options: pick(res.data?.data?.data, ['cities', 'countries', 'langs', 'ticket_statuses', 'user_roles', 'lang_vls'])
+    options: pick(res.data?.data?.data, ['cities', 'countries', 'currencies', 'langs', 'ticket_statuses', 'user_roles', 'lang_vls'])
   })),
   staleTime: 5 * 60 * 1000
 }
@@ -109,6 +109,7 @@ export default function Layout() {
   const isLoginPage = location.pathname === '/login'
 
   useEffect(() => {
+    if (!config) return
     const [langId, lang] = Object.entries(config.options.langs).find(([id, lang]) => Number(id) === config.values.lang)
     setAppState({ ...config.values, langId, langCode: lang?.iso, lang })
   }, [config])

@@ -18,7 +18,7 @@ const createCityOptions = {
   label: <><PlusOutlined style={{ fontSize: '0.94em' }} /> Create new city</>
 }
 
-const renderWithFlag = label => <><span class={`fi fi-${label.value}`}></span> {label.label}</>
+const renderWithFlag = label => <><span className={`fi fi-${label.value}`}></span> {label.label}</>
 const filterOption = (value, option) => isLowerIncludes(value, option.label)
 
 const InputCity = forwardRef((props, ref) => {
