@@ -130,6 +130,14 @@ export default function EventForm() {
   const isNew = id === 'create'
   const updateData = useUpdateData()
   const mutateTickets = useMutation({ mutationFn: TicketsApi.updateTickets })
+  
+  useEffect(() => {
+    if (!mutateTickets.isError) {
+      return
+    }
+    messageApi.error(`Update tickets failed: ${mutateTickets.failureReason?.message}`)
+  }, [mutateTickets.isError])
+  
   const { data, error, isLoading } = useData(null, {
     select: ({ data, default_lang }) => {
       const { schedule, stadiums, teams, tournaments } = data
@@ -161,9 +169,11 @@ export default function EventForm() {
     queryFn: () => fetchTicketsPaymentData(baseTickets?.data),
     select: data => {
       const { booking } = data?.data || {}
+
       return baseTickets.data?.map(({ sold_info, ...ticket }) => {
         const date = booking[sold_info?.buy_id]?.b_payment_datetime
-        const day = dayjs(date).isValid() ? dayjs(date) : null
+        if (date) console.log(date)
+        const day = date && dayjs(date).isValid() ? dayjs(date) : null
         const sold = sold_info ? {
           ...sold_info,
           date: day
@@ -225,8 +235,8 @@ export default function EventForm() {
       dataIndex: 'sold_info',
       title: 'Date',
       ...getColumnSearch('date', { getData: item => item.sold_info?.date, type: 'date' }),
-      render: (_, item) => {
-        return item.sold_info?.date?.format('DD.MM.YYYY')
+      render: sold_info => {
+        return sold_info?.date && sold_info.date?.format('DD.MM.YYYY')
       },
       sorter: (a, b) => {
         const d1 = a.sold_info?.date
@@ -367,7 +377,6 @@ export default function EventForm() {
             })
             navigate(`/event/${eventId}`, { replace: true })
           } catch (e) {
-            console.log(e)
             messageApi.error(e.message)
           } finally {
             setIsSending(false)
@@ -531,8 +540,8 @@ export default function EventForm() {
                     renderItem={(item, index) => {
                       const t = tickets?.data || EMPTY_ARRAY
                       const totalCount = t.filter(ticket => ticket.section === item.value).length
-                      const soldCount = t.filter(ticket => ticket.section === item.value && ticket.is_sold).length
-                      const reservedCount = t.filter(ticket => ticket.section === item.value && ticket.is_reserved).length
+                      const soldCount = t.filter(ticket => ticket.section === item.value && ticket.status !== 2 && ticket.is_sold).length
+                      const reservedCount = t.filter(ticket => ticket.section === item.value && (ticket.status === 2 || ticket.is_reserved)).length
                       const disabledCount = t.filter(ticket => ticket.section === item.value && ticket.disabled).length - soldCount - reservedCount
                       const remainsCount = totalCount - (soldCount + reservedCount + disabledCount)
                       return (

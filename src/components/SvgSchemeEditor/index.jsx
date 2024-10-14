@@ -60,7 +60,6 @@ export default function SvgSchemeEditor(props) {
         tickets.filter(item => item.status === 2).forEach(ticket => {
           const el = svg.querySelector(`.${seatClassName}[data-row="${ticket.row}"][data-seat="${ticket.seat}"]`)
           el?.setAttribute('data-disabled', '')
-          el?.setAttribute('style', 'stroke: red; stroke-width: 2px;')
           el?.classList.add('unavailable')
         })
         
@@ -96,7 +95,6 @@ export default function SvgSchemeEditor(props) {
     tickets.filter(item => item.status === 2).forEach(ticket => {
       const el = svgRef.current.querySelector(`.${seatClassName}[data-row="${ticket.row}"][data-seat="${ticket.seat}"]`)
       el?.setAttribute('data-disabled', '')
-      el?.setAttribute('style', 'stroke: red; stroke-width: 2px;')
       el?.classList.add('unavailable')
     })
   }, [tickets])

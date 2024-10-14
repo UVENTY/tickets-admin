@@ -61,6 +61,7 @@ const SvgScheme = forwardRef(({
       .svg-seat:not([data-disabled]) { cursor: pointer; }
       .svg-seat[data-disabled] { fill: #666 !important; }
       .svg-seat.active { stroke: #ffffff !important; stroke-width: 2px; }
+      .svg-seat.unavailable { stroke: #f00; stroke-width: 2px; }
     `)
   }, [categories])
 
