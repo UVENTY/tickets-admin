@@ -5,7 +5,43 @@ import { DATA_TYPES } from 'consts'
 import { useCallback, useState } from 'react'
 import Fieldset from 'shared/ui/fieldset'
 
-export default function SeatParamsFieldset({ items = [], onChange }) {
+const tableColumns = [
+  {
+    dataIndex: 'label',
+    title: 'Label',
+    width: 200
+  }, {
+    dataIndex: 'type',
+    title: 'Type',
+    render: type => DATA_TYPES.find(t => t.value === type)?.label || 'String',
+    width: 200
+  }, {
+    dataIndex: 'name',
+    title: 'System name',
+    width: 200
+  }, {
+    key: 'options',
+    title: 'Options',
+    render: (_, item) => {
+      const output = [
+        !!item.defaultValue && `Default value: ${item.defaultValue}`,
+        !!item.placeholder && `Placeholder: ${item.placeholder}`,
+        (!!item.minlength && !item.maxlength) && `Length not less than ${item.minlength}`,
+        (!item.minlength && !!item.maxlength) && `Length not more than ${item.maxlength}`,
+        (!!item.minlength && !!item.maxlength) && `Length from ${item.minlength} to ${item.maxlength}`,
+        (!!item.min && !item.max) && `Value not less than ${item.minlength}`,
+        (!item.min && !!item.max) && `Value not more than ${item.maxlength}`,
+        (!!item.min && !!item.max) && `Value from range ${item.minlength} to ${item.maxlength}`,
+        item.searchable && 'Searchable',
+        item.type === 'file' && (item.multiple ? 'Multiple file' : 'Single file'),
+        item.type === 'file' && `File formats: ${item.accept || 'any'}`
+      ].filter(Boolean)
+      return output.join('; ')
+    }
+  }
+]
+
+export default function SeatParamsFieldset({ items = [], selectCategory, onChange }) {
   const [editSeatParams, setEditSeatParams] = useState(null)
   const [editSeatIndex, setEditSeatIndex] = useState(null)
 
@@ -44,7 +80,7 @@ export default function SeatParamsFieldset({ items = [], onChange }) {
   }, [items, editSeatParams, editSeatIndex, hideEditSeat])
 
   const isEditSeat = editSeatIndex === true || typeof editSeatIndex === 'number'
-
+  
   return (
     <Fieldset
       title={<>
@@ -64,43 +100,10 @@ export default function SeatParamsFieldset({ items = [], onChange }) {
         onRow={(record, index) => ({
           onClick: () => showEditSeat(index)
         })}
-        columns={[
-          {
-            dataIndex: 'label',
-            title: 'Label',
-            width: 200
-          }, {
-            dataIndex: 'type',
-            title: 'Type',
-            render: type => DATA_TYPES.find(t => t.value === type)?.label || 'String',
-            width: 200
-          }, {
-            dataIndex: 'name',
-            title: 'System name',
-            width: 200
-          }, {
-            key: 'options',
-            title: 'Options',
-            render: (_, item) => {
-              const output = [
-                !!item.defaultValue && `Default value: ${item.defaultValue}`,
-                !!item.placeholder && `Placeholder: ${item.placeholder}`,
-                (!!item.minlength && !item.maxlength) && `Length not less than ${item.minlength}`,
-                (!item.minlength && !!item.maxlength) && `Length not more than ${item.maxlength}`,
-                (!!item.minlength && !!item.maxlength) && `Length from ${item.minlength} to ${item.maxlength}`,
-                (!!item.min && !item.max) && `Value not less than ${item.minlength}`,
-                (!item.min && !!item.max) && `Value not more than ${item.maxlength}`,
-                (!!item.min && !!item.max) && `Value from range ${item.minlength} to ${item.maxlength}`,
-                item.searchable && 'Searchable',
-                item.type === 'file' && (item.multiple ? 'Multiple file' : 'Single file'),
-                item.type === 'file' && `File formats: ${item.accept || 'any'}`
-              ].filter(Boolean)
-              return output.join('; ')
-            }
-          }
-        ]}
+        columns={tableColumns}
         dataSource={items}
         pagination={false}
+        rowKey='name'
         bordered
       />
       {isEditSeat && <Modal
@@ -117,13 +120,13 @@ export default function SeatParamsFieldset({ items = [], onChange }) {
           <Button
             key='Save'
             type="primary"
-            // loading={loading}
             onClick={saveSeatProp}
           >
             Save
           </Button>,
         ].filter(Boolean)}
       >
+        
         <SeatProperty
           title={`${editSeatIndex === true ? 'New' : 'Edit'} seat property`}
           {...editSeatParams}

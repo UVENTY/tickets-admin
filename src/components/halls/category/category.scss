@@ -8,7 +8,7 @@
       opacity: 1;
     }
 
-    .deleteCat {
+    .scheme-category-delete {
       opacity: 1;
 
       &:hover {
@@ -94,7 +94,7 @@
     font-family: var(--ant-font-family);
   }
 
-  &-deleteCat {
+  &-delete {
     color: #000;
     opacity: 0;
     transition: ease .3s opacity;
@@ -119,6 +119,15 @@
 
     :global(.ant-color-picker-color-block-inner) {
       border-radius: 0 !important;
+    }
+  }
+
+  &-filter {
+    color: var(--ant-color-link);
+    cursor: pointer;
+    
+    &:hover {
+      color: var(--ant-gold);
     }
   }
 }

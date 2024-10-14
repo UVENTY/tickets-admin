@@ -1,6 +1,6 @@
 import { map, uniq, orderBy } from 'lodash'
 import QRCode from 'qrcode'
-import { EMPTY_FUNC } from '../consts'
+import { EMPTY_FUNC, NEW_ITEM_ID } from '../consts'
 
 export const capitalizeFirstLetter = str => {
   return str[0].toUpperCase() + str.substr(1)
@@ -187,3 +187,28 @@ export const filterUnique = (item, index, arr) => arr.indexOf(item) === index
 export const random = (min, max) => Math.random() * (max - min) + min
 
 export const countOccurrences = (text, search) => (text.match(new RegExp(search, 'g')) || []).length
+
+export const pushCategory = id => prev => ({
+  ...prev,
+  categories: [
+    ...prev.categories,
+    {
+      id,
+      value: id,
+      ...NEW_ITEM_ID
+    }
+  ]
+})
+
+export const popCategory = value => prev => ({
+  ...prev,
+  categories: prev.categories.filter((cat) => cat.value !== value)
+})
+
+export const changeCategory = (index, key, value) => prev => ({
+  ...prev,
+  categories: prev.categories.map((item, i) => i === index ?
+    { ...item, [key]: value } :
+    item
+  )
+})

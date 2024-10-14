@@ -1,12 +1,27 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import classNames from 'classnames'
 import { pick, keyBy } from 'lodash'
 import { cn as bem } from '@bem-react/classname'
-import { BarsOutlined, BorderBottomOutlined, BorderTopOutlined, CheckCircleOutlined, CheckSquareOutlined, ClearOutlined, ClockCircleFilled, ControlOutlined, EnvironmentOutlined, InboxOutlined, InsertRowAboveOutlined, PlusOutlined, RedoOutlined, SettingOutlined, UploadOutlined } from '@ant-design/icons'
-import { Typography, Button, Col, Descriptions, Divider, Flex, Form, Input, Modal, Row, Segmented, Select, Space, Steps, Table, Upload, Skeleton } from 'antd'
-import { useAppState } from 'shared/contexts'
-import { countOccurrences, jsonBase64, random, toBase64, toText } from 'utils/utils'
+import {
+  BarsOutlined,
+  BorderBottomOutlined,
+  BorderTopOutlined,
+  CheckCircleOutlined,
+  CheckSquareOutlined,
+  EnvironmentOutlined,
+  SettingOutlined,
+  UploadOutlined
+} from '@ant-design/icons'
+import { Typography, Col, Divider, Form, Input, Modal, Row, Segmented, Select, Space, Steps, Table, Upload, Skeleton } from 'antd'
+import { useAwwwwwwwwwawwwd ppState } from 'shared/contexts'
+import {
+  countOccurrences,
+  jsonBase64,
+  random,
+  toBase64,
+  toText
+} from 'utils/utils'
 import { defaultSeatParams, findSeatElement, getCategories, isEqualSeats, transformScheme } from 'utils/svg'
 import { activeSeatClassName, seatClassName } from 'components/SvgSchemeEditor/consts'
 import SvgScheme from 'components/svg-scheme'
@@ -19,7 +34,7 @@ import { useLocalStorage } from 'utils/hooks'
 import cache from 'shared/api/cache'
 import Fieldset, { FieldsetTitle } from 'shared/ui/fieldset'
 import { axios } from 'api/axios'
-import { query, updateData } from './api'
+import { query, updateData } from './api' 
 import { useQuery } from '@tanstack/react-query'
 import { SchemeFieldset, SeatParamsFieldset } from 'components/halls'
 import { transformResponse } from 'shared/api/scheme'
@@ -31,7 +46,6 @@ export default function HallForm({ form, schemeFile, onSubmit }) {
   const { hall_id } = useParams()
   const [{ langCode }] = useAppState()
   const [scheme, setScheme] = useState({ categories: [], seatParams: defaultSeatParams, scheme: '' })
-
   const schemeJson = useQuery({
     queryKey: ['scheme', hall_id],
     queryFn: () => axios.get(schemeFile).then(res => res.data),
@@ -47,14 +61,21 @@ export default function HallForm({ form, schemeFile, onSubmit }) {
     <Form
       size='large'
       layout='vertical'
-      className='hall-form'
+      className={cn('form')}
       form={form}
       onFinish={values => onSubmit && onSubmit(values, scheme)}
     >
       {hall_id !== NEW_ITEM_ID && <Form.Item name='id' style={{ display: 'none' }}><input type='hidden' value={hall_id} /></Form.Item>}
-      <Typography.Title className={cn('header')} level={1} style={{ display: 'flex', margin: '0 0 30px' }}>
+      <Typography.Title
+        className={cn('header')}
+        level={1}
+        style={{ display: 'flex', margin: '0 0 30px' }}
+      >
         concert hall
-        <Form.Item name={langCode} style={{ marginBottom: 0, flex: '1 1 auto', position: 'relative', top: -7, left: 10 }}>
+        <Form.Item
+          name={langCode}
+          style={{ marginBottom: 0, flex: '1 1 auto', position: 'relative', top: -7, left: 10 }}
+        >
           <Input
             className='input_huge'
             placeholder='name'
@@ -65,7 +86,10 @@ export default function HallForm({ form, schemeFile, onSubmit }) {
         </Form.Item>
       </Typography.Title>
       
-      <Fieldset title='located in' icon={<EnvironmentOutlined className='fs-icon' />}>
+      <Fieldset
+        title='located in'
+        icon={<EnvironmentOutlined className='fs-icon' />}
+      >
         <Row gutter={[16, 0]}>
           <Col span={12}>
             <InputCity
@@ -95,7 +119,7 @@ export default function HallForm({ form, schemeFile, onSubmit }) {
       />
       
       <SeatParamsFieldset
-        items={scheme.seatParams}
+        items={scheme?.seatParams}
         onChange={seatParams => setScheme(prev => ({ ...prev, seatParams }))}
       />
     </Form>

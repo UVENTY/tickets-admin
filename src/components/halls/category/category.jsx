@@ -7,7 +7,7 @@ import './category.scss'
 const cn = bem('scheme-category')
 
 export default function Category(props) {
-  const { onChange = () => {}, onDelete, seatsCount, ...item } = props
+  const { onCountClick, onChange = () => {}, onDelete, seatsCount, ...item } = props
 
   return (
     <Flex gap={8} key={item.value} className={cn()} align='center'>
@@ -50,19 +50,22 @@ export default function Category(props) {
       />
       <div className={cn('capacity')}>
         {seatsCount ?
-          <>
+          <span
+            className={cn('filter')}
+            title='Select category seats'
+            onClick={onCountClick}
+          >
             <span className={cn('capacity-val')}>{seatsCount}</span> x💺
-          </> : <>
-            <input
-              className={cn('capacity-field')}
-              defaultValue={item.capacity}
-              onChange={e => onChange({ capacity: e.currentTarget.value })}
-            /> x🧍
-          </>
-        }
+          </span> : <>
+          <input
+            className={cn('capacity-field')}
+            defaultValue={item.capacity}
+            onChange={e => onChange({ capacity: e.currentTarget.value })}
+          /> x🧍
+        </>}
       </div>
       <Button
-        size="small"
+        size='small'
         className={cn('delete')}
         icon={<DeleteOutlined />}
         onClick={() => onDelete(item.value)}

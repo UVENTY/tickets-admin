@@ -1,0 +1,13 @@
+.ticket {
+  display: inline-flex;
+  box-shadow: var(--ant-box-shadow-card);
+  background: #fff;
+  padding: 5px;
+  text-align: right;
+
+  &-cutline {
+    margin: -5px 10px -5px 0;
+    width: 30px;
+    border-right: 1px dashed #999;
+  }
+}

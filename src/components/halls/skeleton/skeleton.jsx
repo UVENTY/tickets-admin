@@ -3,7 +3,7 @@ import { Skeleton } from 'antd'
 export default function FormSkeleton() {
   const renderRow = () => (<div style={{ display: 'flex' }}>
     {Array.from({ length: 4 }).map((_, i) => (
-      <div style={{ width: i < 3 ? 200 : 'auto', flex: i < 3 ? '0 0 200px' : '1 1 auto', padding: 3 }}>
+      <div key={i} style={{ width: i < 3 ? 200 : 'auto', flex: i < 3 ? '0 0 200px' : '1 1 auto', padding: 3 }}>
         <Skeleton.Button key={i} style={{ height: 35, margin: 3 }} active block />
       </div>
     ))}

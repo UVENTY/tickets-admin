@@ -17,6 +17,7 @@ import dayjs from 'dayjs'
 import { hallsQuery } from 'routes/halls'
 import { query as toursQuery } from 'routes/tours'
 import EventForm from './form'
+import Ticket from 'shared/ui/ticket'
 
 export { query as eventsQuery } from './api'
 export { default as EventForm } from './form'
@@ -33,16 +34,6 @@ const orderOptions = [{
 }, {
   value: 'name',
   label: 'name'
-}]
-const groupOptions = [{
-  value: 'date',
-  label: 'by date'
-}, {
-  value: 'tour',
-  label: 'by tour'
-}, {
-  value: 'by country',
-  label: 'country'
 }]
 
 export default function Events() {
@@ -64,7 +55,7 @@ export default function Events() {
   })
   const tours = useQuery({
     ...toursQuery,
-    select: data => mapToOptions(data, 'en')
+    select: data => mapToOptions(data, 'en').map(item => ({ value: item.label }))
   })
 
   const items = useMemo(() => {
@@ -95,7 +86,8 @@ export default function Events() {
       events.data.find(item => String(item.id) === event_id)
   }, [event_id])
 
-  const periodFilter = periodFilterOptions.filter(item => item !== filter.date)
+  const periodFilter = periodFilterOptions
+    .filter(item => item !== filter.date)
     .map(item => ({ key: item, label:
       <Link
         to={{ search: `?period=${item}` }}
@@ -115,6 +107,10 @@ export default function Events() {
       </Dropdown> 
     )
   })
+
+  const handleSubmit = useCallback(() => {
+
+  }, [])
   
   return (<>
     <Sidebar buttons sticky>
@@ -125,14 +121,6 @@ export default function Events() {
       {!event_id && <Typography.Title className={cn('header')} level={1} style={{ margin: '0 0 30px' }}>
         events
       </Typography.Title>}
-{/*       <div className={cn('controls')}>
-        <div>
-          order by <Select size='small' value={order.by} options={orderOptions} onChange={by => setOrder(prev => ({ ...prev, by }))} />
-        </div>
-        <div>
-          <Checkbox>group by</Checkbox> <Select size='small' value={order.by} options={orderOptions} onChange={by => setOrder(prev => ({ ...prev, by }))} />
-        </div>
-      </div> */}
       {!activeEvent ?
         <Row gutter={[16, 16]}>
           {items?.map(item => (
@@ -145,6 +133,7 @@ export default function Events() {
           form={form}
           hallOptions={halls.data || []}
           tourOptions={tours.data || []}
+          onSubmit={handleSubmit}
         />
       }
     </div>

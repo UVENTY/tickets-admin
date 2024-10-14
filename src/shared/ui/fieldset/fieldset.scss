@@ -54,6 +54,8 @@
 
   &_disabled {
     color: #ccc;
+    cursor: auto;
+    pointer-events: none;
 
     .fst-icon {
       color: #ccc;

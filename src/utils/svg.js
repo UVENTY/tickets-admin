@@ -3,14 +3,14 @@ import { getValidSvg, tryToNumber } from './utils'
 
 export const defaultSeatParams = [
   {
+    name: 'text',
+    label: 'Text',
+  }, {
     name: 'icon',
     label: 'Seat icon',
     type: 'file',
     accept: '.svg',
     originalColors: false,
-  }, {
-    name: 'text',
-    label: 'Text',
   }, {
     name: 'disabled',
     label: 'Disabled',

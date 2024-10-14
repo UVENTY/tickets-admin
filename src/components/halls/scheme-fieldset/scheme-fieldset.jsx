@@ -17,7 +17,7 @@ export const getEmptyCategory = (categories) => {
 }
 
 function SchemeFieldset(props, ref) {
-  const { isLoading, scheme, categories, title, seatParams, onChange, afterSchemeRender } = props
+  const { isLoading, scheme, categories, title, seatParams, onChange, currency } = props
   const [selectedSeats, setSelectedSeats] = useState([])
   const [showSeatsEdit, setShowSeatsEdit] = useState(false)
   
@@ -101,9 +101,8 @@ function SchemeFieldset(props, ref) {
             ref={svgRef}
             src={scheme}
             categories={categories}
-            renderTooltip={SchemeTooltip}
             seat={seatHandlers}
-            afterRender={afterSchemeRender}
+            renderTooltip={SchemeTooltip}
           /> :
           <Upload.Dragger
             accept='.svg'
@@ -145,7 +144,7 @@ function SchemeFieldset(props, ref) {
             onClick={isSelected ? () => setShowSeatsEdit(true) : undefined}
             icon={<CheckCircleOutlined />}
           >
-            selected seats
+            selected seats{selectedSeats.length > 0 && ` (${selectedSeats.length})`}
           </FieldsetTitle>
         </>}
         style={{ flex: '1 1 auto' }}
@@ -157,6 +156,7 @@ function SchemeFieldset(props, ref) {
             params={seatParams}
             seats={selectedSeats}
             onChange={handleChangeSeat}
+            currency={currency}
           /> :
           <>
             {categories?.length > 0 && <SortableList
@@ -166,6 +166,13 @@ function SchemeFieldset(props, ref) {
                 <SortableList.Item id={item.id}>
                   <Category
                     {...item}
+                    onCountClick={() => {
+                      console.log('click');
+                      
+                      const elems = svgRef.current?.querySelectorAll(`*[data-category="${item.value}"]`)
+                      setSelectedSeats(Array.from(elems))
+                      setShowSeatsEdit(true)
+                    }}
                     onChange={inject => onChange(prev => {
                       const categories = [...prev.categories]
                       categories[i] = { ...categories[i], ...inject }
