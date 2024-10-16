@@ -357,7 +357,7 @@ export default function EventForm() {
             const createdStadium = await updateData({ stadiums: [stadium] })
             const stadiumId = get(createdStadium, 'data.created_id.stadiums.0')
             if (!stadiumId) {
-              messageApi.error(`Error on creating stadium: ${JSON.stringify(data)}`)
+              messageApi.error(`Error on creating stadium; Request body: ${JSON.stringify({ stadiums: [stadium] })}, response: ${JSON.stringify(createdStadium)}`)
               return
             }
             eventData.stadium = stadiumId
