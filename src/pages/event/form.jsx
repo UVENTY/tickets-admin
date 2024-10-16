@@ -14,11 +14,11 @@ import SvgSchemeEditor from '../../components/SvgSchemeEditor'
 import Sidebar from '../../components/Layout/sidebar'
 import { getCitiesOptions, getCountriesOptions, getLangValue } from '../../redux/config'
 import { downloadBlob, jsonBase64, qrBase64, toBase64 } from '../../utils/utils'
-import './event.scss'
 import { EMPTY_ARRAY, NON_SEAT_ROW } from '../../consts'
 import Wysiwyg from '../../components/Wysiwyg'
 import { fetchTicketsPaymentData, getTicketPdf } from '../../api/tickets/request'
 import { getColumnSearch } from '../../utils/components'
+import './event.scss'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
@@ -159,7 +159,7 @@ export default function EventForm() {
     }
   })
 
-
+  
   const baseTickets = TicketsApi.useTickets({ event_id: id }, { order: 'section' }, {
     enabled: !isNew
   })
@@ -188,7 +188,7 @@ export default function EventForm() {
     },
     enabled: !!baseTickets?.data  
   })
-
+  
   const [changingTicket, setChangingTicket] = useState(false)
   
   const ticketsColumns = useMemo(() => [
@@ -521,10 +521,10 @@ export default function EventForm() {
                   </Col>
                 </Row>
                 <Form.Item className='scheme_blob' name={['stadium', 'scheme_blob']}>
-                  {!!tickets.data && <SvgSchemeEditor
+                  <SvgSchemeEditor
                     tickets={tickets.data}
                     onTicketsChange={val => setChangedPrice(prev => ({ ...prev, ...val }))}
-                  />}
+                  />
                 </Form.Item>
               </>
             },
