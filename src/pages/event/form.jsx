@@ -328,12 +328,12 @@ export default function EventForm() {
         layout='vertical'
         onFinish={async (dataValues) => {
           setIsSending(true)
-          const { template_subject, template_body, pdf_body, ...values } = dataValues
+          const { template_subject, template_body, pdf_body, eventName, ...values } = dataValues
           try {
             let { stadium: { scheme_blob, ...stadium }, date, time, ...event } = values
             stadium.scheme_blob = await jsonBase64(scheme_blob)
             event.datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
-            
+            //event.options = { name: eventName }
             await updateLang({
               [`email_ticket_paid_subject_${id}`]: { [data.defaultLang]: template_subject },
               [`email_ticket_paid_body_${id}`]: { [data.defaultLang]: template_body },
@@ -410,6 +410,16 @@ export default function EventForm() {
               label: <b>Event data</b>,
               style: panelStyle,
               children: <Row gutter={20}>
+                <Col span={18}>
+                  <Form.Item
+                    label='Name'
+                    name={['options', 'name']}
+                  >
+                    <Input
+
+                    />
+                  </Form.Item>
+                </Col>
                 <Col span={6}>
                   <Form.Item
                     label='Artist'
