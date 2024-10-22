@@ -1,5 +1,7 @@
 export const API_URL = process.env.REACT_APP_API_URL
 
+export const TICKETMAN_ROLE = 6
+
 const SCHEME_PREFIX = 'svg-scheme-'
 
 export const NEW_ITEM_ID = 'create'

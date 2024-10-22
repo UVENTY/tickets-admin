@@ -52,16 +52,13 @@ const NAVBAR_TOP = [
   }, {
     key: 'events',
     label: <Link to='/events'><CalendarOutlined />&nbsp;&nbsp;Events</Link>,
-  }/* , {
-    key: 'teams',
-    label: <Link to='/teams'><TeamOutlined />&nbsp;&nbsp;Teams</Link>,
   }, {
-    key: 'stadiums',
-    label: <Link to='/stadiums'><StadiumIcon width={14} heiht={14} />&nbsp;&nbsp;Stadiums</Link>,
+    key: 'ticketmans',
+    label: <Link to='/ticketmans'><TeamOutlined />&nbsp;&nbsp;Ticketmans</Link>,
   }, {
     key: 'd1',
     label: <Divider type='vertical' />
-  } */
+  }
 ]
 
 const NAVBAR_RIGHT = [

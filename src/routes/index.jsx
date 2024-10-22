@@ -7,6 +7,7 @@ import { useMemo } from 'react'
 import { getAction, getDeferred, getLoader, getLoaders } from './utils'
 import Events, { EventForm, eventsQuery } from './events'
 import Halls, { HallForm, hallsQuery } from './halls'
+import TicketmansPage, { ticketmansQuery } from './ticketmans'
 
 const getRouter = queryClient => createBrowserRouter([
   {
@@ -33,6 +34,12 @@ const getRouter = queryClient => createBrowserRouter([
           halls: hallsQuery,
           events: eventsQuery
         }),
+      }, {
+        path: '/events/:event_id/edit',
+      }, {
+        path: '/ticketmans/:user_id?',
+        element: <TicketmansPage />,
+        loader: getDeferred(queryClient, { ticketmans: ticketmansQuery }),
       }
     ]
   }, {

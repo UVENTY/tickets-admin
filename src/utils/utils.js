@@ -1,6 +1,7 @@
 import { map, uniq, orderBy } from 'lodash'
 import QRCode from 'qrcode'
 import { EMPTY_FUNC, NEW_ITEM_ID } from '../consts'
+import dayjs from 'dayjs'
 
 export const capitalizeFirstLetter = str => {
   return str[0].toUpperCase() + str.substr(1)
@@ -212,3 +213,8 @@ export const changeCategory = (index, key, value) => prev => ({
     item
   )
 })
+
+export const formatDate = (date, format) => {
+  if (!dayjs(date).isValid()) return ''
+  return dayjs(date).format('DD.MM.YYYY HH:mm')
+}

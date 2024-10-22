@@ -170,7 +170,7 @@ export default function EventForm({ form, schemeFile, hallOptions = [], tourOpti
             </FieldsetTitle>
             {i < formTabs.length - 1 && <Divider type='vertical' />}
           </Fragment>)}
-        <Divider />
+        </ Divider>
       </div>
 
       {['scheme', 'tickets'].includes(activePage) && <>

@@ -1,0 +1,19 @@
+.ticketmans {
+  flex: 1 1 auto;
+  
+  &-filter {
+    &-event {
+      vertical-align: middle;
+      margin-left: 1em;
+      font-size: 1.4em;
+      min-width: 6%;
+    }
+  }
+
+  .ant-select {
+    min-width: 100%;
+  }
+}
+.no-label label::after {
+  display: none !important;
+}
