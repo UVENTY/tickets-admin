@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Form, Input, Select } from 'antd'
+import { Button, Form, Input, message, Select } from 'antd'
 import { get } from 'lodash'
 import { useNavigate, useParams, useSubmit } from 'react-router-dom'
 import { EMPTY_ARRAY, NEW_ITEM_ID } from 'consts'
@@ -19,10 +19,11 @@ function LoginInput({ value, onChange }) {
   )
 }
 
-export default function TicketmanForm({ idProp = 'id_user', initialValues = {}, renderEvent, beforeSubmit, afterSubmit, labels = true, form, onSubmit }) {
+export default function TicketmanForm({ idProp = 'id_user', initialValues = {}, renderEvent, beforeSubmit, afterSubmit, labels = true, form, close, onSubmit }) {
   const [{ langCode }] = useAppState()
   const navigate = useNavigate()
-  const { id_user } = useParams()
+  const { user_id } = useParams()
+  const isNew = user_id === NEW_ITEM_ID
   const queryClient = useQueryClient()
   const events = useQuery({
     ...eventsQuery,
@@ -32,11 +33,6 @@ export default function TicketmanForm({ idProp = 'id_user', initialValues = {}, 
         label: renderEvent(event)
       }))
   })
-
-  /* useEffect(() => {
-    form && form.setFieldsValue(initialValues)
-  }, [initialValues]) */
-  console.log(events.data);
   
   return (
     <Form
@@ -46,35 +42,28 @@ export default function TicketmanForm({ idProp = 'id_user', initialValues = {}, 
       initialValues={initialValues}
       labelCol={{ flex: '0 0 130px' }}
       onFinish={async (values) => {
-        /* beforeSubmit && beforeSubmit(values)
-        const response = await axios.post('/data', {
-          data: JSON.stringify({
-            tournaments: [values]
-          })
-        })
-        const createdId = get(response, ['data', 'data', 'created_id', 'tournaments', 0])
-        queryClient.setQueryData(
-          ['tours'],
-          prev => initialValues[idProp] === NEW_ITEM_ID && createdId ? [{ ...values, id: createdId }, ...prev] :
-            [...prev.map(item => item[idProp] === initialValues[idProp] ? { ...item, ...values } : item)]
-        )
-        afterSubmit && afterSubmit(response) */
+        if (values.data) {
+          values.data = JSON.stringify(values.data)
+        }
+        values.u_role = '6'
+        await (isNew ? axios.post('/register', values) : axios.post(`/user/${user_id}`, values))
+        message.success('Saved')
       }}
     >
-      {!!id_user && id_user !== NEW_ITEM_ID &&
+      {!!user_id && user_id !== NEW_ITEM_ID &&
         <Form.Item name={idProp} style={{ display: 'none' }}>
-          <Input type='hidden' value={id_user} />
+          <Input type='hidden' value={user_id} />
         </Form.Item>
       }
       <Form.Item
         label='Login'
-        name='email'
+        name='u_email'
       >
         <Input />
       </Form.Item>
       <Form.Item
         label='Password'
-        name='password'
+        name={['data', 'password']}
         tooltip={!!initialValues[idProp] && initialValues[idProp] !== NEW_ITEM_ID ?
           'Leave empty to not change password' :
           'After saving, it will be impossible to restore password, only change available'
@@ -84,13 +73,13 @@ export default function TicketmanForm({ idProp = 'id_user', initialValues = {}, 
       </Form.Item>
       <Form.Item
         label='Name'
-        name='name'
+        name='u_name'
       >
         <Input />
       </Form.Item>
       <Form.Item
         label='Phone'
-        name='phone'
+        name='u_phone'
       >
         <Input />
       </Form.Item>
@@ -102,11 +91,13 @@ export default function TicketmanForm({ idProp = 'id_user', initialValues = {}, 
       </Form.Item>
       <Form.Item
         label=' '
-        name='disable'
+        name={['data', 'u_details', 'fullAccess']}
         className='no-label'
       >
         <Checkbox>Can mark ticket as invalid</Checkbox>
       </Form.Item>
+      <Button type='primary' htmlType='submit'>Save</Button>
+      <Button htmlType='button' onClick={() => close && close()}>Cancel</Button>
     </Form>
   )
 }

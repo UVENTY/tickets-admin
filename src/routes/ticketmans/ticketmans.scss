@@ -10,7 +10,11 @@
     }
   }
 
-  .ant-select {
+  h1 .ant-select {
+    min-width: 600px;
+  }
+
+  td .ant-select {
     min-width: 100%;
   }
 }

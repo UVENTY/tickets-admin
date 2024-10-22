@@ -131,12 +131,14 @@ function TicketmansPage() {
         {!!user_id && <Modal
           title='Create ticketman'
           onCancel={() => navigate('/ticketmans')}
+          footer={null}
           open
         >
           <TicketmanForm
             form={form}
             renderEvent={renderEventLabel}
             initialValues={initialForm}
+            close={() => navigate('/ticketmans')}
           />
         </Modal>}
       </div>
