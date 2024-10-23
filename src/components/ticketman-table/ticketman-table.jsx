@@ -117,33 +117,33 @@ export default function TicketmanTable(props) {
   const defaultColumns = [
     {
       title: 'Name',
-      dataIndex: 'name',
+      dataIndex: 'u_name',
       width: '250px',
       render: (value, item) => <>{value}<Link to={`/ticketmans/${item.id_user}`} className='cell-link' /></>
       // editable: true,
     },
     {
       title: 'E-mail',
-      dataIndex: 'email',
+      dataIndex: 'u_email',
       width: '250px',
       render: (value, item) => <>{value?.split('@')[0]}<Link to={`/ticketmans/${item.id_user}`} className='cell-link' /></>
       // editable: true,
     },
     {
       title: 'Phone',
-      dataIndex: 'phone',
+      dataIndex: 'u_phone',
       width: '150px',
       render: (value, item) => <>{value}<Link to={`/ticketmans/${item.id_user}`} className='cell-link' /></>
       // editable: true,
     },
     {
       title: 'Event',
-      dataIndex: 'event',
-      render: (_, record) => <div className={cn('control', { modified: props.highlight?.[record.id_user] })}>
+      dataIndex: 'sc_id',
+      render: (sc_id, record) => <div className={cn('control', { modified: props.highlight?.[record.id_user] })}>
         <Select
           options={props.events || []}
           style={{ margin: '-6px -11px' }}
-          defaultValue={record.id_schedule}
+          defaultValue={sc_id}
           onChange={value => handleChange(record.id_user, 'event', value)}
           size='large'
         />

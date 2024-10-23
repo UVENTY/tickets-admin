@@ -67,7 +67,7 @@ export default function TicketmanForm({ idProp = 'id_user', initialValues = {}, 
       }
       <Form.Item
         label='Login'
-        name='email'
+        name='u_email'
       >
         <Input />
       </Form.Item>
@@ -83,25 +83,25 @@ export default function TicketmanForm({ idProp = 'id_user', initialValues = {}, 
       </Form.Item>
       <Form.Item
         label='Name'
-        name='name'
+        name='u_name'
       >
         <Input />
       </Form.Item>
       <Form.Item
         label='Phone'
-        name='phone'
+        name='u_phone'
       >
         <Input />
       </Form.Item>
       <Form.Item
         label='Event'
-        name='id_schedule'
+        name='sc_id'
       >
         <Select className='cell-event' options={events} />
       </Form.Item>
       <Form.Item
         label=' '
-        name={['data', 'u_details', 'fullAccess']}
+        name={['u_details', 'full_access']}
         className='no-label'
       >
         <Checkbox>Can mark ticket as invalid</Checkbox>
