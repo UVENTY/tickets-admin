@@ -26,7 +26,8 @@ export default function TicketmanForm({ idProp = 'id_user', initialValues = {}, 
   const { user_id } = useParams()
   const isNew = user_id === NEW_ITEM_ID
   const queryClient = useQueryClient()
-
+  console.log(initialValues);
+  
   return (
     <Form
       action='/ticketmans'
@@ -40,12 +41,23 @@ export default function TicketmanForm({ idProp = 'id_user', initialValues = {}, 
         }
         values.u_role = '6'
         const response = await (isNew ? axios.post('/register', values) : axios.post(`/user/${user_id}`, { data: JSON.stringify({ sc_id, ...values }) }))
+        if (response.data?.status === 'error') {
+          message.error(get(response, 'data.message', 'Error'))
+          return
+        }
         const id = response.data?.data?.u_id
-        if (id && isNew) {
+        if (!id) {
+          message.error('Unknown error on create user, reponse: ' + JSON.stringify(response.data))
+          return
+        } else if (isNew) {
           await axios.post(`/user/${id}`, { data: JSON.stringify({ sc_id }) })
         }
         navigate(`/ticketmans/${id}`, { replace: true })
         message.success('Saved')
+        queryClient.invalidateQueries({
+          queryKey: ['ticketmans'],
+          refetchType: 'all',
+        })
       }}
     >
       {!!user_id && user_id !== NEW_ITEM_ID &&
@@ -55,7 +67,7 @@ export default function TicketmanForm({ idProp = 'id_user', initialValues = {}, 
       }
       <Form.Item
         label='Login'
-        name='u_email'
+        name='email'
       >
         <Input />
       </Form.Item>
@@ -71,13 +83,13 @@ export default function TicketmanForm({ idProp = 'id_user', initialValues = {}, 
       </Form.Item>
       <Form.Item
         label='Name'
-        name='u_name'
+        name='name'
       >
         <Input />
       </Form.Item>
       <Form.Item
         label='Phone'
-        name='u_phone'
+        name='phone'
       >
         <Input />
       </Form.Item>
