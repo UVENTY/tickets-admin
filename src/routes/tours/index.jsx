@@ -15,7 +15,7 @@ export const toursQuery = {
   queryFn: () => axios.get('/data', { params: { fields: 8 } })
     .then(res =>
       Object.entries(res.data?.data?.data?.tournaments || {})
-      .map(([id, item]) => ({ id, ...item }))
+      .map(([id, item]) => ({ id,  ...item }))
       .reverse()
     )
 }

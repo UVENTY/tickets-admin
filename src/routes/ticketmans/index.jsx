@@ -118,6 +118,14 @@ function TicketmansPage() {
   const changeFilter = useCallback((fieldname) => {
     return value => setFilter(prev => ({ ...prev, [fieldname]: value })) 
   }, [])
+  const filteredData = useMemo(() => {
+    if (!data) return []
+    return data.filter(item => {
+      if (filter.event === 'any') return true
+      if (filter.event === 'empty') return !item.id_schedule
+      return item.id_schedule === filter.event
+    })
+  }, [data, filter])
   
   return (
     <>
@@ -127,7 +135,8 @@ function TicketmansPage() {
         onCreate={() => navigate('/ticketmans/create')}
         onSave={async () => {
           setIsPending(true)
-          await axios.post('/user', { data: JSON.stringify(changedEvents) })
+          const promises = Object.entries(changedEvents).map(([user_id, item]) => axios.post(`/user/${user_id}`, { data: JSON.stringify(item) }))
+          await Promise.all(promises)
           setIsPending(false)
         }}
       />
@@ -143,7 +152,7 @@ function TicketmansPage() {
           />
         </Typography.Title>
         <TicketmanTable
-          data={data}
+          data={filteredData}
           events={events}
           loading={isLoading || eventQuery.isLoading}
           pending={isPending}
