@@ -10,7 +10,7 @@ import { NEW_ITEM_ID } from 'consts'
 import TourForm from './form'
 import './tours.scss'
 
-export const query = {
+export const toursQuery = {
   queryKey: ['tours'],
   queryFn: () => axios.get('/data', { params: { fields: 8 } })
     .then(res =>
@@ -24,7 +24,7 @@ export default function Tours() {
   const [{ langCode }] = useAppState()
   const [ searchParams, setSearchParams ] = useSearchParams()
   const { tour_id } = useParams()
-  const tours = useQuery(query)
+  const tours = useQuery(toursQuery)
   const navigate = useNavigate()
   const [ form ] = Form.useForm()
   const [isSending, setIsSending] = useState(false)

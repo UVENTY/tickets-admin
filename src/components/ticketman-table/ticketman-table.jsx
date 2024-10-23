@@ -1,9 +1,12 @@
-import React, { useContext, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { Button, Form, Input, InputNumber, Popconfirm, Select, Table } from 'antd'
+import { cn as bem } from '@bem-react/classname'
 import { EMPTY_FUNC } from 'consts'
-import './ticketman-table.scss'
 import { Link } from 'react-router-dom'
 import { renderWithFlag } from 'shared/ui/input-city/input-city'
+import './ticketman-table.scss'
+
+const cn = bem('ticketman-table')
 
 const EditableContext = React.createContext(null)
 
@@ -98,15 +101,19 @@ const EditableCell = ({
 }
 
 export default function TicketmanTable(props) {
+  const [modifyEvent, setModifyEvent] = useState([])
   const dataSource = props.data || []
-  const handleChange = props.onChange || EMPTY_FUNC
+  const handleChange = useCallback((...args) => {
+    const fn = props.onChange || EMPTY_FUNC
+    const [ user_id, field, value ] = args
+    fn(user_id, field === 'event' ? 'sc_id' : field, value)
+    setModifyEvent(prev => prev.includes(args[2]) ? prev : ([ ...prev, args[2] ]))
+  }, [])
   const handleDelete = props.onDelete || EMPTY_FUNC
   const handleAdd = props.onCreate || EMPTY_FUNC
   const handleSave = props.onSave || EMPTY_FUNC
-
   const [count, setCount] = useState(2)
-
-
+  
   const defaultColumns = [
     {
       title: 'Name',
@@ -132,15 +139,15 @@ export default function TicketmanTable(props) {
     {
       title: 'Event',
       dataIndex: 'event',
-      render: (_, record) =>
+      render: (_, record) => <div className={cn('control', { modified: props.highlight?.[record.id_user] })}>
         <Select
           options={props.events || []}
           style={{ margin: '-6px -11px' }}
-          optionRender={renderWithFlag}
-          labelRender={renderWithFlag}
+          defaultValue={record.id_schedule}
           onChange={value => handleChange(record.id_user, 'event', value)}
           size='large'
         />
+      </div>
       ,
     },
   ]

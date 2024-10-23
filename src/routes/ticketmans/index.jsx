@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
 import { cn as bem } from '@bem-react/classname'
 import TicketmanTable from 'components/ticketman-table/ticketman-table'
@@ -13,7 +13,13 @@ import { renderWithFlag } from 'shared/ui/input-city/input-city'
 import { keyBy } from 'lodash'
 import { formatDate } from 'utils/utils'
 import TicketmanForm from './form'
-import { NEW_ITEM_ID } from 'consts'
+import { EMPTY_OBJECT, NEW_ITEM_ID } from 'consts'
+import dayjs from 'dayjs'
+import { eventsQuery } from 'routes/events'
+import { hallsQuery } from 'routes/halls'
+import { toursQuery } from 'routes/tours'
+import { useAppState } from 'shared/contexts'
+import { axios } from 'api/axios'
 
 const cn = bem('ticketmans')
 
@@ -21,40 +27,57 @@ export { query as ticketmansQuery }
 
 function TicketmansPage() {
   const { data, isLoading } = useQuery(query)
-  const { data: events = [], isLoading: isLoadingEvents } = useQuery(eventQuery)
   const [ changedEvents, setChangedEvents ] = useState(null)
+  const [isPending, setIsPending] = useState(false)
  
-  const renderEventLabel = item => {
-    const eventMap = keyBy(events, 'id')
-    const event = eventMap[item?.sc_id] ?? Object.values(eventMap)[0]
-    
-    return {
-      value: item.id,
-      label: item.label ||
-        <div style={{ display: 'inline-flex'}}>
-          <div style={{ flex: '0 0 100px' }}>
-            {renderWithFlag({ value: event?.country, label: event?.city })}
-          </div>
-          <div style={{ flex: '0 0 150px' }}>
-            {formatDate(event?.datetme)}
-          </div>
-          <div style={{ flex: '1 1 auto' }}>
-            {event?.name}
-          </div>
-        </div>
-    }
-  }
+  const renderEventLabel = item => (
+    <div style={{ display: 'inline-flex'}}>
+      <div style={{ flex: '0 0 100px' }}>
+        {renderWithFlag({ value: item?.country, label: item?.city })}
+      </div>
+      <div style={{ flex: '0 0 150px' }}>
+        {dayjs(item?.date).format('DD.MM.YYYY HH:mm')}
+      </div>
+      <div style={{ flex: '1 1 auto' }}>
+        {item?.en || item?.tour?.en}
+      </div>
+    </div>
+  )
+  const queryClient = useQueryClient()
+  const config = queryClient.getQueryData(['config'])?.options || {}
+  const cities = config?.cities || EMPTY_OBJECT
+  const halls = useQuery(hallsQuery)
+  const eventQuery = useQuery(eventsQuery)
+  const tours = useQuery(toursQuery)
   
-  const eventList = useMemo(() => {
-    if (!data || !events) return []
+  const events = useMemo(() => {
+    if (!tours.data || !eventQuery.data || !halls.data) return []
+    const tourMap = keyBy(tours.data, 'id')
+    return eventQuery.data.map(item => {
+      const hall = halls.data[item.stadium]
+      
+      return {
+        value: item.id,
+        label: renderEventLabel({
+          ...item,
+          city: cities[hall?.city]?.en,
+          country: hall?.country,
+          tour: tourMap[item.tournament]
+        })
+      }
+    })
+  }, [eventQuery.data, halls.data, tours.data, cities])
+  
+  const eventFilter = useMemo(() => {
+    if (!events.length) return []
     return [{
-      id: 'any',
+      value: 'any',
       label: 'regardless of event'
     }, {
-      id: 'empty',
+      value: 'empty',
       label: 'without the event or with past event'
-      }, ...events].map(renderEventLabel)
-  }, [data, events])
+      }, ...events]
+  }, [events])
 
   const { user_id } = useParams()
   const navigate = useNavigate()
@@ -67,7 +90,7 @@ function TicketmansPage() {
   }, [data])
 
   const initialForm = user_id && user_id !== NEW_ITEM_ID ?
-    (data.find(item => item.id_user === user_id) ?? {}) : {}
+    (data?.find(item => item.id_user === user_id) ?? {}) : {}
   
   const handleAdd = (num) => {
     const newData: DataType = {
@@ -100,7 +123,13 @@ function TicketmansPage() {
     <>
       <Sidebar.Left
         buttons={!user_id ? ['create'].concat(changedEvents ? ['save'] : []) : []/* ['save', 'back'] */}
+        loading={isPending}
         onCreate={() => navigate('/ticketmans/create')}
+        onSave={async () => {
+          setIsPending(true)
+          await axios.post('/user', { data: JSON.stringify(changedEvents) })
+          setIsPending(false)
+        }}
       />
       <div className={cn()}>
         <Typography.Title className={cn('header')} level={1} style={{ margin: '0 0 30px' }}>
@@ -109,14 +138,15 @@ function TicketmansPage() {
             size='large'
             value={filter.event}
             onChange={changeFilter('event')}
-            options={eventList}
+            options={eventFilter}
             className={cn('filter-event')}
           />
         </Typography.Title>
         <TicketmanTable
           data={data}
-          events={eventList}
-          loading={isLoading || isLoadingEvents}
+          events={events}
+          loading={isLoading || eventQuery.isLoading}
+          pending={isPending}
           onChange={(user_id, field, value) => setChangedEvents({
             ...(changedEvents ?? {}),
             [user_id]: {
@@ -139,6 +169,8 @@ function TicketmansPage() {
             renderEvent={renderEventLabel}
             initialValues={initialForm}
             close={() => navigate('/ticketmans')}
+            pending={isPending}
+            events={events}
           />
         </Modal>}
       </div>

@@ -28,14 +28,22 @@ Sidebar.Left = ({ buttons = [], loading, onCreate, onSave, onBack }) => (
       loading={loading}
       title='Create'
     />}
-    {buttons.includes('back') && <Button
+    {buttons.includes('back') && !buttons.includes('save') && <Button
       icon={<ArrowLeftOutlined />}
       size='large'
       onClick={onBack}
       disabled={loading}
       title='Back to list'
     />}
-    {buttons.includes('save') && <Space.Compact>
+    {buttons.includes('save') && !buttons.includes('back') && <Button
+      icon={<SaveOutlined />}
+      type='primary'
+      size='large'
+      onClick={onSave}
+      loading={loading}
+      title='Save'
+    />}
+    {buttons.includes('back') && buttons.includes('save') && <Space.Compact>
       <Button
         type='primary'
         size='large'

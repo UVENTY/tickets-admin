@@ -15,7 +15,7 @@ import { query } from './api'
 import './events.scss'
 import dayjs from 'dayjs'
 import { hallsQuery } from 'routes/halls'
-import { query as toursQuery } from 'routes/tours'
+import { toursQuery as toursQuery } from 'routes/tours'
 import EventForm from './form'
 import Ticket from 'shared/ui/ticket'
 

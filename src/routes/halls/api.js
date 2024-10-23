@@ -21,12 +21,13 @@ export const query = {
   queryFn: () => axios.get('/data', { params: { fields: 1 } })
     .then(response => {
       const map = response.data?.data?.data?.stadiums || {}
-      Object.values(map).forEach(hall => {
+      Object.entries(map).forEach(([id, hall]) => {
         const options = parseJson(hall.scheme)
         if (!options) return
         hall.base = options?.base
         if (options.parent && map[options.parent]) {
           const parent = map[options.parent]
+          hall.id = id
           hall.parent = parent
           hall.city = parent.city
           hall.country = parent.country

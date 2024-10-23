@@ -57,7 +57,7 @@ export default function EventForm({ form, schemeFile, hallOptions = [], tourOpti
   const [schemeStatus, setSchemeStatus] = useState('idle')
   const [activeTabIndex, setActiveTabIndex] = useState(1)
   const [isTour, setIsTour] = useState(false)
-
+  
   const queryClient = useQueryClient()
   const config = queryClient.getQueryData(['config'])?.options || {}
   const currencies = useMemo(() => {
@@ -175,8 +175,7 @@ export default function EventForm({ form, schemeFile, hallOptions = [], tourOpti
 
       {['scheme', 'tickets'].includes(activePage) && <>
         {!schemeSelected && <Result
-          icon={<EnvironmentOutlined />}
-          title={`To work with the ${activePage}, select a hall`}
+          title={<>To work with the {activePage}, select <EnvironmentOutlined style={{ color: 'var(--ant-blue)'}} /> a hall</>}
         />}
         {isLoading && <Flex justify='space-between' gap={20}>
           <div style={{ flex: '0 0 65%' }}>
