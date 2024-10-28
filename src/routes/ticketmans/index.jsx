@@ -32,6 +32,7 @@ function TicketmansPage() {
  
   const renderEventLabel = item => (
     <div style={{ display: 'inline-flex'}}>
+      {item.id}
       <div style={{ flex: '0 0 100px' }}>
         {renderWithFlag({ value: item?.country, label: item?.city })}
       </div>

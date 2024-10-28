@@ -33,7 +33,7 @@ export const authorizeByTokens = async (dispatch) => {
   const cookies = new Cookies()
   const token = cookies.get('token')
   const u_hash = cookies.get('u_hash')
-  if (!token && !u_hash) {
+  if (!token || !u_hash || token === 'undefined' || u_hash === 'undefined') {
     dispatch(setLoading(false))
     return false
   }
@@ -58,13 +58,13 @@ export const getToken = hash => async (dispatch) => {
   try {
     const formData = toFormData({ auth_hash: hash })
     const res = await axios.post('/token', formData)
-    const tokens = res.data?.data
-    if (tokens) {
-      dispatch(setToken(tokens))
-      cookies.set('token', tokens.token)
-      cookies.set('u_hash', tokens.u_hash)
+    const { token, u_hash } = res.data?.data || {}
+    if (token && u_hash) {
+      dispatch(setToken({ token, u_hash }))
+      cookies.set('token', token)
+      cookies.set('u_hash', u_hash)
     }
-    return tokens
+    return { token, u_hash }
   } catch(e) {
     console.error(e)
   }

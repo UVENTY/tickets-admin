@@ -14,7 +14,7 @@ axios.interceptors.request.use(config => {
   const formData = (data instanceof URLSearchParams || data instanceof FormData) ? data : getFormData(data)
   const token = cookies.get('token')
   const u_hash = cookies.get('u_hash')
-  if (token && u_hash) {
+  if (token && u_hash && ![token, u_hash].includes('undefined')) {
     formData.append('token', token)
     formData.append('u_hash', u_hash)
   }
