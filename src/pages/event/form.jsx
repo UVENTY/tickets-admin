@@ -14,11 +14,11 @@ import SvgSchemeEditor from '../../components/SvgSchemeEditor'
 import Sidebar from '../../components/Layout/sidebar'
 import { getCitiesOptions, getCountriesOptions, getLangValue } from '../../redux/config'
 import { downloadBlob, jsonBase64, qrBase64, toBase64 } from '../../utils/utils'
+import './event.scss'
 import { EMPTY_ARRAY, NON_SEAT_ROW } from '../../consts'
 import Wysiwyg from '../../components/Wysiwyg'
 import { fetchTicketsPaymentData, getTicketPdf } from '../../api/tickets/request'
 import { getColumnSearch } from '../../utils/components'
-import './event.scss'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
@@ -130,14 +130,6 @@ export default function EventForm() {
   const isNew = id === 'create'
   const updateData = useUpdateData()
   const mutateTickets = useMutation({ mutationFn: TicketsApi.updateTickets })
-  
-  useEffect(() => {
-    if (!mutateTickets.isError) {
-      return
-    }
-    messageApi.error(`Update tickets failed: ${mutateTickets.failureReason?.message}`)
-  }, [mutateTickets.isError])
-  
   const { data, error, isLoading } = useData(null, {
     select: ({ data, default_lang }) => {
       const { schedule, stadiums, teams, tournaments } = data
@@ -159,7 +151,7 @@ export default function EventForm() {
     }
   })
 
-  
+
   const baseTickets = TicketsApi.useTickets({ event_id: id }, { order: 'section' }, {
     enabled: !isNew
   })
@@ -169,11 +161,9 @@ export default function EventForm() {
     queryFn: () => fetchTicketsPaymentData(baseTickets?.data),
     select: data => {
       const { booking } = data?.data || {}
-
       return baseTickets.data?.map(({ sold_info, ...ticket }) => {
         const date = booking[sold_info?.buy_id]?.b_payment_datetime
-        if (date) console.log(date)
-        const day = date && dayjs(date).isValid() ? dayjs(date) : null
+        const day = dayjs(date).isValid() ? dayjs(date) : null
         const sold = sold_info ? {
           ...sold_info,
           date: day
@@ -188,7 +178,7 @@ export default function EventForm() {
     },
     enabled: !!baseTickets?.data  
   })
-  
+
   const [changingTicket, setChangingTicket] = useState(false)
   
   const ticketsColumns = useMemo(() => [
@@ -235,8 +225,8 @@ export default function EventForm() {
       dataIndex: 'sold_info',
       title: 'Date',
       ...getColumnSearch('date', { getData: item => item.sold_info?.date, type: 'date' }),
-      render: sold_info => {
-        return sold_info?.date && sold_info.date?.format('DD.MM.YYYY')
+      render: (_, item) => {
+        return item.sold_info?.date?.format('DD.MM.YYYY')
       },
       sorter: (a, b) => {
         const d1 = a.sold_info?.date
@@ -328,12 +318,12 @@ export default function EventForm() {
         layout='vertical'
         onFinish={async (dataValues) => {
           setIsSending(true)
-          const { template_subject, template_body, pdf_body, eventName, ...values } = dataValues
+          const { template_subject, template_body, pdf_body, ...values } = dataValues
           try {
             let { stadium: { scheme_blob, ...stadium }, date, time, ...event } = values
             stadium.scheme_blob = await jsonBase64(scheme_blob)
             event.datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
-            //event.options = { name: eventName }
+            
             await updateLang({
               [`email_ticket_paid_subject_${id}`]: { [data.defaultLang]: template_subject },
               [`email_ticket_paid_body_${id}`]: { [data.defaultLang]: template_body },
@@ -357,7 +347,7 @@ export default function EventForm() {
             const createdStadium = await updateData({ stadiums: [stadium] })
             const stadiumId = get(createdStadium, 'data.created_id.stadiums.0')
             if (!stadiumId) {
-              messageApi.error(`Error on creating stadium; Request body: ${JSON.stringify({ stadiums: [stadium] })}, response: ${JSON.stringify(createdStadium)}`)
+              messageApi.error(`Error on creating stadium: ${JSON.stringify(data)}`)
               return
             }
             eventData.stadium = stadiumId
@@ -377,6 +367,7 @@ export default function EventForm() {
             })
             navigate(`/event/${eventId}`, { replace: true })
           } catch (e) {
+            console.log(e)
             messageApi.error(e.message)
           } finally {
             setIsSending(false)
@@ -410,16 +401,6 @@ export default function EventForm() {
               label: <b>Event data</b>,
               style: panelStyle,
               children: <Row gutter={20}>
-                <Col span={18}>
-                  <Form.Item
-                    label='Name'
-                    name={['options', 'name']}
-                  >
-                    <Input
-
-                    />
-                  </Form.Item>
-                </Col>
                 <Col span={6}>
                   <Form.Item
                     label='Artist'
@@ -550,8 +531,8 @@ export default function EventForm() {
                     renderItem={(item, index) => {
                       const t = tickets?.data || EMPTY_ARRAY
                       const totalCount = t.filter(ticket => ticket.section === item.value).length
-                      const soldCount = t.filter(ticket => ticket.section === item.value && ticket.status !== 2 && ticket.is_sold).length
-                      const reservedCount = t.filter(ticket => ticket.section === item.value && (ticket.status === 2 || ticket.is_reserved)).length
+                      const soldCount = t.filter(ticket => ticket.section === item.value && ticket.is_sold).length
+                      const reservedCount = t.filter(ticket => ticket.section === item.value && ticket.is_reserved).length
                       const disabledCount = t.filter(ticket => ticket.section === item.value && ticket.disabled).length - soldCount - reservedCount
                       const remainsCount = totalCount - (soldCount + reservedCount + disabledCount)
                       return (

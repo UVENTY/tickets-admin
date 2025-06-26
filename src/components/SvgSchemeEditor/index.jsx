@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Card, Upload, Input, Typography, ColorPicker, Flex, Select, Form, Space } from 'antd'
 import { DeleteOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
@@ -60,6 +59,7 @@ export default function SvgSchemeEditor(props) {
         tickets.filter(item => item.status === 2).forEach(ticket => {
           const el = svg.querySelector(`.${seatClassName}[data-row="${ticket.row}"][data-seat="${ticket.seat}"]`)
           el?.setAttribute('data-disabled', '')
+          el?.setAttribute('style', 'stroke: red; stroke-width: 2px;')
           el?.classList.add('unavailable')
         })
         
@@ -95,6 +95,7 @@ export default function SvgSchemeEditor(props) {
     tickets.filter(item => item.status === 2).forEach(ticket => {
       const el = svgRef.current.querySelector(`.${seatClassName}[data-row="${ticket.row}"][data-seat="${ticket.seat}"]`)
       el?.setAttribute('data-disabled', '')
+      el?.setAttribute('style', 'stroke: red; stroke-width: 2px;')
       el?.classList.add('unavailable')
     })
   }, [tickets])
@@ -194,20 +195,22 @@ export default function SvgSchemeEditor(props) {
     <Flex className={s.form}>
       <div className={s.scheme}>
         <div className={labelClass}>Seating plan</div>
-        {!scheme && <Upload
-          accept='.svg'
-          itemRender={() => null}
-          customRequest={e => toText(e.file)
-            .then(transformScheme)
-            .then(scheme => ({ categories: getCategories(scheme), scheme: clearFillAndStringify(scheme) }))
-            .then(({ categories, scheme }) => {
-              setScheme(scheme)
-              setCategories(categories)
-              setCustomProps(defaultCustomProps)
-            })}
-        >
-          <Button size='large' type='primary' htmlType='button' icon={<UploadOutlined />}>Upload from svg</Button>
-        </Upload>}
+        {!scheme && (
+          <Upload
+            accept='.svg'
+            itemRender={() => null}
+            customRequest={e => toText(e.file)
+              .then(transformScheme)
+              .then(scheme => ({ categories: getCategories(scheme), scheme: clearFillAndStringify(scheme) }))
+              .then(({ categories, scheme }) => {
+                setScheme(scheme)
+                setCategories(categories)
+                setCustomProps(defaultCustomProps)
+              })}
+          >
+            <Button size='large' type='primary' htmlType='button' icon={<UploadOutlined />}>Upload from svg</Button>
+          </Upload>
+        )}
         <div className={s.root}>
           {!!scheme && <Button
             size='large'

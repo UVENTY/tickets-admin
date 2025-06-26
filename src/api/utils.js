@@ -1,5 +1,9 @@
 export function getFormData(data, formData = new FormData(), parentKey) {
-  if (data && typeof data === 'object' && !(data instanceof Date) && !(data instanceof File) && !(data instanceof Blob)) {
+  if (Array.isArray(data)) {
+    data.forEach((item, index) => {
+      getFormData(item, formData, `${parentKey}[${index}]`)
+    })
+  } else if (data && typeof data === 'object' && !(data instanceof Date) && !(data instanceof File) && !(data instanceof Blob)) {
     Object.keys(data).forEach(key => {
       getFormData(data[key], formData, parentKey ? `${parentKey}[${key}]` : key);
     });
