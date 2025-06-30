@@ -106,30 +106,9 @@ export default function EventForm() {
   const [ messageApi, contextHolder ] = message.useMessage()
   const navigate = useNavigate()
   const { id } = useParams()
-  const [ form ] = Form.useForm()
-  const [ isSending, setIsSending ] = useState(false)
-  const [ changedPrice, setChangedPrice ] = useState({})
-  const [statusMap, setStatusMap] = useState({})
-  const dispatch = useDispatch()
-
-  const cities = useSelector(getCitiesOptions)
-  const countries = useSelector(getCountriesOptions)
-
-  const schemeData = Form.useWatch(['stadium', 'scheme_blob'], form)
-
-  const { isLoading: isLoadingUsers, data: usersMap } = useQuery({
-    queryKey: ['usersMap'],
-    queryFn: async () => {
-      const response = await axios.post('/query/select', {
-        sql: `SELECT id_user,id_role,phone,email,name,family,middle,id_verification_status FROM users WHERE active=1 AND deleted!=1`
-      })
-      return (response.data?.data || []).reduce((acc, item) => ({ ...acc, [item.id_user]: item }), {})
-    }
-  })
-
   const isNew = id === 'create'
-  const updateData = useUpdateData()
-  const mutateTickets = useMutation({ mutationFn: TicketsApi.updateTickets })
+  const [ form ] = Form.useForm()
+
   const { data, error, isLoading } = useData(null, {
     select: ({ data, default_lang }) => {
       const { schedule, stadiums, teams, tournaments } = data
@@ -151,6 +130,43 @@ export default function EventForm() {
     }
   })
 
+  const [ isSending, setIsSending ] = useState(false)
+  const [ changedPrice, setChangedPrice ] = useState({})
+  const [statusMap, setStatusMap] = useState({})
+  const dispatch = useDispatch()
+
+  const cities = useSelector(getCitiesOptions)
+  const countries = useSelector(getCountriesOptions)
+
+  const [schemeData, setSchemeData] = useState(null);
+  useEffect(() => {
+    const scheme_blob = data?.event?.stadium?.scheme_blob;
+    if (!isNew && scheme_blob) {
+      if (typeof scheme_blob === 'string' && scheme_blob.startsWith('http')) {
+        fetch(scheme_blob)
+          .then(res => res.json())
+          .then(json => setSchemeData(json))
+          .catch(() => setSchemeData(null));
+      } else {
+        setSchemeData(scheme_blob);
+      }
+    } else if (scheme_blob === null) {
+      setSchemeData(null);
+    }
+  }, [isNew, data?.event?.stadium?.scheme_blob]);
+
+  const { isLoading: isLoadingUsers, data: usersMap } = useQuery({
+    queryKey: ['usersMap'],
+    queryFn: async () => {
+      const response = await axios.post('/query/select', {
+        sql: `SELECT id_user,id_role,phone,email,name,family,middle,id_verification_status FROM users WHERE active=1 AND deleted!=1`
+      })
+      return (response.data?.data || []).reduce((acc, item) => ({ ...acc, [item.id_user]: item }), {})
+    }
+  })
+
+  const updateData = useUpdateData()
+  const mutateTickets = useMutation({ mutationFn: TicketsApi.updateTickets })
 
   const baseTickets = TicketsApi.useTickets({ event_id: id }, { order: 'section' }, {
     enabled: !isNew
@@ -289,7 +305,18 @@ export default function EventForm() {
   const emailContent = useSelector(state => getLangValue(state, `email_ticket_paid_body_${id}`))
   const pdfContent = useSelector(state => getLangValue(state, `html_pdf_ticket_paid_body_${id}`))
   
-  if ((!isNew && (isLoading || tickets.isLoading)) || !data) return null
+  useEffect(() => {
+    if (!isNew && data?.event?.stadium?.scheme_blob) {
+      form.setFieldsValue({
+        stadium: {
+          ...data.event.stadium,
+          scheme_blob: data.event.stadium.scheme_blob,
+        },
+      });
+    }
+  }, [isNew, data?.event?.stadium?.scheme_blob]);
+
+  if (isLoading || !data) return null;
 
   const panelStyle = {
     background: '#fff',
@@ -320,6 +347,12 @@ export default function EventForm() {
           setIsSending(true)
           const { template_subject, template_body, pdf_body, ...values } = dataValues
           try {
+            // Проверка наличия scheme_blob
+            if (!values.stadium?.scheme_blob) {
+              messageApi.error('Не загружена схема зала (SVG)!');
+              setIsSending(false);
+              return;
+            }
             let { stadium: { scheme_blob, ...stadium }, date, time, ...event } = values
             stadium.scheme_blob = await jsonBase64(scheme_blob)
             event.datetime = `${date.format('YYYY-MM-DD')} ${time.format('HH:mm:ss')}+03:00`
@@ -513,6 +546,7 @@ export default function EventForm() {
                 </Row>
                 <Form.Item className='scheme_blob' name={['stadium', 'scheme_blob']}>
                   <SvgSchemeEditor
+                    value={schemeData && schemeData.scheme ? schemeData.scheme : schemeData}
                     tickets={tickets.data}
                     onTicketsChange={val => setChangedPrice(prev => ({ ...prev, ...val }))}
                   />
