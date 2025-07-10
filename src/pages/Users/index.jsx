@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Table, Tag } from 'antd'
+import { Button, Table, Tag, Row, Col } from 'antd'
 import { CheckOutlined, PlusOutlined } from '@ant-design/icons'
 import axios from '../../utils/axios'
 import { getColumnSearch } from '../../utils/components'
@@ -56,16 +56,29 @@ export default function PageUsers() {
 
   return (<>
     <Sidebar />
-    <Table
-      style={{ flex: '1 1 0'}}
-      columns={columns}
-      dataSource={data}
-      loading={isLoading}
-      rowKey={({ id_user }) => id_user}
-      onRow={record => ({
-        onClick: () => navigate(`/users/${record.id_user}`)
-      })}
-    />
+    <div style={{ flex: '1 1 0', padding: '20px' }}>
+      <Row style={{ marginBottom: '20px' }}>
+        <Col>
+          <Button 
+            icon={<PlusOutlined />} 
+            type='primary' 
+            onClick={() => navigate('/users/create')} 
+            size="large"
+          >
+            Создать нового пользователя
+          </Button>
+        </Col>
+      </Row>
+      <Table
+        columns={columns}
+        dataSource={data}
+        loading={isLoading}
+        rowKey={({ id_user }) => id_user}
+        onRow={record => ({
+          onClick: () => navigate(`/users/${record.id_user}`)
+        })}
+      />
+    </div>
     <Sidebar />
   </>
   )

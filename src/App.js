@@ -19,6 +19,7 @@ import PageTickets from './pages/Tickets'
 import PageTranslations from './pages/Translations'
 import PageUsers from './pages/Users'
 import PageUser from './pages/User'
+import CreateUser from './pages/User/create'
 import Layout from './components/Layout'
 import { authorizeByTokens } from './redux/user'
 import { fetchConfig } from './redux/config'
@@ -71,6 +72,7 @@ function App() {
           <Route path="/content/:page" element={<PageContent />} />
           <Route path="/templates/:page" element={<PageTemplates />} />
           <Route path="/users" element={<PageUsers />} />
+          <Route path="/users/create" element={<CreateUser />} />
           <Route path="/users/:id" element={<PageUser />} />
           <Route path="/matches" element={<PageMatches />} />
           <Route path="/matches/:id" element={<PageMatch />} />

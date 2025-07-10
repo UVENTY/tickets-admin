@@ -19,6 +19,7 @@ import { EMPTY_ARRAY, NON_SEAT_ROW } from '../../consts'
 import Wysiwyg from '../../components/Wysiwyg'
 import { fetchTicketsPaymentData, getTicketPdf } from '../../api/tickets/request'
 import { getColumnSearch } from '../../utils/components'
+import ControllersAccordion from '../User/ControllersAccordion'
 
 const getOptions = obj => Object.values(obj)
   .map(item => ({ label: item.en, value: item.id }))
@@ -641,6 +642,12 @@ export default function EventForm() {
                     dataSource={tickets.data}
                   />
                 </>
+            },
+            {
+              key: '7',
+              label: <b>Ticket controllers</b>,
+              style: panelStyle,
+              children: <ControllersAccordion />
             }
           ]}
         />
