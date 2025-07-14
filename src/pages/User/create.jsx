@@ -54,6 +54,7 @@ export default function CreateUser({ onUserCreated }) {
       if (values.middle) { fields.push('middle'); vals.push(`'${values.middle}'`); }
       if (values.email) { fields.push('email'); vals.push(`'${values.email}'`); }
       if (values.phone) { fields.push('phone'); vals.push(`'${values.phone}'`); }
+      if (values.id_schedule) { fields.push('id_schedule'); vals.push(`'${values.id_schedule}'`); }
       const sqlInsert = `INSERT INTO users (${fields.join(', ')}) VALUES (${vals.join(', ')})`;
       const response = await axios.postWithAuth('/query/insert', { sql: sqlInsert });
       if (response.data?.status === 'success') {
@@ -119,16 +120,6 @@ export default function CreateUser({ onUserCreated }) {
                   <Input placeholder="Введите фамилию" />
                 </Form.Item>
               </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="middle"
-                  label="Отчество"
-                >
-                  <Input placeholder="Введите отчество" />
-                </Form.Item>
-              </Col>
               <Col span={12}>
                 <Form.Item
                   name="id_role"
@@ -142,6 +133,15 @@ export default function CreateUser({ onUserCreated }) {
                       </Option>
                     ))}
                   </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="id_schedule"
+                  label="ID ивента"
+                  rules={[{ required: true, message: 'Пожалуйста, введите id ивента!' }]}
+                >
+                  <Input placeholder="Введите id ивента" />
                 </Form.Item>
               </Col>
             </Row>
