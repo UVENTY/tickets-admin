@@ -54,6 +54,48 @@ export default function SvgSchemeEditSeat({
   
   const isDisabled = disabled === 'true'
   const ticket = tickets.find(item => String(item.section) === String(category) && (String(item.row) === '-1' || (String(item.row) === String(row) && String(item.seat) === String(seat))))
+
+  // --- вычисление значений для инпутов ---
+  let inputPrice = '';
+  let inputCount = '';
+  let inputBusyCount = '';
+  let groupPrice = '';
+  if (seats.length === 1) {
+    const seat = seats[0];
+    // Сначала ищем индивидуальный билет
+    let ticket = tickets.find(
+      t => String(t.section) === String(seat.dataset.category)
+        && String(t.row) === String(seat.dataset.row)
+        && String(t.seat) === String(seat.dataset.seat)
+    );
+    // Если не нашли — ищем по категории (row === -1)
+    if (!ticket) {
+      ticket = tickets.find(
+        t => String(t.section) === String(seat.dataset.category)
+          && String(t.row) === '-1'
+      );
+    }
+    if (ticket) {
+      inputPrice = typeof ticket.price === 'number' ? ticket.price : '';
+      inputCount = typeof ticket.count === 'number' ? ticket.count : '';
+      inputBusyCount = typeof ticket.busyCount === 'number' ? ticket.busyCount : '';
+    }
+  }
+  if (seats.length > 1) {
+    const prices = seats.map(seat => {
+      const ticket = tickets.find(
+        t => String(t.section) === String(seat.dataset.category)
+          && String(t.row) === String(seat.dataset.row)
+          && String(t.seat) === String(seat.dataset.seat)
+      ) || tickets.find(
+        t => String(t.section) === String(seat.dataset.category)
+          && String(t.row) === '-1'
+      );
+      return typeof ticket?.price === 'number' ? ticket.price : undefined;
+    });
+    const uniquePrices = Array.from(new Set(prices.filter(p => typeof p === 'number')));
+    if (uniquePrices.length === 1) groupPrice = uniquePrices[0];
+  }
   return (
     <Card
       className={s.edit}
@@ -91,25 +133,25 @@ export default function SvgSchemeEditSeat({
       <Flex className={s.row3} gap={20}>
         {!!row && <div>
           <label className={s.label}>Row</label>
-          <Input defaultValue={row} disabled />
+          <Input value={row ?? ''} disabled />
         </div>}
         {!!seat && <div>
           <label className={s.label}>Seat</label>
-          <Input defaultValue={seat} disabled />
+          <Input value={seat ?? ''} disabled />
         </div>}
         {!row && !seat && <>
           <div>
             <label className={s.label}>Booking / sold</label>
-            <InputNumber defaultValue={busyCount} style={{ width: '100%' }} disabled />
+            <InputNumber value={seats.length === 1 ? inputBusyCount : (typeof busyCount === 'number' ? busyCount : '')} style={{ width: '100%' }} disabled />
           </div>
           <div>
             <label className={s.label}>Tickets leave</label>
-            <InputNumber defaultValue={count} style={{ width: '100%' }} onChange={value => handleChange('count', value)} />
+            <InputNumber value={seats.length === 1 ? inputCount : (typeof count === 'number' ? count : '')} style={{ width: '100%' }} onChange={value => handleChange('count', value)} />
           </div>
         </>}
         <div>
           <label className={s.label}>Price</label>
-          <InputNumber defaultValue={price} onChange={value => handleChange('price', value)} disabled={isDisabled} />
+          <InputNumber value={seats.length === 1 ? inputPrice : groupPrice} onChange={value => handleChange('price', value)} disabled={isDisabled} />
         </div>
       </Flex>
       {fieldsToShow.filter(f => !['seat', 'row', 'price', 'count', 'busyCount'].includes(f.value)).map(field => {
@@ -119,10 +161,10 @@ export default function SvgSchemeEditSeat({
         }
         const isArrayField = isArray(values[field.value])
         if (isCheckbox) {
-          rest.defaultChecked = isArrayField(false, values[field.value] === true)
+          rest.checked = isArrayField(false, values[field.value] === true)
           rest.indeterminate = isArrayField(true, undefined)
         } else {
-          rest.defaultValue = isArrayField(null)
+          rest.value = typeof values[field.value] === 'number' || typeof values[field.value] === 'string' ? values[field.value] : ''
           rest.placeholder = isArrayField('Multiple values', '')
         }
         return (
