@@ -131,6 +131,8 @@ export default function EventForm() {
     }
   })
 
+
+
   const [ isSending, setIsSending ] = useState(false)
   const [ changedPrice, setChangedPrice ] = useState({})
   const [statusMap, setStatusMap] = useState({})
@@ -366,6 +368,12 @@ export default function EventForm() {
 
             if (!isNew) {
               stadium.id = data.event?.stadium?.id
+              
+              // Обновляем Stripe аккаунт если изменился
+              if (values.stripe_account !== data.event?.stripe_account) {
+                event.stripe_account = values.stripe_account
+              }
+              
               await mutateTickets.mutateAsync({
                 event_id: id,
                 hall_id: stadium?.id,
@@ -385,6 +393,12 @@ export default function EventForm() {
               return
             }
             eventData.stadium = stadiumId
+            
+            // Добавляем Stripe аккаунт если выбран
+            if (values.stripe_account) {
+              eventData.stripe_account = values.stripe_account
+            }
+            
             const createdEvent = await updateData({
               schedule: [eventData],
             })
@@ -503,6 +517,30 @@ export default function EventForm() {
               </Row>
             },
             {
+              key: '5',
+              label: <b>Payment Settings</b>,
+              style: panelStyle,
+              children: <Row gutter={20}>
+                <Col span={12}>
+                  <Form.Item
+                    label='Stripe Account'
+                    name='stripe_account'
+                    tooltip='Выберите Stripe аккаунт для обработки платежей за билеты'
+                  >
+                    <Select
+                      placeholder='Select Stripe account'
+                      options={[
+                        { label: 'Account 1 (Default)', value: 'account1' },
+                        { label: 'Account 2', value: 'account2' }
+                      ]}
+                      style={{ width: '100%' }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            },
+
+            {
               key: '2',
               label: <b>Location</b>,
               style: panelStyle,
@@ -597,7 +635,7 @@ export default function EventForm() {
                 </div>
             },
             {
-              key: '4',
+              key: '6',
               label: <b>E-mail template</b>,
               style: panelStyle,
               children:
@@ -611,7 +649,7 @@ export default function EventForm() {
                 </div>
             },
             {
-              key: '5',
+              key: '7',
               label: <b>PDF ticket</b>,
               style: panelStyle,
               children:
@@ -622,7 +660,7 @@ export default function EventForm() {
                 </div>
             },
             {
-              key: '6',
+              key: '8',
               label: <b>Tickets</b>,
               style: panelStyle,
               children:
@@ -644,7 +682,7 @@ export default function EventForm() {
                 </>
             },
             {
-              key: '7',
+              key: '9',
               label: <b>Ticket controllers</b>,
               style: panelStyle,
               children: <ControllersAccordion />

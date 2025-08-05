@@ -80,12 +80,6 @@ export default function CreateUser({ onUserCreated }) {
     }
   }
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    form.submit()
-  }
-
   const handleButtonClick = () => {
     form.submit()
   }
@@ -95,8 +89,7 @@ export default function CreateUser({ onUserCreated }) {
   return (
     <div style={{ flex: '1 1 0', padding: '20px' }}>
       <Card title="Создание нового пользователя" style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <div onSubmit={handleFormSubmit}>
-          <Form
+        <Form
             form={form}
             layout="vertical"
             onFinish={handleSubmit}
@@ -215,7 +208,6 @@ export default function CreateUser({ onUserCreated }) {
               </Button>
             </div>
           </Form>
-        </div>
       </Card>
     </div>
   )
