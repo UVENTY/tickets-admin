@@ -131,6 +131,8 @@ export default function EventForm() {
     }
   })
 
+
+
   const [ isSending, setIsSending ] = useState(false)
   const [ changedPrice, setChangedPrice ] = useState({})
   const [statusMap, setStatusMap] = useState({})
@@ -366,6 +368,8 @@ export default function EventForm() {
 
             if (!isNew) {
               stadium.id = data.event?.stadium?.id
+              
+             
               await mutateTickets.mutateAsync({
                 event_id: id,
                 hall_id: stadium?.id,
@@ -385,6 +389,8 @@ export default function EventForm() {
               return
             }
             eventData.stadium = stadiumId
+            
+            
             const createdEvent = await updateData({
               schedule: [eventData],
             })
@@ -502,6 +508,8 @@ export default function EventForm() {
                 </Col>
               </Row>
             },
+           
+
             {
               key: '2',
               label: <b>Location</b>,
@@ -597,7 +605,7 @@ export default function EventForm() {
                 </div>
             },
             {
-              key: '4',
+              key: '6',
               label: <b>E-mail template</b>,
               style: panelStyle,
               children:
@@ -611,7 +619,7 @@ export default function EventForm() {
                 </div>
             },
             {
-              key: '5',
+              key: '7',
               label: <b>PDF ticket</b>,
               style: panelStyle,
               children:
@@ -622,7 +630,7 @@ export default function EventForm() {
                 </div>
             },
             {
-              key: '6',
+              key: '8',
               label: <b>Tickets</b>,
               style: panelStyle,
               children:
@@ -644,7 +652,7 @@ export default function EventForm() {
                 </>
             },
             {
-              key: '7',
+              key: '9',
               label: <b>Ticket controllers</b>,
               style: panelStyle,
               children: <ControllersAccordion />

@@ -28,6 +28,7 @@ import PageEvent from './pages/event'
 import EventForm from './pages/event/form'
 
 
+
 function App() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -67,6 +68,7 @@ function App() {
           <Route path="/dashboard" element={<PageTeams />} />
           <Route path="/events" element={<PageEvent />} />
           <Route path="/event/:id" element={<EventForm />} />
+
 
           <Route path="/translations" element={<PageTranslations />} />
           <Route path="/content/:page" element={<PageContent />} />

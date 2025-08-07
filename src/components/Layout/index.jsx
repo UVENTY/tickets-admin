@@ -7,6 +7,7 @@ import {
   TeamOutlined,
   TrophyOutlined,
   UserOutlined,
+  CreditCardOutlined,
 } from '@ant-design/icons'
 import {
   Menu,
@@ -70,7 +71,8 @@ const NAVBAR_RIGHT = [
       { label: <Link to='/content/privacy-policy'>Privacy policy</Link>, key: 'privacy-policy' },
       { label: <Link to='/content/become-a-partner'>Become a partner</Link>, key: 'become-a-partner' },
   ]},
-  { key: 'users', label:<Link to='/users'>Users</Link>, icon: <UserOutlined /> }
+  { key: 'users', label:<Link to='/users'>Users</Link>, icon: <UserOutlined /> },
+  { key: 'stripe-accounts', label:<Link to='/stripe-accounts'>Stripe Accounts</Link>, icon: <CreditCardOutlined /> }
 ]
 
 export default function PageLayout() {
