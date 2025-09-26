@@ -369,7 +369,11 @@ export default function EventForm() {
             if (!isNew) {
               stadium.id = data.event?.stadium?.id
               
-             
+              // Обновляем Stripe аккаунт если изменился
+              if (values.stripe_account !== data.event?.stripe_account) {
+                event.stripe_account = values.stripe_account
+              }
+              
               await mutateTickets.mutateAsync({
                 event_id: id,
                 hall_id: stadium?.id,
@@ -390,6 +394,10 @@ export default function EventForm() {
             }
             eventData.stadium = stadiumId
             
+            // Добавляем Stripe аккаунт если выбран
+            if (values.stripe_account) {
+              eventData.stripe_account = values.stripe_account
+            }
             
             const createdEvent = await updateData({
               schedule: [eventData],
@@ -508,7 +516,29 @@ export default function EventForm() {
                 </Col>
               </Row>
             },
-           
+            {
+              key: '5',
+              label: <b>Payment Settings</b>,
+              style: panelStyle,
+              children: <Row gutter={20}>
+                <Col span={12}>
+                  <Form.Item
+                    label='Stripe Account'
+                    name='stripe_account'
+                    tooltip='Выберите Stripe аккаунт для обработки платежей за билеты'
+                  >
+                    <Select
+                      placeholder='Select Stripe account'
+                      options={[
+                        { label: 'Account 1 (Default)', value: 'account1' },
+                        { label: 'Account 2', value: 'account2' }
+                      ]}
+                      style={{ width: '100%' }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+            },
 
             {
               key: '2',

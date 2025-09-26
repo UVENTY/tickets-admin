@@ -8,7 +8,7 @@ export default function Categories(props) {
 
   return (
     <Flex gap={16} wrap>
-      {items.map((item, i) => (
+      {(items || []).map((item, i) => (
         <Flex gap={8} key={item.value} className={s.catItem} align='center'>
           {!item.icon ?
             <Upload

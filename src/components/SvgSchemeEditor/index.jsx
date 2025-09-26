@@ -24,7 +24,7 @@ const isMac = isMacintosh()
 export default function SvgSchemeEditor(props) {
   const { initialValue, value, onChange, tickets = [], onTicketsChange = EMPTY_FUNC } = props
   const [ categories, setCategories ] = useState(value?.categories || EMPTY_ARRAY)
-  const [customProps, setCustomProps] = useState(value?.customProps || defaultCustomProps)
+  const [customProps, setCustomProps] = useState(value?.customProps || defaultCustomProps || [])
   const [ scheme, setScheme ] = useState(value?.scheme || '')
   const [ selectedSeats, setSelectedSeats ] = useState([])
   const [ editProp, setEditProp ] = useState('categories')
@@ -33,7 +33,11 @@ export default function SvgSchemeEditor(props) {
   useEffect(() => {
     if (typeof value === 'string' && value?.startsWith('http')) {
       axios.get(value).then(({ data }) => {
-        const svg = renderHiddenHTML(data.scheme)
+        if (!data) {
+          console.error('No data received from server');
+          return;
+        }
+        const svg = renderHiddenHTML(data.scheme || '')
         if (!svg) return
         const nonSeatCount = {}
         tickets.forEach(({ section, row, seat, price, is_sold, is_reserved }) => {
@@ -69,8 +73,8 @@ export default function SvgSchemeEditor(props) {
         
         // Первые билеты создавались без цены, для таких вручную добавляем это поле
         // Вообще, скорее всего, уже все билеты давно с ценой. Проверить и удалить блок
-        if (!data.customProps.find(prop => prop.value == 'count')) {
-          data.customProps = [ ...data.customProps.slice(0, 2), {
+        if (!(data.customProps || []).find(prop => prop.value == 'count')) {
+          data.customProps = [ ...(data.customProps || []).slice(0, 2), {
             value: 'count',
             label: 'Tickets leave',
             type: 'number',
