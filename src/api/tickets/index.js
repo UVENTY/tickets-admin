@@ -65,7 +65,7 @@ export default (function() {
     const { editList, ...params } = Object.entries(tickets).reduce((acc, [key, data]) => {
       const fullKey = [hall_id, category, row, key].filter(Boolean).join(';')
       const value = typeof data === 'object' ? data.price : data
-      const price = value && parseInt(value, 10)
+      const price = value && parseFloat(value)
       if (value) {
         let priceIndex = acc.price.indexOf(price)
         if (priceIndex === -1) {

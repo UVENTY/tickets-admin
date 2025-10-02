@@ -5,8 +5,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import { keyBy } from 'lodash'
 import dayjs from 'dayjs'
-import { Table, Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse, InputNumber, Switch, List } from 'antd'
-import { ArrowLeftOutlined, SaveOutlined, DownloadOutlined, FilePdfOutlined } from '@ant-design/icons'
+import { Table, Col, Row, Form, Button, Select, DatePicker, TimePicker, message, Input, Collapse, InputNumber, Switch, List, Card, Space, Tag } from 'antd'
+import { ArrowLeftOutlined, SaveOutlined, DownloadOutlined, FilePdfOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import TicketsApi from '../../api/tickets'
 import { useData, useUpdateData } from '../../api/data'
 import { axios } from '../../api/axios'
@@ -112,7 +112,7 @@ export default function EventForm() {
 
   const { data, error, isLoading } = useData(null, {
     select: ({ data, default_lang }) => {
-      const { schedule, stadiums, teams, tournaments } = data
+      const { schedule, stadiums, teams, tournaments, promocodes } = data
       const event = { ...schedule[id] }
       event.date = dayjs(event.datetime)
       event.time = event.date?.utc()
@@ -123,10 +123,17 @@ export default function EventForm() {
         t: getOptions(Object.keys(tournaments || {}).map(id => ({ id, ...tournaments?.[id] })), 'en'),
         teams: getOptions(Object.keys(teams || {}).map(id => ({ id, ...teams?.[id] })), 'en'),
       }
+      
+      // Фильтруем промокоды для текущего события
+      const eventPromocodes = promocodes ? Object.values(promocodes).filter(promo => 
+        promo.schedule && promo.schedule.includes(String(id))
+      ) : []
+      
       return {
         event,
         options,
-        defaultLang: default_lang
+        defaultLang: default_lang,
+        promocodes: eventPromocodes
       }
     }
   })
@@ -348,7 +355,7 @@ export default function EventForm() {
         layout='vertical'
         onFinish={async (dataValues) => {
           setIsSending(true)
-          const { template_subject, template_body, pdf_body, ...values } = dataValues
+          const { template_subject, template_body, pdf_body, promocodes, ...values } = dataValues
           try {
             // Проверка наличия scheme_blob
             if (!values.stadium?.scheme_blob) {
@@ -382,6 +389,27 @@ export default function EventForm() {
                 schedule: [{ id, ...event }],
                 stadiums: [stadium],
               }))
+              
+              // Обновляем промокоды для существующего события
+              if (promocodes && promocodes.length > 0) {
+                const promocodesData = promocodes.map(promo => ({
+                  ...(promo.id && { id: promo.id }), // Если есть ID, то обновляем
+                  value: promo.value,
+                  discount: promo.discount,
+                  max_products: promo.max_products,
+                  max_payments: promo.max_payments,
+                  limit: `${promo.limit.format('YYYY-MM-DD HH:mm:ss')} +03:00`,
+                  active: promo.active ? 1 : 0,
+                  json: '{}',
+                  schedule: [id] // Привязываем промокод к этому событию
+                }))
+                
+                await updateData({
+                  promocodes: promocodesData
+                })
+                messageApi.success('Promocodes updated successfully!')
+              }
+              
               messageApi.success(`Event successfully ${isNew ? 'created' : 'updated'}`)
               return
             }
@@ -413,6 +441,26 @@ export default function EventForm() {
               [`email_ticket_paid_body_${eventId}`]: { [data.defaultLang]: template_body },
               [`html_pdf_ticket_paid_body_${eventId}`]: { [data.defaultLang]: pdf_body }
             })
+            
+            // Создаем промокоды для этого события
+            if (promocodes && promocodes.length > 0) {
+              const promocodesData = promocodes.map(promo => ({
+                value: promo.value,
+                discount: promo.discount,
+                max_products: promo.max_products,
+                max_payments: promo.max_payments,
+                limit: `${promo.limit.format('YYYY-MM-DD HH:mm:ss')} +03:00`,
+                active: promo.active ? 1 : 0,
+                json: '{}',
+                schedule: [eventId] // Привязываем промокод к этому событию
+              }))
+              
+              await updateData({
+                promocodes: promocodesData
+              })
+              messageApi.success('Promocodes created successfully!')
+            }
+            
             navigate(`/event/${eventId}`, { replace: true })
           } catch (e) {
             console.log(e)
@@ -682,7 +730,196 @@ export default function EventForm() {
                 </>
             },
             {
-              key: '9',
+            //   key: '9',
+            //   label: <b>Promocodes</b>,
+            //   style: panelStyle,
+            //   children: (
+            //     <div>
+            //       {/* Таблица существующих промокодов */}
+            //       {data?.promocodes && data.promocodes.length > 0 && (
+            //         <div style={{ marginBottom: '24px' }}>
+            //           <h4>Existing Promocodes</h4>
+            //           <Table
+            //             dataSource={data.promocodes}
+            //             rowKey="id_promocode"
+            //             pagination={false}
+            //             size="small"
+            //             columns={[
+            //               {
+            //                 title: 'Promo Code',
+            //                 dataIndex: 'value',
+            //                 key: 'value',
+            //                 render: (text) => <strong>{text}</strong>
+            //               },
+            //               {
+            //                 title: 'Discount',
+            //                 dataIndex: 'discount',
+            //                 key: 'discount',
+            //                 render: (discount) => `${discount}%`
+            //               },
+            //               {
+            //                 title: 'Max Tickets',
+            //                 dataIndex: 'max_products',
+            //                 key: 'max_products'
+            //               },
+            //               {
+            //                 title: 'Max Orders',
+            //                 dataIndex: 'max_payments',
+            //                 key: 'max_payments'
+            //               },
+            //               {
+            //                 title: 'Used Tickets',
+            //                 dataIndex: 'used_products',
+            //                 key: 'used_products'
+            //               },
+            //               {
+            //                 title: 'Used Orders',
+            //                 dataIndex: 'used_payments',
+            //                 key: 'used_payments'
+            //               },
+            //               {
+            //                 title: 'Status',
+            //                 dataIndex: 'active',
+            //                 key: 'active',
+            //                 render: (active) => (
+            //                   <Tag color={active ? 'green' : 'red'}>
+            //                     {active ? 'Active' : 'Inactive'}
+            //                   </Tag>
+            //                 )
+            //               },
+            //               {
+            //                 title: 'Expiry Date',
+            //                 dataIndex: 'limit_date',
+            //                 key: 'limit_date',
+            //                 render: (date) => date ? dayjs(date).format('YYYY-MM-DD HH:mm:ss') : '-'
+            //               }
+            //             ]}
+            //           />
+            //         </div>
+            //       )}
+                  
+            //       {/* Форма создания новых промокодов */}
+            //       <h4 style={{ marginBottom: '16px' }}>Create New Promocodes</h4>
+            //       <Form.List name="promocodes">
+            //         {(fields, { add, remove }) => (
+            //           <>
+            //             <Button 
+            //               type="dashed" 
+            //               onClick={() => add()} 
+            //               block 
+            //               icon={<PlusOutlined />}
+            //               style={{ marginBottom: 16 }}
+            //             >
+            //               Add Promocode
+            //             </Button>
+            //             {fields.map(({ key, name, ...restField }) => (
+            //               <Card
+            //                 key={key}
+            //                 size="small"
+            //                 style={{ marginBottom: 16 }}
+            //                 extra={
+            //                   <Button
+            //                     type="link"
+            //                     danger
+            //                     icon={<DeleteOutlined />}
+            //                     onClick={() => remove(name)}
+            //                   >
+            //                     Delete
+            //                   </Button>
+            //                 }
+            //               >
+            //                 <Row gutter={16}>
+            //                   <Col span={6}>
+            //                     <Form.Item
+            //                       {...restField}
+            //                       name={[name, 'value']}
+            //                       label="Promo Code"
+            //                       rules={[{ required: true, message: 'Enter promo code' }]}
+            //                     >
+            //                       <Input placeholder="e.g. SUMMER2025" />
+            //                     </Form.Item>
+            //                   </Col>
+            //                   <Col span={4}>
+            //                     <Form.Item
+            //                       {...restField}
+            //                       name={[name, 'discount']}
+            //                       label="Discount %"
+            //                       rules={[{ required: true, message: 'Enter discount' }]}
+            //                     >
+            //                       <InputNumber 
+            //                         min={0} 
+            //                         max={100} 
+            //                         style={{ width: '100%' }}
+            //                         placeholder="10"
+            //                       />
+            //                     </Form.Item>
+            //                   </Col>
+            //                   <Col span={4}>
+            //                     <Form.Item
+            //                       {...restField}
+            //                       name={[name, 'max_products']}
+            //                       label="Max Tickets"
+            //                       rules={[{ required: true, message: 'Enter max tickets' }]}
+            //                     >
+            //                       <InputNumber 
+            //                         min={1} 
+            //                         style={{ width: '100%' }}
+            //                         placeholder="100"
+            //                       />
+            //                     </Form.Item>
+            //                   </Col>
+            //                   <Col span={4}>
+            //                     <Form.Item
+            //                       {...restField}
+            //                       name={[name, 'max_payments']}
+            //                       label="Max Orders"
+            //                       rules={[{ required: true, message: 'Enter max orders' }]}
+            //                     >
+            //                       <InputNumber 
+            //                         min={1} 
+            //                         style={{ width: '100%' }}
+            //                         placeholder="50"
+            //                       />
+            //                     </Form.Item>
+            //                   </Col>
+            //                   <Col span={6}>
+            //                     <Form.Item
+            //                       {...restField}
+            //                       name={[name, 'limit']}
+            //                       label="Expiry Date"
+            //                       rules={[{ required: true, message: 'Select expiry date' }]}
+            //                     >
+            //                       <DatePicker 
+            //                         showTime 
+            //                         format="YYYY-MM-DD HH:mm:ss"
+            //                         style={{ width: '100%' }}
+            //                       />
+            //                     </Form.Item>
+            //                   </Col>
+            //                 </Row>
+            //                 <Row gutter={16}>
+            //                   <Col span={24}>
+            //                     <Form.Item
+            //                       {...restField}
+            //                       name={[name, 'active']}
+            //                       label="Active"
+            //                       valuePropName="checked"
+            //                       initialValue={true}
+            //                     >
+            //                       <Switch />
+            //                     </Form.Item>
+            //                   </Col>
+            //                 </Row>
+            //               </Card>
+            //             ))}
+            //           </>
+            //         )}
+            //       </Form.List>
+            //     </div>
+            //   )
+            // },
+            // {
+              key: '10',
               label: <b>Ticket controllers</b>,
               style: panelStyle,
               children: <ControllersAccordion />

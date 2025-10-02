@@ -455,7 +455,7 @@ export default function TicketsForm({
         row: record.row,
         seats: record.seat,
         currency: record.currency,
-        price: parseInt(record.price)
+        price: parseFloat(record.price)
       }]
     })
     setShowModal(true)
