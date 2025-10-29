@@ -730,195 +730,195 @@ export default function EventForm() {
                 </>
             },
             {
-            //   key: '9',
-            //   label: <b>Promocodes</b>,
-            //   style: panelStyle,
-            //   children: (
-            //     <div>
-            //       {/* Таблица существующих промокодов */}
-            //       {data?.promocodes && data.promocodes.length > 0 && (
-            //         <div style={{ marginBottom: '24px' }}>
-            //           <h4>Existing Promocodes</h4>
-            //           <Table
-            //             dataSource={data.promocodes}
-            //             rowKey="id_promocode"
-            //             pagination={false}
-            //             size="small"
-            //             columns={[
-            //               {
-            //                 title: 'Promo Code',
-            //                 dataIndex: 'value',
-            //                 key: 'value',
-            //                 render: (text) => <strong>{text}</strong>
-            //               },
-            //               {
-            //                 title: 'Discount',
-            //                 dataIndex: 'discount',
-            //                 key: 'discount',
-            //                 render: (discount) => `${discount}%`
-            //               },
-            //               {
-            //                 title: 'Max Tickets',
-            //                 dataIndex: 'max_products',
-            //                 key: 'max_products'
-            //               },
-            //               {
-            //                 title: 'Max Orders',
-            //                 dataIndex: 'max_payments',
-            //                 key: 'max_payments'
-            //               },
-            //               {
-            //                 title: 'Used Tickets',
-            //                 dataIndex: 'used_products',
-            //                 key: 'used_products'
-            //               },
-            //               {
-            //                 title: 'Used Orders',
-            //                 dataIndex: 'used_payments',
-            //                 key: 'used_payments'
-            //               },
-            //               {
-            //                 title: 'Status',
-            //                 dataIndex: 'active',
-            //                 key: 'active',
-            //                 render: (active) => (
-            //                   <Tag color={active ? 'green' : 'red'}>
-            //                     {active ? 'Active' : 'Inactive'}
-            //                   </Tag>
-            //                 )
-            //               },
-            //               {
-            //                 title: 'Expiry Date',
-            //                 dataIndex: 'limit_date',
-            //                 key: 'limit_date',
-            //                 render: (date) => date ? dayjs(date).format('YYYY-MM-DD HH:mm:ss') : '-'
-            //               }
-            //             ]}
-            //           />
-            //         </div>
-            //       )}
+              key: '9',
+              label: <b>Promocodes</b>,
+              style: panelStyle,
+              children: (
+                <div>
+                  {/* Таблица существующих промокодов */}
+                  {data?.promocodes && data.promocodes.length > 0 && (
+                    <div style={{ marginBottom: '24px' }}>
+                      <h4>Existing Promocodes</h4>
+                      <Table
+                        dataSource={data.promocodes}
+                        rowKey="id_promocode"
+                        pagination={false}
+                        size="small"
+                        columns={[
+                          {
+                            title: 'Promo Code',
+                            dataIndex: 'value',
+                            key: 'value',
+                            render: (text) => <strong>{text}</strong>
+                          },
+                          {
+                            title: 'Discount',
+                            dataIndex: 'discount',
+                            key: 'discount',
+                            render: (discount) => `${discount}%`
+                          },
+                          {
+                            title: 'Max Tickets',
+                            dataIndex: 'max_products',
+                            key: 'max_products'
+                          },
+                          {
+                            title: 'Max Orders',
+                            dataIndex: 'max_payments',
+                            key: 'max_payments'
+                          },
+                          {
+                            title: 'Used Tickets',
+                            dataIndex: 'used_products',
+                            key: 'used_products'
+                          },
+                          {
+                            title: 'Used Orders',
+                            dataIndex: 'used_payments',
+                            key: 'used_payments'
+                          },
+                          {
+                            title: 'Status',
+                            dataIndex: 'active',
+                            key: 'active',
+                            render: (active) => (
+                              <Tag color={active ? 'green' : 'red'}>
+                                {active ? 'Active' : 'Inactive'}
+                              </Tag>
+                            )
+                          },
+                          {
+                            title: 'Expiry Date',
+                            dataIndex: 'limit_date',
+                            key: 'limit_date',
+                            render: (date) => date ? dayjs(date).format('YYYY-MM-DD HH:mm:ss') : '-'
+                          }
+                        ]}
+                      />
+                    </div>
+                  )}
                   
-            //       {/* Форма создания новых промокодов */}
-            //       <h4 style={{ marginBottom: '16px' }}>Create New Promocodes</h4>
-            //       <Form.List name="promocodes">
-            //         {(fields, { add, remove }) => (
-            //           <>
-            //             <Button 
-            //               type="dashed" 
-            //               onClick={() => add()} 
-            //               block 
-            //               icon={<PlusOutlined />}
-            //               style={{ marginBottom: 16 }}
-            //             >
-            //               Add Promocode
-            //             </Button>
-            //             {fields.map(({ key, name, ...restField }) => (
-            //               <Card
-            //                 key={key}
-            //                 size="small"
-            //                 style={{ marginBottom: 16 }}
-            //                 extra={
-            //                   <Button
-            //                     type="link"
-            //                     danger
-            //                     icon={<DeleteOutlined />}
-            //                     onClick={() => remove(name)}
-            //                   >
-            //                     Delete
-            //                   </Button>
-            //                 }
-            //               >
-            //                 <Row gutter={16}>
-            //                   <Col span={6}>
-            //                     <Form.Item
-            //                       {...restField}
-            //                       name={[name, 'value']}
-            //                       label="Promo Code"
-            //                       rules={[{ required: true, message: 'Enter promo code' }]}
-            //                     >
-            //                       <Input placeholder="e.g. SUMMER2025" />
-            //                     </Form.Item>
-            //                   </Col>
-            //                   <Col span={4}>
-            //                     <Form.Item
-            //                       {...restField}
-            //                       name={[name, 'discount']}
-            //                       label="Discount %"
-            //                       rules={[{ required: true, message: 'Enter discount' }]}
-            //                     >
-            //                       <InputNumber 
-            //                         min={0} 
-            //                         max={100} 
-            //                         style={{ width: '100%' }}
-            //                         placeholder="10"
-            //                       />
-            //                     </Form.Item>
-            //                   </Col>
-            //                   <Col span={4}>
-            //                     <Form.Item
-            //                       {...restField}
-            //                       name={[name, 'max_products']}
-            //                       label="Max Tickets"
-            //                       rules={[{ required: true, message: 'Enter max tickets' }]}
-            //                     >
-            //                       <InputNumber 
-            //                         min={1} 
-            //                         style={{ width: '100%' }}
-            //                         placeholder="100"
-            //                       />
-            //                     </Form.Item>
-            //                   </Col>
-            //                   <Col span={4}>
-            //                     <Form.Item
-            //                       {...restField}
-            //                       name={[name, 'max_payments']}
-            //                       label="Max Orders"
-            //                       rules={[{ required: true, message: 'Enter max orders' }]}
-            //                     >
-            //                       <InputNumber 
-            //                         min={1} 
-            //                         style={{ width: '100%' }}
-            //                         placeholder="50"
-            //                       />
-            //                     </Form.Item>
-            //                   </Col>
-            //                   <Col span={6}>
-            //                     <Form.Item
-            //                       {...restField}
-            //                       name={[name, 'limit']}
-            //                       label="Expiry Date"
-            //                       rules={[{ required: true, message: 'Select expiry date' }]}
-            //                     >
-            //                       <DatePicker 
-            //                         showTime 
-            //                         format="YYYY-MM-DD HH:mm:ss"
-            //                         style={{ width: '100%' }}
-            //                       />
-            //                     </Form.Item>
-            //                   </Col>
-            //                 </Row>
-            //                 <Row gutter={16}>
-            //                   <Col span={24}>
-            //                     <Form.Item
-            //                       {...restField}
-            //                       name={[name, 'active']}
-            //                       label="Active"
-            //                       valuePropName="checked"
-            //                       initialValue={true}
-            //                     >
-            //                       <Switch />
-            //                     </Form.Item>
-            //                   </Col>
-            //                 </Row>
-            //               </Card>
-            //             ))}
-            //           </>
-            //         )}
-            //       </Form.List>
-            //     </div>
-            //   )
-            // },
-            // {
+                  {/* Форма создания новых промокодов */}
+                  <h4 style={{ marginBottom: '16px' }}>Create New Promocodes</h4>
+                  <Form.List name="promocodes">
+                    {(fields, { add, remove }) => (
+                      <>
+                        <Button 
+                          type="dashed" 
+                          onClick={() => add()} 
+                          block 
+                          icon={<PlusOutlined />}
+                          style={{ marginBottom: 16 }}
+                        >
+                          Add Promocode
+                        </Button>
+                        {fields.map(({ key, name, ...restField }) => (
+                          <Card
+                            key={key}
+                            size="small"
+                            style={{ marginBottom: 16 }}
+                            extra={
+                              <Button
+                                type="link"
+                                danger
+                                icon={<DeleteOutlined />}
+                                onClick={() => remove(name)}
+                              >
+                                Delete
+                              </Button>
+                            }
+                          >
+                            <Row gutter={16}>
+                              <Col span={6}>
+                                <Form.Item
+                                  {...restField}
+                                  name={[name, 'value']}
+                                  label="Promo Code"
+                                  rules={[{ required: true, message: 'Enter promo code' }]}
+                                >
+                                  <Input placeholder="e.g. SUMMER2025" />
+                                </Form.Item>
+                              </Col>
+                              <Col span={4}>
+                                <Form.Item
+                                  {...restField}
+                                  name={[name, 'discount']}
+                                  label="Discount %"
+                                  rules={[{ required: true, message: 'Enter discount' }]}
+                                >
+                                  <InputNumber 
+                                    min={0} 
+                                    max={100} 
+                                    style={{ width: '100%' }}
+                                    placeholder="10"
+                                  />
+                                </Form.Item>
+                              </Col>
+                              <Col span={4}>
+                                <Form.Item
+                                  {...restField}
+                                  name={[name, 'max_products']}
+                                  label="Max Tickets"
+                                  rules={[{ required: true, message: 'Enter max tickets' }]}
+                                >
+                                  <InputNumber 
+                                    min={1} 
+                                    style={{ width: '100%' }}
+                                    placeholder="100"
+                                  />
+                                </Form.Item>
+                              </Col>
+                              <Col span={4}>
+                                <Form.Item
+                                  {...restField}
+                                  name={[name, 'max_payments']}
+                                  label="Max Orders"
+                                  rules={[{ required: true, message: 'Enter max orders' }]}
+                                >
+                                  <InputNumber 
+                                    min={1} 
+                                    style={{ width: '100%' }}
+                                    placeholder="50"
+                                  />
+                                </Form.Item>
+                              </Col>
+                              <Col span={6}>
+                                <Form.Item
+                                  {...restField}
+                                  name={[name, 'limit']}
+                                  label="Expiry Date"
+                                  rules={[{ required: true, message: 'Select expiry date' }]}
+                                >
+                                  <DatePicker 
+                                    showTime 
+                                    format="YYYY-MM-DD HH:mm:ss"
+                                    style={{ width: '100%' }}
+                                  />
+                                </Form.Item>
+                              </Col>
+                            </Row>
+                            <Row gutter={16}>
+                              <Col span={24}>
+                                <Form.Item
+                                  {...restField}
+                                  name={[name, 'active']}
+                                  label="Active"
+                                  valuePropName="checked"
+                                  initialValue={true}
+                                >
+                                  <Switch />
+                                </Form.Item>
+                              </Col>
+                            </Row>
+                          </Card>
+                        ))}
+                      </>
+                    )}
+                  </Form.List>
+                </div>
+              )
+            },
+            {
               key: '10',
               label: <b>Ticket controllers</b>,
               style: panelStyle,
