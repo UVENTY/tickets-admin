@@ -54,7 +54,7 @@ export default function CreateUser({ onUserCreated }) {
       if (values.middle) { fields.push('middle'); vals.push(`'${values.middle}'`); }
       if (values.email) { fields.push('email'); vals.push(`'${values.email}'`); }
       if (values.phone) { fields.push('phone'); vals.push(`'${values.phone}'`); }
-      if (values.id_schedule) { fields.push('id_schedule'); vals.push(`'${values.id_schedule}'`); }
+      if (values.id_schedule && values.id_schedule.trim() !== '') { fields.push('id_schedule'); vals.push(`'${values.id_schedule}'`); }
       const sqlInsert = `INSERT INTO users (${fields.join(', ')}) VALUES (${vals.join(', ')})`;
       const response = await axios.postWithAuth('/query/insert', { sql: sqlInsert });
       if (response.data?.status === 'success') {
@@ -131,10 +131,10 @@ export default function CreateUser({ onUserCreated }) {
               <Col span={12}>
                 <Form.Item
                   name="id_schedule"
-                  label="ID ивента"
-                  rules={[{ required: true, message: 'Пожалуйста, введите id ивента!' }]}
+                  label="ID ивента (необязательно)"
+                  tooltip="Если не указан, контроллер сможет проверять билеты для всех событий"
                 >
-                  <Input placeholder="Введите id ивента" />
+                  <Input placeholder="Введите id ивента (оставьте пустым для всех событий)" />
                 </Form.Item>
               </Col>
             </Row>
